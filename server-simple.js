@@ -26,12 +26,35 @@ app.use(limiter);
 
 // CORS configuration for RapidAPI
 app.use(cors({
-  origin: ['https://rapidapi.com', 'https://rapidapi.com/*', 'http://localhost:3000', 'http://localhost:5000'],
+  origin: ['https://rapidapi.com', 'https://rapidapi.com/*', 'http://localhost:3000', 'http://localhost:5000', '*'],
   credentials: true
 }));
 
 // Middleware
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      frameSrc: ["'self'", "https://ayurvedaremedyfinder.onrender.com"],
+      frameAncestors: ["'self'", "*"]
+    }
+  },
+  crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+
+// Add headers to allow iframe embedding
+app.use((req, res, next) => {
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('X-Frame-Options', 'ALLOWALL');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  next();
+});
+
 app.use(compression());
 app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
@@ -454,7 +477,9 @@ app.get('/', (req, res) => {
     message: 'Frontend files not found in expected locations',
     attemptedPaths: possiblePaths,
     currentDir: __dirname,
-    filesInCurrentDir: fs.readdirSync(__dirname)
+    filesInCurrentDir: fs.readdirSync(__dirname),
+    publicDirExists: fs.existsSync(path.join(__dirname, 'public')),
+    publicDirContents: fs.existsSync(path.join(__dirname, 'public')) ? fs.readdirSync(path.join(__dirname, 'public')) : 'Directory does not exist'
   });
 });
 
