@@ -1,5 +1,5 @@
 // API Configuration
-const API_BASE = 'http://localhost:5000';
+const API_BASE = window.location.origin; // Use current domain for production
 
 // Global variables
 let currentStep = 1;
@@ -10,6 +10,8 @@ let assessmentData = {};
 let allRemedies = [];
 let isPremiumUser = false; // Track premium status
 let remedyCount = 0; // Track free remedy usage
+let userUsage = null; // Track user usage
+let pricing = null; // Store pricing information
 
 // Sample symptoms data
 const symptomsData = {
@@ -141,6 +143,9 @@ const doshaQuestions = [
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initializing...');
     
+    // Load user usage and pricing first
+    loadUserUsage();
+    
     // Initialize the application
     initializeApp();
     
@@ -196,52 +201,39 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
+            // Check for pricing button
+            if (e.target.id === 'pricing-btn') {
+                showPricingModal();
+                return;
+            }
+            
             console.log('No data-action found on clicked element or its parents');
             return;
         }
         
         const action = target.getAttribute('data-action');
-        console.log('Button clicked with action:', action, 'target:', target);
+        const step = target.getAttribute('data-step');
+        
+        console.log('Action detected:', action, 'Step:', step);
         
         switch(action) {
             case 'next-step':
-                const nextStepNum = parseInt(target.getAttribute('data-step'));
-                console.log('Next step requested:', nextStepNum);
-                nextStep(nextStepNum);
+                nextStep(parseInt(step));
                 break;
             case 'prev-step':
-                const prevStepNum = parseInt(target.getAttribute('data-step'));
-                console.log('Previous step requested:', prevStepNum);
-                prevStep(prevStepNum);
-                break;
-            case 'start-assessment':
-                console.log('Starting dosha assessment');
-                startDoshaAssessment();
+                prevStep(parseInt(step));
                 break;
             case 'prioritize-symptoms':
-                console.log('Prioritizing symptoms');
                 prioritizeSymptoms();
                 break;
+            case 'start-assessment':
+                startAssessment();
+                break;
             case 'generate-report':
-                console.log('Generating report');
                 generateReport();
                 break;
             case 'restart-assessment':
-                console.log('Restarting assessment');
                 restartAssessment();
-                break;
-            case 'upgrade-premium':
-                console.log('Opening premium modal');
-                showPremiumModal();
-                break;
-            case 'subscribe':
-                const plan = target.getAttribute('data-plan');
-                console.log('Subscribing to plan:', plan);
-                handleSubscription(plan);
-                break;
-            case 'close-modal':
-                console.log('Closing modal');
-                closePremiumModal();
                 break;
             default:
                 console.log('Unknown action:', action);
@@ -1027,100 +1019,124 @@ function filterSymptoms(query) {
     }
 }
 
-// Premium Features Functions
-function showPremiumModal() {
-    const modal = document.getElementById('premium-modal');
-    if (modal) {
-        modal.style.display = 'flex';
-        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+// Load user usage and pricing information
+async function loadUserUsage() {
+    try {
+        const response = await fetch(`${API_BASE}/api/usage`);
+        const data = await response.json();
+        
+        if (data.success) {
+            userUsage = data.data.usage;
+            pricing = data.data.pricing;
+            isPremiumUser = data.data.usage.isPremium;
+            
+            updateUsageDisplay();
+        }
+    } catch (error) {
+        console.error('Error loading user usage:', error);
+        // Set default values if API fails
+        userUsage = { assessments: 0, isPremium: false };
+        pricing = { freeAssessments: 3, paidAssessmentPrice: 2.99 };
     }
 }
 
-function closePremiumModal() {
-    const modal = document.getElementById('premium-modal');
-    if (modal) {
-        modal.style.display = 'none';
-        document.body.style.overflow = 'auto'; // Restore scrolling
-    }
-}
-
-function handleSubscription(plan) {
-    console.log('Handling subscription for plan:', plan);
+// Update usage display in the header
+function updateUsageDisplay() {
+    const usageText = document.getElementById('usage-text');
+    if (!usageText || !userUsage || !pricing) return;
     
-    // In a real implementation, this would integrate with Stripe
-    // For now, we'll simulate the subscription process
-    
-    const planPrices = {
-        'starter': 499, // $4.99 in cents
-        'professional': 1499, // $14.99 in cents
-        'enterprise': 4999 // $49.99 in cents
-    };
-    
-    const planNames = {
-        'starter': 'Starter',
-        'professional': 'Professional',
-        'enterprise': 'Enterprise'
-    };
-    
-    // Show loading state
-    const button = document.querySelector(`[data-plan="${plan}"]`);
-    const originalText = button.textContent;
-    button.textContent = 'Processing...';
-    button.disabled = true;
-    
-    // Simulate payment processing
-    setTimeout(() => {
-        // Simulate successful subscription
-        isPremiumUser = true;
-        localStorage.setItem('premiumUser', 'true');
-        localStorage.setItem('premiumPlan', plan);
-        
-        // Update UI
-        updatePremiumUI();
-        closePremiumModal();
-        
-        // Show success message
-        showNotification(`Successfully subscribed to ${planNames[plan]} plan!`, 'success');
-        
-        // Reset button
-        button.textContent = originalText;
-        button.disabled = false;
-        
-    }, 2000);
-}
-
-function updatePremiumUI() {
-    const premiumBanner = document.getElementById('premium-banner');
-    const premiumFeatures = document.getElementById('premium-features');
+    const remainingFree = Math.max(0, pricing.freeAssessments - userUsage.assessments);
     
     if (isPremiumUser) {
-        // Hide premium banner, show premium features
-        if (premiumBanner) premiumBanner.style.display = 'none';
-        if (premiumFeatures) premiumFeatures.style.display = 'block';
-        
-        // Update header to show premium status
-        const header = document.querySelector('.header');
-        if (header) {
-            const premiumBadge = document.createElement('div');
-            premiumBadge.className = 'premium-badge';
-            premiumBadge.innerHTML = '<i class="fas fa-crown"></i> Premium';
-            header.appendChild(premiumBadge);
-        }
+        usageText.textContent = 'Premium User - Unlimited Assessments';
+    } else if (remainingFree > 0) {
+        usageText.textContent = `${remainingFree} free assessment${remainingFree !== 1 ? 's' : ''} remaining`;
     } else {
-        // Show premium banner for free users
-        if (premiumBanner) premiumBanner.style.display = 'block';
-        if (premiumFeatures) premiumFeatures.style.display = 'none';
+        usageText.textContent = 'Free limit reached - Upgrade to continue';
     }
 }
 
-function checkPremiumStatus() {
-    const storedPremium = localStorage.getItem('premiumUser');
-    const storedPlan = localStorage.getItem('premiumPlan');
+// Show pricing modal
+function showPricingModal() {
+    if (!pricing) return;
     
-    if (storedPremium === 'true' && storedPlan) {
-        isPremiumUser = true;
-        updatePremiumUI();
-        console.log('Premium user detected:', storedPlan);
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-crown"></i> Choose Your Plan</h2>
+                <button class="close-btn" onclick="this.closest('.modal').remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="pricing-grid">
+                    <div class="pricing-card">
+                        <h3>Free</h3>
+                        <div class="price">$0<span>/month</span></div>
+                        <ul>
+                            <li><i class="fas fa-check"></i> ${pricing.freeAssessments} assessments</li>
+                            <li><i class="fas fa-check"></i> Basic dosha results</li>
+                            <li><i class="fas fa-check"></i> General remedy suggestions</li>
+                        </ul>
+                        <button class="btn btn-secondary" disabled>Current Plan</button>
+                    </div>
+                    <div class="pricing-card featured">
+                        <div class="popular-badge">Most Popular</div>
+                        <h3>Premium Monthly</h3>
+                        <div class="price">$${pricing.premiumMonthlyPrice}<span>/month</span></div>
+                        <ul>
+                            <li><i class="fas fa-check"></i> Unlimited assessments</li>
+                            <li><i class="fas fa-check"></i> Priority support</li>
+                            <li><i class="fas fa-check"></i> Monthly wellness plans</li>
+                            <li><i class="fas fa-check"></i> Exclusive content access</li>
+                            <li><i class="fas fa-check"></i> PDF report downloads</li>
+                        </ul>
+                        <button class="btn btn-primary" onclick="handleSubscription('monthly')">Subscribe Now</button>
+                    </div>
+                    <div class="pricing-card">
+                        <h3>Premium Yearly</h3>
+                        <div class="price">$${pricing.premiumYearlyPrice}<span>/year</span></div>
+                        <ul>
+                            <li><i class="fas fa-check"></i> All monthly features</li>
+                            <li><i class="fas fa-check"></i> 2 months free</li>
+                            <li><i class="fas fa-check"></i> Priority customer support</li>
+                        </ul>
+                        <button class="btn btn-primary" onclick="handleSubscription('yearly')">Subscribe Now</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    setTimeout(() => modal.classList.add('show'), 10);
+}
+
+// Handle subscription
+async function handleSubscription(plan) {
+    try {
+        const response = await fetch(`${API_BASE}/api/subscribe`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ plan })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification('Subscription successful!', 'success');
+            // Reload usage to update premium status
+            await loadUserUsage();
+        } else {
+            showNotification(data.message || 'Subscription failed', 'error');
+        }
+    } catch (error) {
+        console.error('Error handling subscription:', error);
+        showNotification('Subscription failed. Please try again.', 'error');
     }
 }
 

@@ -5,9 +5,38 @@ const morgan = require('morgan');
 const compression = require('compression');
 const path = require('path');
 const rateLimit = require('express-rate-limit');
+const cookieParser = require('cookie-parser');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// In-memory storage for user usage (in production, use a database)
+const userUsage = new Map();
+
+// Function to generate unique user ID
+const generateUserId = () => {
+  return 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+};
+
+// Function to get or create user
+const getUser = (req) => {
+  let userId = req.cookies?.userId || req.headers['x-user-id'];
+  
+  if (!userId) {
+    userId = generateUserId();
+  }
+  
+  if (!userUsage.has(userId)) {
+    userUsage.set(userId, {
+      assessments: 0,
+      lastAssessment: null,
+      isPremium: false,
+      premiumExpiry: null
+    });
+  }
+  
+  return userId;
+};
 
 // Rate limiting for RapidAPI
 const limiter = rateLimit({
@@ -59,6 +88,7 @@ app.use(compression());
 app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // Serve static files from public directory
 app.use(express.static(path.join(__dirname, 'public')));
@@ -104,6 +134,74 @@ app.get('/health', (req, res) => {
     status: 'OK',
     message: 'Ayurveda Remedy API is running',
     timestamp: new Date().toISOString()
+  });
+});
+
+// Get user usage and pricing info
+app.get('/api/usage', (req, res) => {
+  const userId = getUser(req);
+  const user = userUsage.get(userId);
+  
+  // Set user ID cookie if not exists
+  if (!req.cookies?.userId) {
+    res.cookie('userId', userId, { 
+      maxAge: 365 * 24 * 60 * 60 * 1000, // 1 year
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production'
+    });
+  }
+  
+  const pricing = {
+    freeAssessments: 3,
+    paidAssessmentPrice: 2.99,
+    premiumMonthlyPrice: 9.99,
+    premiumYearlyPrice: 99.99
+  };
+  
+  res.status(200).json({
+    success: true,
+    data: {
+      userId,
+      usage: user,
+      pricing,
+      canUseFree: user.assessments < pricing.freeAssessments || user.isPremium,
+      remainingFree: Math.max(0, pricing.freeAssessments - user.assessments)
+    }
+  });
+});
+
+// Pricing information endpoint
+app.get('/api/pricing', (req, res) => {
+  const pricing = {
+    freeAssessments: 3,
+    paidAssessmentPrice: 2.99,
+    premiumMonthlyPrice: 9.99,
+    premiumYearlyPrice: 99.99,
+    features: {
+      free: [
+        '3 assessments',
+        'Basic dosha results',
+        'General remedy suggestions'
+      ],
+      paid: [
+        'Individual assessment ($2.99)',
+        'Detailed personalized report',
+        'Specific remedy recommendations',
+        'Lifestyle suggestions'
+      ],
+      premium: [
+        'Unlimited assessments',
+        'Priority support',
+        'Monthly wellness plans',
+        'Exclusive content access',
+        'PDF report downloads'
+      ]
+    }
+  };
+  
+  res.status(200).json({
+    success: true,
+    data: pricing
   });
 });
 
@@ -313,11 +411,51 @@ app.get('/api/doshas/assessment', (req, res) => {
 app.post('/api/doshas/assessment', (req, res) => {
   try {
     const { answers } = req.body;
+    const userId = getUser(req);
+    const user = userUsage.get(userId);
 
     if (!answers || !Array.isArray(answers)) {
       return res.status(400).json({
         success: false,
         message: 'Please provide answers array'
+      });
+    }
+
+    // Check usage limits
+    const pricing = {
+      freeAssessments: 3,
+      paidAssessmentPrice: 2.99
+    };
+
+    const canUseFree = user.assessments < pricing.freeAssessments || user.isPremium;
+    
+    if (!canUseFree) {
+      return res.status(402).json({
+        success: false,
+        message: 'Free assessment limit reached',
+        data: {
+          usage: user,
+          pricing,
+          upgradeOptions: {
+            singleAssessment: pricing.paidAssessmentPrice,
+            premiumMonthly: 9.99,
+            premiumYearly: 99.99
+          }
+        }
+      });
+    }
+
+    // Increment usage count
+    user.assessments++;
+    user.lastAssessment = new Date().toISOString();
+    userUsage.set(userId, user);
+
+    // Set user ID cookie if not exists
+    if (!req.cookies?.userId) {
+      res.cookie('userId', userId, { 
+        maxAge: 365 * 24 * 60 * 60 * 1000, // 1 year
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production'
       });
     }
 
@@ -374,6 +512,11 @@ app.post('/api/doshas/assessment', (req, res) => {
           'Excessive travel and movement',
           'Cold and dry environments'
         ]
+      },
+      usage: {
+        assessmentsUsed: user.assessments,
+        remainingFree: Math.max(0, pricing.freeAssessments - user.assessments),
+        isPremium: user.isPremium
       }
     };
 
