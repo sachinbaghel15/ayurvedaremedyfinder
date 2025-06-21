@@ -1,0 +1,155 @@
+<!-- Ayurveda Remedy Dashboard - Embed Code for shloakh.com -->
+<!-- Copy this code and paste it into your blog post or page -->
+
+<div style="max-width: 100%; margin: 20px 0; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+    <iframe 
+        src="http://localhost:5000" 
+        width="100%" 
+        height="800px" 
+        frameborder="0" 
+        scrolling="no"
+        style="border: none; border-radius: 15px;"
+        title="Ayurveda Remedy Dashboard">
+    </iframe>
+</div>
+
+<!-- Alternative: Direct API Integration -->
+<!-- If you prefer to integrate directly with your blog's design, use this JavaScript code -->
+
+<script>
+// Ayurveda API Integration for shloakh.com
+const AYURVEDA_API = 'http://localhost:5000';
+
+// Function to load dosha information
+async function loadDoshaInfo() {
+    try {
+        const response = await fetch(`${AYURVEDA_API}/api/doshas/info`);
+        const data = await response.json();
+        return data.success ? data.data : null;
+    } catch (error) {
+        console.error('Error loading dosha info:', error);
+        return null;
+    }
+}
+
+// Function to load remedies
+async function loadRemedies() {
+    try {
+        const response = await fetch(`${AYURVEDA_API}/api/remedies`);
+        const data = await response.json();
+        return data.success ? data.data : [];
+    } catch (error) {
+        console.error('Error loading remedies:', error);
+        return [];
+    }
+}
+
+// Function to submit dosha assessment
+async function submitAssessment(answers) {
+    try {
+        const response = await fetch(`${AYURVEDA_API}/api/doshas/assessment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ answers })
+        });
+        const data = await response.json();
+        return data.success ? data.data : null;
+    } catch (error) {
+        console.error('Error submitting assessment:', error);
+        return null;
+    }
+}
+
+// Example usage in your blog:
+// You can call these functions to integrate Ayurveda content into your blog posts
+
+// Example: Display dosha information
+async function displayDoshaSection() {
+    const doshaInfo = await loadDoshaInfo();
+    if (doshaInfo) {
+        // Create your own HTML structure to display dosha information
+        console.log('Dosha information loaded:', doshaInfo);
+    }
+}
+
+// Example: Display remedies
+async function displayRemediesSection() {
+    const remedies = await loadRemedies();
+    if (remedies.length > 0) {
+        // Create your own HTML structure to display remedies
+        console.log('Remedies loaded:', remedies);
+    }
+}
+
+// Example: Create a simple dosha assessment widget
+function createAssessmentWidget() {
+    const widget = document.createElement('div');
+    widget.innerHTML = `
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0;">
+            <h3>Discover Your Dosha Type</h3>
+            <p>Take our quick assessment to learn about your Ayurvedic constitution.</p>
+            <button onclick="startAssessment()" style="background: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
+                Start Assessment
+            </button>
+        </div>
+    `;
+    return widget;
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // You can automatically load content or create widgets here
+    console.log('Ayurveda API integration ready!');
+});
+</script>
+
+<!-- CSS for custom styling (optional) -->
+<style>
+.ayurveda-widget {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 15px;
+    margin: 20px 0;
+    text-align: center;
+}
+
+.ayurveda-widget h3 {
+    margin-bottom: 15px;
+    font-size: 1.5rem;
+}
+
+.ayurveda-widget p {
+    margin-bottom: 20px;
+    opacity: 0.9;
+}
+
+.ayurveda-btn {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 2px solid white;
+    padding: 12px 25px;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.ayurveda-btn:hover {
+    background: white;
+    color: #667eea;
+    transform: translateY(-2px);
+}
+</style>
+
+<!-- Example widget HTML -->
+<div class="ayurveda-widget">
+    <h3>🌿 Ayurveda Remedies</h3>
+    <p>Discover natural remedies and learn about your dosha type with our interactive dashboard.</p>
+    <a href="http://localhost:5000" target="_blank" class="ayurveda-btn">
+        Explore Remedies
+    </a>
+</div> 
