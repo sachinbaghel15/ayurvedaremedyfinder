@@ -40,6 +40,10 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static files from public directory
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Fallback for Render deployment - try alternative paths
+app.use(express.static(path.join(__dirname, 'src', 'public')));
+app.use(express.static(path.join(__dirname, '..', 'public')));
+
 // API Key authentication middleware
 const authenticateApiKey = (req, res, next) => {
   const apiKey = req.headers['x-rapidapi-key'] || req.headers['x-api-key'] || req.query.api_key;
@@ -399,7 +403,20 @@ app.get('/api/remedies', (req, res) => {
 
 // Serve the main page
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  const indexPath = path.join(__dirname, 'public', 'index.html');
+  const altIndexPath = path.join(__dirname, 'src', 'public', 'index.html');
+  
+  if (require('fs').existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else if (require('fs').existsSync(altIndexPath)) {
+    res.sendFile(altIndexPath);
+  } else {
+    res.status(404).json({
+      error: 'index.html not found',
+      message: 'Frontend files not found in expected locations',
+      paths: [indexPath, altIndexPath]
+    });
+  }
 });
 
 // 404 handler
