@@ -43,6 +43,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Fallback for Render deployment - try alternative paths
 app.use(express.static(path.join(__dirname, 'src', 'public')));
 app.use(express.static(path.join(__dirname, '..', 'public')));
+app.use(express.static(path.join(__dirname, '..', 'src', 'public')));
 
 // API Key authentication middleware
 const authenticateApiKey = (req, res, next) => {
@@ -81,6 +82,36 @@ app.get('/health', (req, res) => {
     message: 'Ayurveda Remedy API is running',
     timestamp: new Date().toISOString()
   });
+});
+
+// Debug endpoint to check directory structure
+app.get('/debug', (req, res) => {
+  const fs = require('fs');
+  const path = require('path');
+  
+  try {
+    const currentDir = __dirname;
+    const filesInCurrentDir = fs.readdirSync(currentDir);
+    const publicDir = path.join(currentDir, 'public');
+    const srcPublicDir = path.join(currentDir, 'src', 'public');
+    
+    const debugInfo = {
+      currentDirectory: currentDir,
+      filesInCurrentDir: filesInCurrentDir,
+      publicDirExists: fs.existsSync(publicDir),
+      srcPublicDirExists: fs.existsSync(srcPublicDir),
+      publicDirContents: fs.existsSync(publicDir) ? fs.readdirSync(publicDir) : 'Directory does not exist',
+      srcPublicDirContents: fs.existsSync(srcPublicDir) ? fs.readdirSync(srcPublicDir) : 'Directory does not exist'
+    };
+    
+    res.status(200).json(debugInfo);
+  } catch (error) {
+    res.status(500).json({
+      error: 'Debug failed',
+      message: error.message,
+      currentDir: __dirname
+    });
+  }
 });
 
 // Dosha information endpoint (no database required)
@@ -403,20 +434,28 @@ app.get('/api/remedies', (req, res) => {
 
 // Serve the main page
 app.get('/', (req, res) => {
-  const indexPath = path.join(__dirname, 'public', 'index.html');
-  const altIndexPath = path.join(__dirname, 'src', 'public', 'index.html');
+  const fs = require('fs');
+  const possiblePaths = [
+    path.join(__dirname, 'public', 'index.html'),
+    path.join(__dirname, 'src', 'public', 'index.html'),
+    path.join(__dirname, '..', 'public', 'index.html'),
+    path.join(__dirname, '..', 'src', 'public', 'index.html')
+  ];
   
-  if (require('fs').existsSync(indexPath)) {
-    res.sendFile(indexPath);
-  } else if (require('fs').existsSync(altIndexPath)) {
-    res.sendFile(altIndexPath);
-  } else {
-    res.status(404).json({
-      error: 'index.html not found',
-      message: 'Frontend files not found in expected locations',
-      paths: [indexPath, altIndexPath]
-    });
+  for (const indexPath of possiblePaths) {
+    if (fs.existsSync(indexPath)) {
+      return res.sendFile(indexPath);
+    }
   }
+  
+  // If no file found, return error with all attempted paths
+  res.status(404).json({
+    error: 'index.html not found',
+    message: 'Frontend files not found in expected locations',
+    attemptedPaths: possiblePaths,
+    currentDir: __dirname,
+    filesInCurrentDir: fs.readdirSync(__dirname)
+  });
 });
 
 // 404 handler
