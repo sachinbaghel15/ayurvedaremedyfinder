@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Step Navigation</title>
+    <style>
+        .step-content { display: none; }
+        .step-content.active { display: block; }
+        .btn { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Test Step Navigation</h1>
+    
+    <div id="step-1" class="step-content active">
+        <h2>Step 1</h2>
+        <p>This is step 1</p>
+        <button class="btn" onclick="nextStep(2)">Next Step</button>
+    </div>
+    
+    <div id="step-2" class="step-content">
+        <h2>Step 2</h2>
+        <p>This is step 2</p>
+        <button class="btn" onclick="prevStep(1)">Previous</button>
+        <button class="btn" onclick="nextStep(3)">Next Step</button>
+    </div>
+    
+    <div id="step-3" class="step-content">
+        <h2>Step 3</h2>
+        <p>This is step 3</p>
+        <button class="btn" onclick="prevStep(2)">Previous</button>
+        <button class="btn" onclick="nextStep(4)">Next Step</button>
+    </div>
+    
+    <div id="step-4" class="step-content">
+        <h2>Step 4</h2>
+        <p>This is step 4</p>
+        <button class="btn" onclick="prevStep(3)">Previous</button>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        
+        function nextStep(step) {
+            console.log('nextStep called with step:', step);
+            currentStep = step;
+            showStep(step);
+        }
+        
+        function prevStep(step) {
+            console.log('prevStep called with step:', step);
+            currentStep = step;
+            showStep(step);
+        }
+        
+        function showStep(step) {
+            console.log('showStep called with step:', step);
+            
+            // Hide all steps
+            document.querySelectorAll('.step-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Show current step
+            const currentStepContent = document.getElementById(`step-${step}`);
+            if (currentStepContent) {
+                currentStepContent.classList.add('active');
+                console.log('Step', step, 'is now active');
+            } else {
+                console.error('Step content not found for step:', step);
+            }
+        }
+    </script>
+</body>
+</html> 

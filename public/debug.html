@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Step Navigation</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .step-content { 
+            display: none; 
+            border: 2px solid #ccc; 
+            padding: 20px; 
+            margin: 10px 0; 
+            background: #f9f9f9;
+        }
+        .step-content.active { 
+            display: block; 
+            background: #e8f5e8;
+        }
+        .btn { 
+            padding: 10px 20px; 
+            margin: 5px; 
+            cursor: pointer; 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            border-radius: 5px;
+        }
+        .btn:hover { background: #0056b3; }
+        .debug-info { 
+            background: #f0f0f0; 
+            padding: 10px; 
+            margin: 10px 0; 
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Debug Step Navigation</h1>
+    
+    <div class="debug-info">
+        <h3>Debug Info</h3>
+        <p>Current Step: <span id="current-step">1</span></p>
+        <p>Step Elements Found: <span id="step-count">0</span></p>
+        <p>Active Step: <span id="active-step">step-1</span></p>
+    </div>
+    
+    <div id="step-1" class="step-content active">
+        <h2>Step 1: Basic Information</h2>
+        <p>This is step 1 - Basic Information</p>
+        <p>Fill in your basic details and click Next Step.</p>
+        <button class="btn" onclick="nextStep(2)">Next Step</button>
+    </div>
+    
+    <div id="step-2" class="step-content">
+        <h2>Step 2: Symptoms</h2>
+        <p>This is step 2 - Symptoms Selection</p>
+        <p>Select your symptoms and click Next Step.</p>
+        <button class="btn" onclick="prevStep(1)">Previous</button>
+        <button class="btn" onclick="nextStep(3)">Next Step</button>
+    </div>
+    
+    <div id="step-3" class="step-content">
+        <h2>Step 3: Dosha Assessment</h2>
+        <p>This is step 3 - Dosha Assessment</p>
+        <p>Answer questions about your constitution.</p>
+        <button class="btn" onclick="prevStep(2)">Previous</button>
+        <button class="btn" onclick="nextStep(4)">Next Step</button>
+    </div>
+    
+    <div id="step-4" class="step-content">
+        <h2>Step 4: Remedies</h2>
+        <p>This is step 4 - Remedies</p>
+        <p>View your personalized remedies.</p>
+        <button class="btn" onclick="prevStep(3)">Previous</button>
+    </div>
+
+    <div class="debug-info">
+        <h3>Console Output</h3>
+        <div id="console-output" style="background: #000; color: #0f0; padding: 10px; height: 200px; overflow-y: scroll; font-family: monospace;"></div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        
+        function log(message) {
+            console.log(message);
+            const output = document.getElementById('console-output');
+            output.innerHTML += message + '<br>';
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        function updateDebugInfo() {
+            document.getElementById('current-step').textContent = currentStep;
+            document.getElementById('step-count').textContent = document.querySelectorAll('.step-content').length;
+            document.getElementById('active-step').textContent = `step-${currentStep}`;
+        }
+        
+        function nextStep(step) {
+            log(`nextStep called with step: ${step}, currentStep: ${currentStep}`);
+            
+            try {
+                currentStep = step;
+                showStep(step);
+                updateDebugInfo();
+                log(`Successfully moved to step: ${step}`);
+            } catch (error) {
+                log(`Error in nextStep: ${error.message}`);
+            }
+        }
+        
+        function prevStep(step) {
+            log(`prevStep called with step: ${step}`);
+            
+            try {
+                currentStep = step;
+                showStep(step);
+                updateDebugInfo();
+                log(`Successfully moved to step: ${step}`);
+            } catch (error) {
+                log(`Error in prevStep: ${error.message}`);
+            }
+        }
+        
+        function showStep(step) {
+            log(`showStep called with step: ${step}`);
+            
+            try {
+                // Hide all steps
+                const allSteps = document.querySelectorAll('.step-content');
+                log(`Found ${allSteps.length} step content elements`);
+                
+                allSteps.forEach(content => {
+                    content.classList.remove('active');
+                    log(`Removed active class from: ${content.id}`);
+                });
+                
+                // Show current step
+                const currentStepContent = document.getElementById(`step-${step}`);
+                if (currentStepContent) {
+                    currentStepContent.classList.add('active');
+                    log(`Step ${step} is now active`);
+                } else {
+                    log(`ERROR: Step content not found for step: ${step}`);
+                }
+            } catch (error) {
+                log(`Error in showStep: ${error.message}`);
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            log('DOM loaded, initializing debug page...');
+            updateDebugInfo();
+            log('Debug page initialized successfully');
+        });
+    </script>
+</body>
+</html> 

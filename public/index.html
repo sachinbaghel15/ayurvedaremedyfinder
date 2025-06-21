@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ayurveda Diagnostic Tool</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-leaf"></i>
+                <h1>Ayurveda Diagnostic Tool</h1>
+            </div>
+            <p class="subtitle">Find personalized Ayurvedic remedies based on your symptoms and constitution</p>
+        </header>
+
+        <!-- Progress Steps -->
+        <div class="progress-container">
+            <div class="progress-steps">
+                <div class="step active" data-step="1">
+                    <div class="step-number">1</div>
+                    <div class="step-label">Basic Info</div>
+                </div>
+                <div class="step" data-step="2">
+                    <div class="step-number">2</div>
+                    <div class="step-label">Symptoms</div>
+                </div>
+                <div class="step" data-step="3">
+                    <div class="step-number">3</div>
+                    <div class="step-label">Dosha Assessment</div>
+                </div>
+                <div class="step" data-step="4">
+                    <div class="step-number">4</div>
+                    <div class="step-label">Remedies</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Step 1: Basic Information -->
+            <section id="step-1" class="step-content active">
+                <div class="step-header">
+                    <h2><i class="fas fa-user"></i> Step 1: Basic Information</h2>
+                    <p>Please provide your basic information to help us personalize your remedy recommendations.</p>
+                </div>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="gender">Gender</label>
+                        <div class="radio-group">
+                            <label class="radio-option">
+                                <input type="radio" name="gender" value="male" required>
+                                <span class="radio-custom"></span>
+                                <i class="fas fa-mars"></i>
+                                Male
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="gender" value="female" required>
+                                <span class="radio-custom"></span>
+                                <i class="fas fa-venus"></i>
+                                Female
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="age">Age</label>
+                        <select id="age" name="age" required>
+                            <option value="">Select Age</option>
+                            <option value="0-12">0-12 years</option>
+                            <option value="13-19">13-19 years</option>
+                            <option value="20-29">20-29 years</option>
+                            <option value="30-39">30-39 years</option>
+                            <option value="40-49">40-49 years</option>
+                            <option value="50-59">50-59 years</option>
+                            <option value="60-69">60-69 years</option>
+                            <option value="70+">70+ years</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="weight">Weight (kg)</label>
+                        <input type="number" id="weight" name="weight" placeholder="Enter weight" min="1" max="300">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="height">Height (cm)</label>
+                        <input type="number" id="height" name="height" placeholder="Enter height" min="50" max="250">
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>Risk Factors (Select all that apply)</label>
+                        <div class="checkbox-grid">
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="riskFactors" value="diabetes">
+                                <span class="checkbox-custom"></span>
+                                Diabetes
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="riskFactors" value="hypertension">
+                                <span class="checkbox-custom"></span>
+                                Hypertension
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="riskFactors" value="heart_disease">
+                                <span class="checkbox-custom"></span>
+                                Heart Disease
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="riskFactors" value="asthma">
+                                <span class="checkbox-custom"></span>
+                                Asthma
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="riskFactors" value="allergies">
+                                <span class="checkbox-custom"></span>
+                                Allergies
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="riskFactors" value="pregnancy">
+                                <span class="checkbox-custom"></span>
+                                Pregnancy
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-actions">
+                    <button class="btn btn-primary" data-action="next-step" data-step="2">
+                        Next Step <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Step 2: Symptoms -->
+            <section id="step-2" class="step-content">
+                <div class="step-header">
+                    <h2><i class="fas fa-stethoscope"></i> Step 2: Symptoms & Conditions</h2>
+                    <p>Select your symptoms and health conditions. You can search or browse categories.</p>
+                </div>
+
+                <div class="symptoms-container">
+                    <div class="search-section">
+                        <div class="search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="symptom-search" placeholder="Search symptoms, conditions, or ICD codes...">
+                        </div>
+                        <div class="category-tabs">
+                            <button class="category-tab active" data-category="digestive">
+                                <i class="fas fa-stomach"></i> Digestive
+                            </button>
+                            <button class="category-tab" data-category="respiratory">
+                                <i class="fas fa-lungs"></i> Respiratory
+                            </button>
+                            <button class="category-tab" data-category="nervous">
+                                <i class="fas fa-brain"></i> Nervous
+                            </button>
+                            <button class="category-tab" data-category="skin">
+                                <i class="fas fa-user-md"></i> Skin
+                            </button>
+                            <button class="category-tab" data-category="joints">
+                                <i class="fas fa-bone"></i> Joints
+                            </button>
+                            <button class="category-tab" data-category="general">
+                                <i class="fas fa-heartbeat"></i> General
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="symptoms-grid" id="symptoms-grid">
+                        <!-- Symptoms will be loaded here -->
+                    </div>
+
+                    <div class="selected-symptoms">
+                        <h3>Selected Symptoms</h3>
+                        <div class="selected-list" id="selected-symptoms">
+                            <p class="empty-message">No symptoms selected yet. Please select at least 3 symptoms.</p>
+                        </div>
+                        <div class="priority-controls">
+                            <button class="btn btn-secondary" data-action="prioritize-symptoms">
+                                <i class="fas fa-sort"></i> Prioritize Symptoms
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-actions">
+                    <button class="btn btn-secondary" data-action="prev-step" data-step="1">
+                        <i class="fas fa-arrow-left"></i> Previous
+                    </button>
+                    <button class="btn btn-primary" data-action="next-step" data-step="3" id="next-step-2" disabled>
+                        Next Step <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Step 3: Dosha Assessment -->
+            <section id="step-3" class="step-content">
+                <div class="step-header">
+                    <h2><i class="fas fa-balance-scale"></i> Step 3: Dosha Assessment</h2>
+                    <p>Answer these questions to determine your Ayurvedic constitution (dosha type).</p>
+                </div>
+
+                <div class="assessment-container">
+                    <div id="assessment-intro" class="assessment-intro">
+                        <div class="intro-card">
+                            <i class="fas fa-clipboard-list"></i>
+                            <h3>Dosha Assessment</h3>
+                            <p>This assessment will help us understand your body constitution and provide more personalized recommendations.</p>
+                            <button class="btn btn-primary" data-action="start-assessment">
+                                <i class="fas fa-play"></i> Start Assessment
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="assessment-questions" class="assessment-questions" style="display: none;">
+                        <div class="question-container">
+                            <h3 id="question-text"></h3>
+                            <div id="question-options" class="options-grid"></div>
+                        </div>
+                        <div class="assessment-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="progress-fill"></div>
+                            </div>
+                            <span id="progress-text">Question 1 of 8</span>
+                        </div>
+                    </div>
+
+                    <div id="assessment-result" class="assessment-result" style="display: none;">
+                        <h3>Your Dosha Assessment Result</h3>
+                        <div id="result-content"></div>
+                    </div>
+                </div>
+
+                <div class="step-actions">
+                    <button class="btn btn-secondary" data-action="prev-step" data-step="2">
+                        <i class="fas fa-arrow-left"></i> Previous
+                    </button>
+                    <button class="btn btn-primary" data-action="next-step" data-step="4" id="next-step-3" disabled>
+                        Next Step <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Step 4: Remedies -->
+            <section id="step-4" class="step-content">
+                <div class="step-header">
+                    <h2><i class="fas fa-mortar-pestle"></i> Step 4: Recommended Remedies</h2>
+                    <p>Based on your symptoms and dosha type, here are your personalized Ayurvedic remedies.</p>
+                </div>
+
+                <!-- Premium Upgrade Banner -->
+                <div class="premium-banner" id="premium-banner" style="display: none;">
+                    <div class="banner-content">
+                        <i class="fas fa-crown"></i>
+                        <div class="banner-text">
+                            <h3>Unlock Premium Features</h3>
+                            <p>Get unlimited remedies, detailed instructions, and personalized formulations</p>
+                        </div>
+                        <button class="btn btn-premium" data-action="upgrade-premium">
+                            <i class="fas fa-star"></i> Upgrade Now
+                        </button>
+                    </div>
+                </div>
+
+                <div class="results-container">
+                    <div class="summary-card">
+                        <h3>Assessment Summary</h3>
+                        <div class="summary-grid" id="assessment-summary">
+                            <!-- Summary will be populated here -->
+                        </div>
+                    </div>
+
+                    <div class="remedies-section">
+                        <div class="filter-bar">
+                            <div class="filter-group">
+                                <label>Filter by:</label>
+                                <select id="remedy-category-filter">
+                                    <option value="">All Categories</option>
+                                    <option value="digestive">Digestive</option>
+                                    <option value="respiratory">Respiratory</option>
+                                    <option value="nervous">Nervous</option>
+                                    <option value="skin">Skin</option>
+                                    <option value="joints">Joints</option>
+                                    <option value="immunity">Immunity</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Dosha:</label>
+                                <select id="remedy-dosha-filter">
+                                    <option value="">All Doshas</option>
+                                    <option value="vata">Vata</option>
+                                    <option value="pitta">Pitta</option>
+                                    <option value="kapha">Kapha</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Difficulty:</label>
+                                <select id="remedy-difficulty-filter">
+                                    <option value="">All Levels</option>
+                                    <option value="easy">Easy</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="hard">Hard</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="remedies-grid" id="remedies-grid">
+                            <!-- Remedies will be loaded here -->
+                        </div>
+                        
+                        <!-- Premium Features -->
+                        <div class="premium-features" id="premium-features" style="display: none;">
+                            <h3>Premium Features</h3>
+                            <div class="features-grid">
+                                <div class="feature-card">
+                                    <i class="fas fa-download"></i>
+                                    <h4>Download Reports</h4>
+                                    <p>Get detailed PDF reports with your personalized recommendations</p>
+                                </div>
+                                <div class="feature-card">
+                                    <i class="fas fa-chart-line"></i>
+                                    <h4>Progress Tracking</h4>
+                                    <p>Track your health progress and remedy effectiveness</p>
+                                </div>
+                                <div class="feature-card">
+                                    <i class="fas fa-user-md"></i>
+                                    <h4>Expert Consultation</h4>
+                                    <p>Get personalized advice from Ayurvedic practitioners</p>
+                                </div>
+                                <div class="feature-card">
+                                    <i class="fas fa-mobile-alt"></i>
+                                    <h4>Mobile App</h4>
+                                    <p>Access your remedies and track progress on mobile</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-actions">
+                    <button class="btn btn-secondary" data-action="prev-step" data-step="3">
+                        <i class="fas fa-arrow-left"></i> Previous
+                    </button>
+                    <button class="btn btn-success" data-action="generate-report">
+                        <i class="fas fa-download"></i> Generate Report
+                    </button>
+                    <button class="btn btn-primary" data-action="restart-assessment">
+                        <i class="fas fa-redo"></i> Start New Assessment
+                    </button>
+                </div>
+            </section>
+
+            <!-- Premium Modal -->
+            <div id="premium-modal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2><i class="fas fa-crown"></i> Choose Your Plan</h2>
+                        <button class="close-btn" data-action="close-modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="pricing-grid">
+                            <div class="pricing-card">
+                                <h3>Starter</h3>
+                                <div class="price">$4.99<span>/month</span></div>
+                                <ul>
+                                    <li><i class="fas fa-check"></i> Basic diagnostics</li>
+                                    <li><i class="fas fa-check"></i> 10 remedies/month</li>
+                                    <li><i class="fas fa-check"></i> Standard support</li>
+                                </ul>
+                                <button class="btn btn-primary" data-action="subscribe" data-plan="starter">
+                                    Choose Starter
+                                </button>
+                            </div>
+                            <div class="pricing-card featured">
+                                <div class="popular-badge">Most Popular</div>
+                                <h3>Professional</h3>
+                                <div class="price">$14.99<span>/month</span></div>
+                                <ul>
+                                    <li><i class="fas fa-check"></i> Unlimited diagnostics</li>
+                                    <li><i class="fas fa-check"></i> All remedies</li>
+                                    <li><i class="fas fa-check"></i> Progress tracking</li>
+                                    <li><i class="fas fa-check"></i> PDF reports</li>
+                                    <li><i class="fas fa-check"></i> Priority support</li>
+                                </ul>
+                                <button class="btn btn-premium" data-action="subscribe" data-plan="professional">
+                                    Choose Professional
+                                </button>
+                            </div>
+                            <div class="pricing-card">
+                                <h3>Enterprise</h3>
+                                <div class="price">$49.99<span>/month</span></div>
+                                <ul>
+                                    <li><i class="fas fa-check"></i> Everything in Professional</li>
+                                    <li><i class="fas fa-check"></i> Expert consultation</li>
+                                    <li><i class="fas fa-check"></i> Custom formulations</li>
+                                    <li><i class="fas fa-check"></i> API access</li>
+                                    <li><i class="fas fa-check"></i> Dedicated support</li>
+                                </ul>
+                                <button class="btn btn-primary" data-action="subscribe" data-plan="enterprise">
+                                    Choose Enterprise
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="disclaimer">
+                    <h4><i class="fas fa-exclamation-triangle"></i> Important Disclaimer</h4>
+                    <p>This diagnostic tool is for educational purposes only and should not be used as a substitute for professional medical advice, diagnosis, or treatment. Always consult with qualified healthcare professionals before starting any new treatment or making changes to existing treatment.</p>
+                </div>
+                <p>&copy; 2024 Ayurveda Diagnostic Tool. For educational purposes only.</p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 
