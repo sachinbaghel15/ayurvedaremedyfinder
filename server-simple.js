@@ -157,8 +157,7 @@ app.get('/api/usage', (req, res) => {
   }
   
   const pricing = {
-    freeAssessments: 3,
-    paidAssessmentPrice: 2.99,
+    freeFeatures: 'Unlimited',
     premiumMonthlyPrice: 9.99,
     premiumYearlyPrice: 99.99
   };
@@ -169,8 +168,8 @@ app.get('/api/usage', (req, res) => {
       userId,
       usage: user,
       pricing,
-      canUseFree: user.assessments < pricing.freeAssessments || user.isPremium,
-      remainingFree: Math.max(0, pricing.freeAssessments - user.assessments)
+      isPremium: user.isPremium,
+      canUpgrade: !user.isPremium && user.assessments >= 2
     }
   });
 });
@@ -178,28 +177,26 @@ app.get('/api/usage', (req, res) => {
 // Pricing information endpoint
 app.get('/api/pricing', (req, res) => {
   const pricing = {
-    freeAssessments: 3,
-    paidAssessmentPrice: 2.99,
+    freeFeatures: 'Unlimited',
     premiumMonthlyPrice: 9.99,
     premiumYearlyPrice: 99.99,
     features: {
       free: [
-        '3 assessments',
+        'Unlimited assessments',
         'Basic dosha results',
-        'General remedy suggestions'
-      ],
-      paid: [
-        'Individual assessment ($2.99)',
-        'Detailed personalized report',
-        'Specific remedy recommendations',
-        'Lifestyle suggestions'
+        'General remedy suggestions',
+        'Symptom-based filtering',
+        'Mobile-friendly interface'
       ],
       premium: [
-        'Unlimited assessments',
-        'Priority support',
-        'Monthly wellness plans',
+        'All free features',
+        'Detailed PDF reports',
+        'Personalized wellness plans',
+        'Priority customer support',
         'Exclusive content access',
-        'PDF report downloads'
+        'Monthly wellness newsletters',
+        'Advanced remedy recommendations',
+        'Lifestyle coaching tips'
       ]
     }
   };
@@ -426,31 +423,7 @@ app.post('/api/doshas/assessment', (req, res) => {
       });
     }
 
-    // Check usage limits
-    const pricing = {
-      freeAssessments: 3,
-      paidAssessmentPrice: 2.99
-    };
-
-    const canUseFree = user.assessments < pricing.freeAssessments || user.isPremium;
-    
-    if (!canUseFree) {
-      return res.status(402).json({
-        success: false,
-        message: 'Free assessment limit reached',
-        data: {
-          usage: user,
-          pricing,
-          upgradeOptions: {
-            singleAssessment: pricing.paidAssessmentPrice,
-            premiumMonthly: 9.99,
-            premiumYearly: 99.99
-          }
-        }
-      });
-    }
-
-    // Increment usage count
+    // Track usage for analytics (no limits)
     user.assessments++;
     user.lastAssessment = new Date().toISOString();
     userUsage.set(userId, user);
@@ -520,8 +493,8 @@ app.post('/api/doshas/assessment', (req, res) => {
       },
       usage: {
         assessmentsUsed: user.assessments,
-        remainingFree: Math.max(0, pricing.freeAssessments - user.assessments),
-        isPremium: user.isPremium
+        isPremium: user.isPremium,
+        canUpgrade: !user.isPremium && user.assessments >= 2 // Suggest upgrade after 2 assessments
       }
     };
 

@@ -691,6 +691,44 @@ function showDoshaResults() {
     if (nextButton) {
         nextButton.disabled = false;
     }
+    
+    // Show upgrade suggestion after showing results
+    setTimeout(() => {
+        showUpgradeSuggestion();
+    }, 2000);
+}
+
+// Show upgrade suggestion after assessment
+function showUpgradeSuggestion() {
+    if (isPremiumUser || !userUsage || userUsage.assessments < 2) return;
+    
+    const suggestion = document.createElement('div');
+    suggestion.className = 'upgrade-suggestion';
+    suggestion.innerHTML = `
+        <div class="suggestion-content">
+            <div class="suggestion-icon">
+                <i class="fas fa-crown"></i>
+            </div>
+            <div class="suggestion-text">
+                <h4>Unlock Premium Features!</h4>
+                <p>You've completed ${userUsage.assessments} assessments. Upgrade to get detailed PDF reports, personalized wellness plans, and exclusive content.</p>
+                <div class="suggestion-actions">
+                    <button class="btn btn-primary btn-small" onclick="showPricingModal()">
+                        <i class="fas fa-arrow-up"></i> Upgrade Now
+                    </button>
+                    <button class="btn btn-secondary btn-small" onclick="this.closest('.upgrade-suggestion').remove()">
+                        Maybe Later
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add to the page
+    const mainContent = document.querySelector('.main-content');
+    if (mainContent) {
+        mainContent.insertBefore(suggestion, mainContent.firstChild);
+    }
 }
 
 // Remedies functions
@@ -1042,14 +1080,10 @@ function updateUsageDisplay() {
     const usageText = document.getElementById('usage-text');
     if (!usageText || !userUsage || !pricing) return;
     
-    const remainingFree = Math.max(0, pricing.freeAssessments - userUsage.assessments);
-    
     if (isPremiumUser) {
-        usageText.textContent = 'Premium User - Unlimited Assessments';
-    } else if (remainingFree > 0) {
-        usageText.textContent = `${remainingFree} free assessment${remainingFree !== 1 ? 's' : ''} remaining`;
+        usageText.textContent = 'Premium User - All Features Unlocked';
     } else {
-        usageText.textContent = 'Free limit reached - Upgrade to continue';
+        usageText.textContent = `Free User - ${userUsage.assessments} assessment${userUsage.assessments !== 1 ? 's' : ''} completed`;
     }
 }
 
@@ -1062,7 +1096,7 @@ function showPricingModal() {
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-header">
-                <h2><i class="fas fa-crown"></i> Choose Your Plan</h2>
+                <h2><i class="fas fa-crown"></i> Upgrade to Premium</h2>
                 <button class="close-btn" onclick="this.closest('.modal').remove()">
                     <i class="fas fa-times"></i>
                 </button>
@@ -1071,11 +1105,13 @@ function showPricingModal() {
                 <div class="pricing-grid">
                     <div class="pricing-card">
                         <h3>Free</h3>
-                        <div class="price">$0<span>/month</span></div>
+                        <div class="price">$0<span>/forever</span></div>
                         <ul>
-                            <li><i class="fas fa-check"></i> ${pricing.freeAssessments} assessments</li>
+                            <li><i class="fas fa-check"></i> Unlimited assessments</li>
                             <li><i class="fas fa-check"></i> Basic dosha results</li>
                             <li><i class="fas fa-check"></i> General remedy suggestions</li>
+                            <li><i class="fas fa-check"></i> Symptom-based filtering</li>
+                            <li><i class="fas fa-check"></i> Mobile-friendly interface</li>
                         </ul>
                         <button class="btn btn-secondary" disabled>Current Plan</button>
                     </div>
@@ -1084,13 +1120,15 @@ function showPricingModal() {
                         <h3>Premium Monthly</h3>
                         <div class="price">$${pricing.premiumMonthlyPrice}<span>/month</span></div>
                         <ul>
-                            <li><i class="fas fa-check"></i> Unlimited assessments</li>
-                            <li><i class="fas fa-check"></i> Priority support</li>
-                            <li><i class="fas fa-check"></i> Monthly wellness plans</li>
+                            <li><i class="fas fa-check"></i> All free features</li>
+                            <li><i class="fas fa-check"></i> Detailed PDF reports</li>
+                            <li><i class="fas fa-check"></i> Personalized wellness plans</li>
+                            <li><i class="fas fa-check"></i> Priority customer support</li>
                             <li><i class="fas fa-check"></i> Exclusive content access</li>
-                            <li><i class="fas fa-check"></i> PDF report downloads</li>
+                            <li><i class="fas fa-check"></i> Monthly wellness newsletters</li>
+                            <li><i class="fas fa-check"></i> Advanced recommendations</li>
                         </ul>
-                        <button class="btn btn-primary" onclick="handleSubscription('monthly')">Subscribe Now</button>
+                        <button class="btn btn-primary" onclick="handleSubscription('monthly')">Upgrade Now</button>
                     </div>
                     <div class="pricing-card">
                         <h3>Premium Yearly</h3>
@@ -1099,8 +1137,9 @@ function showPricingModal() {
                             <li><i class="fas fa-check"></i> All monthly features</li>
                             <li><i class="fas fa-check"></i> 2 months free</li>
                             <li><i class="fas fa-check"></i> Priority customer support</li>
+                            <li><i class="fas fa-check"></i> Early access to new features</li>
                         </ul>
-                        <button class="btn btn-primary" onclick="handleSubscription('yearly')">Subscribe Now</button>
+                        <button class="btn btn-primary" onclick="handleSubscription('yearly')">Upgrade Now</button>
                     </div>
                 </div>
             </div>

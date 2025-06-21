@@ -1429,4 +1429,67 @@ body {
     background: #218838;
     transform: translateY(-1px);
     transition: all 0.2s ease;
+}
+
+/* Upgrade Suggestion */
+.upgrade-suggestion {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 15px;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    animation: slideInDown 0.5s ease;
+}
+
+.suggestion-content {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.suggestion-icon {
+    font-size: 2rem;
+    color: #ffd700;
+    flex-shrink: 0;
+}
+
+.suggestion-text h4 {
+    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+    color: white;
+}
+
+.suggestion-text p {
+    margin-bottom: 1rem;
+    opacity: 0.9;
+    line-height: 1.5;
+}
+
+.suggestion-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .suggestion-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .suggestion-actions {
+        justify-content: center;
+    }
 } 
