@@ -64,10 +64,13 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
       scriptSrc: ["'self'", "'unsafe-inline'"],
       frameSrc: ["'self'", "https://ayurvedaremedyfinder.onrender.com"],
-      frameAncestors: ["'self'", "*"]
+      frameAncestors: ["'self'", "*"],
+      fontSrc: ["'self'", "https://cdnjs.cloudflare.com"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'"]
     }
   },
   crossOriginEmbedderPolicy: false,
@@ -125,8 +128,10 @@ const authenticateApiKey = (req, res, next) => {
   next();
 };
 
-// Apply authentication to all API routes
-app.use('/api', authenticateApiKey);
+// Apply authentication to specific API routes only (not usage endpoints)
+app.use('/api/doshas/info', authenticateApiKey);
+app.use('/api/doshas/assessment', authenticateApiKey);
+app.use('/api/remedies', authenticateApiKey);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

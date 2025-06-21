@@ -149,9 +149,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize the application
     initializeApp();
     
-    // Check premium status
-    checkPremiumStatus();
-    
     // Add event delegation for all button clicks
     document.addEventListener('click', function(e) {
         console.log('Click event detected on:', e.target);
@@ -1166,4 +1163,10 @@ function showNotification(message, type = 'info') {
             document.body.removeChild(notification);
         }, 300);
     }, 5000);
+}
+
+// Check premium status (placeholder function)
+function checkPremiumStatus() {
+    // This function is now handled by loadUserUsage()
+    console.log('Premium status checked via loadUserUsage()');
 } 
