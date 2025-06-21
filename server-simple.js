@@ -39,7 +39,7 @@ const getUser = (req) => {
 };
 
 // Rate limiting for RapidAPI
-const limiter = rateLimit({
+const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per windowMs
   message: {
@@ -50,8 +50,8 @@ const limiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Apply rate limiting to all routes
-app.use(limiter);
+// Apply rate limiting to API routes
+app.use('/api', apiLimiter);
 
 // CORS configuration for RapidAPI
 app.use(cors({
@@ -132,6 +132,7 @@ const authenticateApiKey = (req, res, next) => {
 app.use('/api/doshas/info', authenticateApiKey);
 app.use('/api/doshas/assessment', authenticateApiKey);
 app.use('/api/remedies', authenticateApiKey);
+app.use('/api/health', authenticateApiKey);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -512,6 +513,8 @@ app.post('/api/doshas/assessment', (req, res) => {
 
 // Sample remedies endpoint (no database required)
 app.get('/api/remedies', (req, res) => {
+  const { category, dosha, difficulty, limit = 20, offset = 0 } = req.query;
+  
   const sampleRemedies = [
     {
       id: 1,
@@ -520,7 +523,17 @@ app.get('/api/remedies', (req, res) => {
       category: 'digestive',
       difficulty: 'easy',
       suitableFor: ['vata', 'kapha'],
-      benefits: ['Improves digestion', 'Reduces bloating', 'Boosts immunity', 'Relieves nausea']
+      benefits: ['Improves digestion', 'Reduces bloating', 'Boosts immunity', 'Relieves nausea'],
+      ingredients: ['Fresh ginger', 'Hot water', 'Honey (optional)', 'Lemon (optional)'],
+      instructions: [
+        'Boil 1 cup of water',
+        'Add 1 inch of fresh ginger (sliced)',
+        'Simmer for 5-10 minutes',
+        'Strain and add honey if desired',
+        'Drink warm after meals'
+      ],
+      preparationTime: '10 minutes',
+      dosage: '1-2 cups daily'
     },
     {
       id: 2,
@@ -529,7 +542,17 @@ app.get('/api/remedies', (req, res) => {
       category: 'immunity',
       difficulty: 'easy',
       suitableFor: ['all'],
-      benefits: ['Anti-inflammatory', 'Boosts immunity', 'Improves sleep', 'Supports joint health']
+      benefits: ['Anti-inflammatory', 'Boosts immunity', 'Improves sleep', 'Supports joint health'],
+      ingredients: ['Turmeric powder', 'Milk', 'Honey', 'Black pepper', 'Ginger'],
+      instructions: [
+        'Heat 1 cup of milk',
+        'Add 1/2 tsp turmeric powder',
+        'Add a pinch of black pepper',
+        'Add honey to taste',
+        'Drink warm before bed'
+      ],
+      preparationTime: '5 minutes',
+      dosage: '1 cup daily'
     },
     {
       id: 3,
@@ -538,7 +561,17 @@ app.get('/api/remedies', (req, res) => {
       category: 'stress',
       difficulty: 'medium',
       suitableFor: ['vata', 'pitta'],
-      benefits: ['Reduces stress', 'Improves sleep', 'Boosts energy', 'Supports adrenal health']
+      benefits: ['Reduces stress', 'Improves sleep', 'Boosts energy', 'Supports adrenal health'],
+      ingredients: ['Ashwagandha powder', 'Hot water', 'Honey', 'Cardamom'],
+      instructions: [
+        'Boil 1 cup of water',
+        'Add 1/2 tsp ashwagandha powder',
+        'Add 1 cardamom pod',
+        'Simmer for 5 minutes',
+        'Strain and add honey'
+      ],
+      preparationTime: '10 minutes',
+      dosage: '1 cup daily'
     },
     {
       id: 4,
@@ -547,7 +580,15 @@ app.get('/api/remedies', (req, res) => {
       category: 'detox',
       difficulty: 'easy',
       suitableFor: ['all'],
-      benefits: ['Gentle detox', 'Improves digestion', 'Supports liver health', 'Boosts immunity']
+      benefits: ['Gentle detox', 'Improves digestion', 'Supports liver health', 'Boosts immunity'],
+      ingredients: ['Triphala powder', 'Warm water', 'Honey'],
+      instructions: [
+        'Mix 1/2 tsp triphala powder in warm water',
+        'Add honey if desired',
+        'Drink on empty stomach in morning'
+      ],
+      preparationTime: '2 minutes',
+      dosage: '1 dose daily'
     },
     {
       id: 5,
@@ -556,7 +597,16 @@ app.get('/api/remedies', (req, res) => {
       category: 'energy',
       difficulty: 'medium',
       suitableFor: ['vata', 'kapha'],
-      benefits: ['Enhances memory', 'Improves focus', 'Reduces anxiety', 'Supports brain health']
+      benefits: ['Enhances memory', 'Improves focus', 'Reduces anxiety', 'Supports brain health'],
+      ingredients: ['Brahmi powder', 'Hot water', 'Honey', 'Ghee'],
+      instructions: [
+        'Boil 1 cup of water',
+        'Add 1/2 tsp brahmi powder',
+        'Simmer for 5 minutes',
+        'Add 1/4 tsp ghee and honey'
+      ],
+      preparationTime: '8 minutes',
+      dosage: '1 cup daily'
     },
     {
       id: 6,
@@ -565,14 +615,53 @@ app.get('/api/remedies', (req, res) => {
       category: 'energy',
       difficulty: 'easy',
       suitableFor: ['vata', 'kapha'],
-      benefits: ['Improves circulation', 'Balances metabolism', 'Warms the body', 'Supports digestion']
+      benefits: ['Improves circulation', 'Balances metabolism', 'Warms the body', 'Supports digestion'],
+      ingredients: ['Cinnamon stick', 'Cardamom pods', 'Hot water', 'Honey'],
+      instructions: [
+        'Boil 1 cup of water',
+        'Add 1 cinnamon stick and 2 cardamom pods',
+        'Simmer for 5 minutes',
+        'Strain and add honey'
+      ],
+      preparationTime: '7 minutes',
+      dosage: '1-2 cups daily'
     }
   ];
 
+  // Apply filters
+  let filteredRemedies = sampleRemedies;
+  
+  if (category) {
+    filteredRemedies = filteredRemedies.filter(remedy => 
+      remedy.category.toLowerCase() === category.toLowerCase()
+    );
+  }
+  
+  if (dosha) {
+    filteredRemedies = filteredRemedies.filter(remedy => 
+      remedy.suitableFor.includes(dosha.toLowerCase()) || remedy.suitableFor.includes('all')
+    );
+  }
+  
+  if (difficulty) {
+    filteredRemedies = filteredRemedies.filter(remedy => 
+      remedy.difficulty.toLowerCase() === difficulty.toLowerCase()
+    );
+  }
+
+  // Apply pagination
+  const startIndex = parseInt(offset);
+  const endIndex = startIndex + parseInt(limit);
+  const paginatedRemedies = filteredRemedies.slice(startIndex, endIndex);
+
   res.status(200).json({
     success: true,
-    count: sampleRemedies.length,
-    data: sampleRemedies
+    count: filteredRemedies.length,
+    total: sampleRemedies.length,
+    limit: parseInt(limit),
+    offset: parseInt(offset),
+    hasMore: endIndex < filteredRemedies.length,
+    data: paginatedRemedies
   });
 });
 
@@ -663,29 +752,182 @@ app.get('/api/subscription-status/:customerId', (req, res) => {
     }
 });
 
-// Analytics endpoint for tracking usage
-app.post('/api/analytics', (req, res) => {
-    try {
-        const { event, data } = req.body;
-        
-        // In a real implementation, store analytics data
-        console.log(`Analytics event: ${event}`, data);
-        
-        res.json({ success: true });
-    } catch (error) {
-        console.error('Analytics error:', error);
-        res.status(500).json({ success: false });
+// API Analytics endpoint (for RapidAPI tracking)
+app.get('/api/analytics', (req, res) => {
+  const analytics = {
+    totalRequests: userUsage.size,
+    totalAssessments: Array.from(userUsage.values()).reduce((sum, user) => sum + user.assessments, 0),
+    activeUsers: Array.from(userUsage.values()).filter(user => {
+      const lastActivity = new Date(user.lastAssessment);
+      const now = new Date();
+      return (now - lastActivity) < (7 * 24 * 60 * 60 * 1000); // Active in last 7 days
+    }).length,
+    premiumUsers: Array.from(userUsage.values()).filter(user => user.isPremium).length,
+    averageAssessmentsPerUser: Array.from(userUsage.values()).reduce((sum, user) => sum + user.assessments, 0) / userUsage.size || 0,
+    topDoshaTypes: {
+      vata: 0,
+      pitta: 0,
+      kapha: 0
+    },
+    apiHealth: {
+      uptime: process.uptime(),
+      memoryUsage: process.memoryUsage(),
+      timestamp: new Date().toISOString()
     }
+  };
+  
+  res.status(200).json({
+    success: true,
+    data: analytics
+  });
+});
+
+// API Status endpoint
+app.get('/api/status', (req, res) => {
+  const status = {
+    service: 'Ayurveda Remedy API',
+    version: '1.0.0',
+    status: 'operational',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      health: '/api/health',
+      doshaInfo: '/api/doshas/info',
+      doshaAssessment: '/api/doshas/assessment',
+      remedies: '/api/remedies',
+      docs: '/api/docs',
+      meta: '/api/meta',
+      analytics: '/api/analytics'
+    },
+    rateLimits: {
+      requests: '100 per 15 minutes',
+      description: 'Rate limiting applied per IP address'
+    }
+  };
+  
+  res.status(200).json(status);
+});
+
+// API Documentation endpoint
+app.get('/api/docs', (req, res) => {
+  const documentation = {
+    name: 'Ayurveda Remedy API',
+    version: '1.0.0',
+    description: 'Comprehensive Ayurvedic diagnostic and remedy recommendation API',
+    baseUrl: 'https://ayurvedaremedyfinder.onrender.com',
+    endpoints: {
+      health: {
+        url: '/api/health',
+        method: 'GET',
+        description: 'Check API health and status',
+        parameters: [],
+        response: {
+          status: 'string',
+          message: 'string',
+          timestamp: 'string'
+        }
+      },
+      doshaInfo: {
+        url: '/api/doshas/info',
+        method: 'GET',
+        description: 'Get comprehensive dosha information',
+        parameters: [],
+        response: {
+          success: 'boolean',
+          data: {
+            vata: 'object',
+            pitta: 'object',
+            kapha: 'object'
+          }
+        }
+      },
+      doshaAssessment: {
+        url: '/api/doshas/assessment',
+        method: 'POST',
+        description: 'Submit dosha assessment and get results',
+        parameters: {
+          answers: 'array of dosha values (vata, pitta, kapha)'
+        },
+        response: {
+          success: 'boolean',
+          data: {
+            scores: 'object',
+            dominantDosha: 'string',
+            recommendations: 'object'
+          }
+        }
+      },
+      remedies: {
+        url: '/api/remedies',
+        method: 'GET',
+        description: 'Get Ayurvedic remedies with filtering options',
+        parameters: {
+          category: 'string (optional)',
+          dosha: 'string (optional)',
+          difficulty: 'string (optional)'
+        },
+        response: {
+          success: 'boolean',
+          count: 'number',
+          data: 'array of remedy objects'
+        }
+      }
+    },
+    authentication: {
+      type: 'API Key',
+      header: 'x-rapidapi-key',
+      description: 'Include your RapidAPI key in the request header'
+    },
+    rateLimits: {
+      requests: '100 per 15 minutes',
+      description: 'Rate limiting applied per IP address'
+    },
+    pricing: {
+      free: '1000 requests/month',
+      basic: '10,000 requests/month',
+      pro: '100,000 requests/month',
+      enterprise: 'Custom limits'
+    }
+  };
+  
+  res.status(200).json(documentation);
+});
+
+// API Metadata endpoint
+app.get('/api/meta', (req, res) => {
+  const metadata = {
+    name: 'Ayurveda Remedy API',
+    version: '1.0.0',
+    description: 'Professional Ayurvedic diagnostic and remedy recommendation API for health and wellness applications',
+    category: 'Health & Wellness',
+    tags: ['ayurveda', 'health', 'wellness', 'remedies', 'dosha', 'natural-medicine'],
+    features: [
+      'Dosha assessment and analysis',
+      'Personalized remedy recommendations',
+      'Symptom-based filtering',
+      'Comprehensive Ayurvedic database',
+      'RESTful API design',
+      'JSON responses',
+      'Rate limiting',
+      'API key authentication'
+    ],
+    useCases: [
+      'Health and wellness apps',
+      'Ayurvedic consultation platforms',
+      'Natural medicine websites',
+      'Wellness blogs and content',
+      'Health assessment tools',
+      'Mobile health applications'
+    ],
+    documentation: 'https://ayurvedaremedyfinder.onrender.com/api/docs',
+    support: 'support@ayurvedaremedyfinder.com',
+    website: 'https://ayurvedaremedyfinder.onrender.com'
+  };
+  
+  res.status(200).json(metadata);
 });
 
 app.listen(PORT, () => {
   console.log(`🚀 Ayurveda Remedy API (Simple Version) running on port ${PORT}`);
   console.log(`📖 Frontend: http://localhost:${PORT}`);
-  console.log(`📖 API Endpoints:`);
-  console.log(`   - http://localhost:${PORT}/health`);
-  console.log(`   - http://localhost:${PORT}/api/doshas/info`);
-  console.log(`   - http://localhost:${PORT}/api/doshas/assessment`);
-  console.log(`   - http://localhost:${PORT}/api/remedies`);
-});
-
-module.exports = app; 
+  console.log(`
