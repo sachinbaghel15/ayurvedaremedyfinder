@@ -725,4 +725,81 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
-}); 
+});
+
+function downloadReport(reportId) {
+    // Generate PDF report for the given report ID
+    generatePDFReport(reportId);
+}
+
+function generatePDFReport(reportId) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    // Set up the PDF document
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Ayurveda Health Assessment Report', 20, 30);
+    
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    
+    let yPosition = 50;
+    
+    // Report Information
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Report ID: ${reportId}`, 20, yPosition);
+    yPosition += 10;
+    
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, yPosition);
+    yPosition += 15;
+    
+    // Assessment Summary
+    doc.setFont('helvetica', 'bold');
+    doc.text('Assessment Summary', 20, yPosition);
+    yPosition += 10;
+    
+    doc.setFont('helvetica', 'normal');
+    doc.text('This report contains your personalized Ayurvedic assessment results,', 20, yPosition);
+    yPosition += 7;
+    doc.text('dosha analysis, and recommended remedies for optimal health.', 20, yPosition);
+    yPosition += 15;
+    
+    // Recommendations
+    doc.setFont('helvetica', 'bold');
+    doc.text('General Health Recommendations:', 20, yPosition);
+    yPosition += 10;
+    
+    doc.setFont('helvetica', 'normal');
+    const recommendations = [
+        'Follow a balanced diet according to your dosha type',
+        'Maintain regular sleep patterns (7-8 hours per night)',
+        'Practice stress-reducing activities like meditation and yoga',
+        'Exercise regularly but moderately',
+        'Stay hydrated throughout the day',
+        'Consider consulting with an Ayurvedic practitioner for personalized guidance',
+        'Track your progress and adjust recommendations as needed'
+    ];
+    
+    recommendations.forEach((rec, index) => {
+        if (yPosition > 250) {
+            doc.addPage();
+            yPosition = 20;
+        }
+        doc.text(`${index + 1}. ${rec}`, 20, yPosition);
+        yPosition += 7;
+    });
+    
+    // Footer
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(10);
+        doc.text(`Page ${i} of ${pageCount}`, 20, doc.internal.pageSize.height - 10);
+        doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 120, doc.internal.pageSize.height - 10);
+    }
+    
+    // Save the PDF
+    doc.save(`ayurveda-report-${reportId}.pdf`);
+} 

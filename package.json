@@ -1,25 +1,50 @@
 {
   "name": "ayurveda-remedy-api",
   "version": "1.0.0",
-  "description": "API for Ayurvedic remedies and treatments",
+  "description": "Professional API for Ayurvedic remedies and treatments with comprehensive health assessment",
   "main": "server-simple.js",
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
   },
   "scripts": {
     "start": "node server-simple.js",
     "dev": "nodemon server-simple.js",
-    "test": "jest"
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "security": "npm audit",
+    "security:fix": "npm audit fix",
+    "build": "echo 'No build step required for Node.js'",
+    "clean": "rm -rf node_modules package-lock.json && npm install",
+    "logs": "tail -f logs/combined.log",
+    "logs:error": "tail -f logs/error.log"
   },
   "keywords": [
     "ayurveda",
     "remedy",
     "api",
     "health",
-    "wellness"
+    "wellness",
+    "medicine",
+    "alternative-medicine",
+    "dosha",
+    "symptoms",
+    "treatment"
   ],
-  "author": "Your Name",
+  "author": "Your Name <your.email@example.com>",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/ayurveda-remedy-api.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/ayurveda-remedy-api/issues"
+  },
+  "homepage": "https://github.com/yourusername/ayurveda-remedy-api#readme",
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "compression": "^1.7.4",
@@ -31,14 +56,47 @@
     "express-validator": "^7.0.1",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
+    "jspdf": "^3.0.1",
     "mongoose": "^8.0.3",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
-    "stripe": "^13.5.0"
+    "stripe": "^13.5.0",
+    "winston": "^3.11.0",
+    "redis": "^4.6.10",
+    "nodemailer": "^6.9.7",
+    "joi": "^17.11.0",
+    "uuid": "^9.0.1",
+    "moment": "^2.29.4",
+    "lodash": "^4.17.21"
   },
   "devDependencies": {
     "jest": "^29.7.0",
     "nodemon": "^3.0.2",
-    "supertest": "^6.3.3"
+    "supertest": "^6.3.3",
+    "eslint": "^8.55.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-node": "^11.1.0",
+    "prettier": "^3.1.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "prettier --write"
+    ]
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "coverageDirectory": "coverage",
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/**/*.test.js"
+    ]
   }
 }

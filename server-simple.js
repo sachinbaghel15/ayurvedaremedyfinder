@@ -8,7 +8,7 @@ const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 4000;
 
 // Enhanced subscription and pricing system
 const subscriptionPlans = {
@@ -499,7 +499,7 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://fonts.googleapis.com"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdnjs.cloudflare.com"],
       scriptSrcAttr: ["'unsafe-inline'", "'unsafe-hashes'"],
       fontSrc: ["'self'", "https://cdnjs.cloudflare.com", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "https:"],
@@ -541,12 +541,12 @@ app.use(express.static(path.join(__dirname, '..', 'src', 'public')));
 const authenticateApiKey = (req, res, next) => {
   const apiKey = req.headers['x-rapidapi-key'] || req.headers['x-api-key'] || req.query.api_key;
   
-  if (!apiKey) {
-    return res.status(401).json({
-      success: false,
-      error: 'API key is required',
-      message: 'Please provide a valid API key in the x-rapidapi-key header or as api_key query parameter'
-    });
+  // Allow frontend access with a simple key or no key for basic functionality
+  if (!apiKey || apiKey === 'frontend-key' || apiKey === 'demo-key') {
+    // For frontend requests, allow access but mark as frontend
+    req.isFrontend = true;
+    req.apiKey = apiKey || 'frontend-key';
+    return next();
   }
   
   // In production, validate against your database
@@ -561,20 +561,34 @@ const authenticateApiKey = (req, res, next) => {
   
   // Add API key to request for tracking
   req.apiKey = apiKey;
+  req.isFrontend = false;
   next();
 };
 
-// Apply authentication to specific API routes only (not usage endpoints)
+// Apply authentication to specific API routes only (not usage endpoints or frontend)
 app.use('/api/doshas/info', authenticateApiKey);
 app.use('/api/doshas/assessment', authenticateApiKey);
-app.use('/api/health', authenticateApiKey);
+app.use('/api/remedies/by-symptoms', authenticateApiKey);
+app.use('/api/remedies/by-dosha', authenticateApiKey);
+app.use('/api/remedies/search', authenticateApiKey);
+app.use('/api/remedies/:id', authenticateApiKey);
 
-// Health check endpoint
+// Health check endpoint (no authentication required)
 app.get('/health', (req, res) => {
   res.status(200).json({
     status: 'OK',
     message: 'Ayurveda Remedy API is running',
     timestamp: new Date().toISOString()
+  });
+});
+
+// API health check endpoint (no authentication required)
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Ayurveda Remedy API is running',
+    timestamp: new Date().toISOString(),
+    version: '1.0.0'
   });
 });
 

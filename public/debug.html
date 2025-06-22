@@ -3,157 +3,223 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Debug Step Navigation</title>
+    <title>Debug - Ayurveda Remedy</title>
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; }
-        .step-content { 
-            display: none; 
-            border: 2px solid #ccc; 
-            padding: 20px; 
-            margin: 10px 0; 
-            background: #f9f9f9;
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
         }
-        .step-content.active { 
-            display: block; 
-            background: #e8f5e8;
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
         }
-        .btn { 
-            padding: 10px 20px; 
-            margin: 5px; 
-            cursor: pointer; 
-            background: #007bff; 
-            color: white; 
-            border: none; 
+        .btn {
+            background: #27ae60;
+            color: white;
+            padding: 10px 20px;
+            border: none;
             border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
         }
-        .btn:hover { background: #0056b3; }
-        .debug-info { 
-            background: #f0f0f0; 
-            padding: 10px; 
-            margin: 10px 0; 
+        .btn:hover {
+            background: #219a52;
+        }
+        .category-tab {
+            background: #ecf0f1;
+            border: none;
+            padding: 10px 15px;
+            margin: 5px;
             border-radius: 5px;
+            cursor: pointer;
+        }
+        .category-tab.active {
+            background: #3498db;
+            color: white;
+        }
+        .symptom-item {
+            background: #f8f9fa;
+            padding: 10px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: inline-block;
+        }
+        .symptom-item:hover {
+            background: #e9ecef;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
         }
     </style>
 </head>
 <body>
-    <h1>Debug Step Navigation</h1>
-    
-    <div class="debug-info">
-        <h3>Debug Info</h3>
-        <p>Current Step: <span id="current-step">1</span></p>
-        <p>Step Elements Found: <span id="step-count">0</span></p>
-        <p>Active Step: <span id="active-step">step-1</span></p>
-    </div>
-    
-    <div id="step-1" class="step-content active">
-        <h2>Step 1: Basic Information</h2>
-        <p>This is step 1 - Basic Information</p>
-        <p>Fill in your basic details and click Next Step.</p>
-        <button class="btn" onclick="nextStep(2)">Next Step</button>
-    </div>
-    
-    <div id="step-2" class="step-content">
-        <h2>Step 2: Symptoms</h2>
-        <p>This is step 2 - Symptoms Selection</p>
-        <p>Select your symptoms and click Next Step.</p>
-        <button class="btn" onclick="prevStep(1)">Previous</button>
-        <button class="btn" onclick="nextStep(3)">Next Step</button>
-    </div>
-    
-    <div id="step-3" class="step-content">
-        <h2>Step 3: Dosha Assessment</h2>
-        <p>This is step 3 - Dosha Assessment</p>
-        <p>Answer questions about your constitution.</p>
-        <button class="btn" onclick="prevStep(2)">Previous</button>
-        <button class="btn" onclick="nextStep(4)">Next Step</button>
-    </div>
-    
-    <div id="step-4" class="step-content">
-        <h2>Step 4: Remedies</h2>
-        <p>This is step 4 - Remedies</p>
-        <p>View your personalized remedies.</p>
-        <button class="btn" onclick="prevStep(3)">Previous</button>
+    <div class="container">
+        <h1>Debug Page - Ayurveda Remedy</h1>
+        <p>This page helps debug the symptoms functionality and test PDF generation.</p>
+        
+        <div id="status"></div>
+        
+        <h2>Test Symptoms Loading</h2>
+        <div class="category-tabs">
+            <button class="category-tab active" data-category="digestive">Digestive</button>
+            <button class="category-tab" data-category="respiratory">Respiratory</button>
+            <button class="category-tab" data-category="nervous">Nervous</button>
+            <button class="category-tab" data-category="skin">Skin</button>
+        </div>
+        
+        <div id="symptoms-container" style="margin: 20px 0; min-height: 100px; border: 1px solid #ddd; padding: 10px;">
+            <p>Symptoms will appear here...</p>
+        </div>
+        
+        <h2>Test PDF Generation</h2>
+        <button class="btn" onclick="testPDFGeneration()">Generate Test PDF</button>
+        <button class="btn" onclick="testPDFWithData()">Generate PDF with Sample Data</button>
+        
+        <h2>Test Pricing Modal</h2>
+        <button class="btn" onclick="testPricingModal()">Show Pricing Modal</button>
     </div>
 
-    <div class="debug-info">
-        <h3>Console Output</h3>
-        <div id="console-output" style="background: #000; color: #0f0; padding: 10px; height: 200px; overflow-y: scroll; font-family: monospace;"></div>
-    </div>
-
+    <!-- Load the main script with cache busting -->
+    <script src="script-new.js?v=2.0"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
     <script>
-        let currentStep = 1;
-        
-        function log(message) {
-            console.log(message);
-            const output = document.getElementById('console-output');
-            output.innerHTML += message + '<br>';
-            output.scrollTop = output.scrollHeight;
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="${type}">${message}</div>`;
         }
-        
-        function updateDebugInfo() {
-            document.getElementById('current-step').textContent = currentStep;
-            document.getElementById('step-count').textContent = document.querySelectorAll('.step-content').length;
-            document.getElementById('active-step').textContent = `step-${currentStep}`;
-        }
-        
-        function nextStep(step) {
-            log(`nextStep called with step: ${step}, currentStep: ${currentStep}`);
-            
-            try {
-                currentStep = step;
-                showStep(step);
-                updateDebugInfo();
-                log(`Successfully moved to step: ${step}`);
-            } catch (error) {
-                log(`Error in nextStep: ${error.message}`);
-            }
-        }
-        
-        function prevStep(step) {
-            log(`prevStep called with step: ${step}`);
-            
-            try {
-                currentStep = step;
-                showStep(step);
-                updateDebugInfo();
-                log(`Successfully moved to step: ${step}`);
-            } catch (error) {
-                log(`Error in prevStep: ${error.message}`);
-            }
-        }
-        
-        function showStep(step) {
-            log(`showStep called with step: ${step}`);
-            
-            try {
-                // Hide all steps
-                const allSteps = document.querySelectorAll('.step-content');
-                log(`Found ${allSteps.length} step content elements`);
-                
-                allSteps.forEach(content => {
-                    content.classList.remove('active');
-                    log(`Removed active class from: ${content.id}`);
-                });
-                
-                // Show current step
-                const currentStepContent = document.getElementById(`step-${step}`);
-                if (currentStepContent) {
-                    currentStepContent.classList.add('active');
-                    log(`Step ${step} is now active`);
-                } else {
-                    log(`ERROR: Step content not found for step: ${step}`);
-                }
-            } catch (error) {
-                log(`Error in showStep: ${error.message}`);
-            }
-        }
-        
-        // Initialize
+
+        // Test symptoms loading
         document.addEventListener('DOMContentLoaded', function() {
-            log('DOM loaded, initializing debug page...');
-            updateDebugInfo();
-            log('Debug page initialized successfully');
+            showStatus('Page loaded. Testing symptoms functionality...', 'info');
+            
+            // Add click handlers for category tabs
+            document.querySelectorAll('.category-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const category = this.getAttribute('data-category');
+                    console.log('Category clicked:', category);
+                    
+                    // Update active tab
+                    document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Test if loadSymptomsByCategory function exists
+                    if (typeof loadSymptomsByCategory === 'function') {
+                        showStatus(`Loading symptoms for category: ${category}`, 'info');
+                        loadSymptomsByCategory(category);
+                    } else {
+                        showStatus('loadSymptomsByCategory function not found!', 'error');
+                    }
+                });
+            });
+            
+            // Test if symptomsData exists
+            if (typeof symptomsData !== 'undefined') {
+                showStatus(`symptomsData loaded with ${Object.keys(symptomsData).length} categories`, 'success');
+            } else {
+                showStatus('symptomsData not found!', 'error');
+            }
         });
+
+        function testPDFGeneration() {
+            try {
+                if (typeof window.jspdf === 'undefined') {
+                    showStatus('jsPDF library not loaded!', 'error');
+                    return;
+                }
+
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                doc.setFontSize(20);
+                doc.text('Debug Test PDF', 20, 30);
+                doc.setFontSize(12);
+                doc.text('PDF generation is working!', 20, 50);
+                doc.text('Generated on: ' + new Date().toLocaleString(), 20, 70);
+                
+                doc.save('debug-test.pdf');
+                showStatus('Test PDF generated successfully!', 'success');
+            } catch (error) {
+                showStatus('Error generating PDF: ' + error.message, 'error');
+            }
+        }
+
+        function testPDFWithData() {
+            try {
+                if (typeof window.jspdf === 'undefined') {
+                    showStatus('jsPDF library not loaded!', 'error');
+                    return;
+                }
+
+                if (typeof generatePDFReport !== 'function') {
+                    showStatus('generatePDFReport function not found!', 'error');
+                    return;
+                }
+
+                // Set up sample data
+                window.userData = { name: 'Test User', age: '25-35', gender: 'Male' };
+                window.doshaScores = { vata: 45, pitta: 35, kapha: 20 };
+                window.selectedSymptoms = ['Anxiety', 'Insomnia', 'Digestive issues'];
+                window.assessmentData = { dominantDosha: 'Vata' };
+
+                generatePDFReport();
+                showStatus('PDF with sample data generated!', 'success');
+            } catch (error) {
+                showStatus('Error generating PDF with data: ' + error.message, 'error');
+            }
+        }
+
+        function testPricingModal() {
+            try {
+                if (typeof showPricingModal !== 'function') {
+                    showStatus('showPricingModal function not found!', 'error');
+                    return;
+                }
+
+                // Set up sample pricing data
+                window.pricing = {
+                    premiumMonthlyPrice: 9.99,
+                    premiumYearlyPrice: 99.99
+                };
+
+                showPricingModal();
+                showStatus('Pricing modal should be displayed!', 'success');
+            } catch (error) {
+                showStatus('Error showing pricing modal: ' + error.message, 'error');
+            }
+        }
+
+        // Log when script loads
+        console.log('Debug page script loaded');
+        console.log('symptomsData available:', typeof symptomsData !== 'undefined');
+        console.log('loadSymptomsByCategory available:', typeof loadSymptomsByCategory !== 'undefined');
+        console.log('generatePDFReport available:', typeof generatePDFReport !== 'undefined');
+        console.log('showPricingModal available:', typeof showPricingModal !== 'undefined');
     </script>
 </body>
 </html> 
