@@ -529,13 +529,108 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Serve static files from public directory
-app.use(express.static(path.join(__dirname, 'public')));
+// Serve static files from public directory with proper MIME types
+app.use(express.static(path.join(__dirname, 'public'), {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript');
+    } else if (path.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css');
+    } else if (path.endsWith('.html')) {
+      res.setHeader('Content-Type', 'text/html');
+    }
+  }
+}));
 
 // Fallback for Render deployment - try alternative paths
-app.use(express.static(path.join(__dirname, 'src', 'public')));
-app.use(express.static(path.join(__dirname, '..', 'public')));
-app.use(express.static(path.join(__dirname, '..', 'src', 'public')));
+app.use(express.static(path.join(__dirname, 'src', 'public'), {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript');
+    } else if (path.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css');
+    } else if (path.endsWith('.html')) {
+      res.setHeader('Content-Type', 'text/html');
+    }
+  }
+}));
+
+// Additional fallback paths for Render
+app.use(express.static(path.join(__dirname, '..', 'public'), {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript');
+    } else if (path.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css');
+    } else if (path.endsWith('.html')) {
+      res.setHeader('Content-Type', 'text/html');
+    }
+  }
+}));
+
+app.use(express.static(path.join(__dirname, '..', 'src', 'public'), {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript');
+    } else if (path.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css');
+    } else if (path.endsWith('.html')) {
+      res.setHeader('Content-Type', 'text/html');
+    }
+  }
+}));
+
+// Specific route handlers for static files (before authentication)
+app.get('/script-new.js', (req, res) => {
+  const fs = require('fs');
+  const path = require('path');
+  const filePath = path.join(__dirname, 'public', 'script-new.js');
+  
+  if (fs.existsSync(filePath)) {
+    res.setHeader('Content-Type', 'application/javascript');
+    res.sendFile(filePath);
+  } else {
+    res.status(404).json({
+      error: 'File not found',
+      path: filePath,
+      currentDir: __dirname
+    });
+  }
+});
+
+app.get('/jspdf.min.js', (req, res) => {
+  const fs = require('fs');
+  const path = require('path');
+  const filePath = path.join(__dirname, 'public', 'jspdf.min.js');
+  
+  if (fs.existsSync(filePath)) {
+    res.setHeader('Content-Type', 'application/javascript');
+    res.sendFile(filePath);
+  } else {
+    res.status(404).json({
+      error: 'File not found',
+      path: filePath,
+      currentDir: __dirname
+    });
+  }
+});
+
+app.get('/styles.css', (req, res) => {
+  const fs = require('fs');
+  const path = require('path');
+  const filePath = path.join(__dirname, 'public', 'styles.css');
+  
+  if (fs.existsSync(filePath)) {
+    res.setHeader('Content-Type', 'text/css');
+    res.sendFile(filePath);
+  } else {
+    res.status(404).json({
+      error: 'File not found',
+      path: filePath,
+      currentDir: __dirname
+    });
+  }
+});
 
 // API Key authentication middleware
 const authenticateApiKey = (req, res, next) => {
