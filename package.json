@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "API for Ayurvedic remedies and treatments",
   "main": "server-simple.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "start": "node server-simple.js",
     "dev": "nodemon server-simple.js",
@@ -20,7 +23,7 @@
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "compression": "^1.7.4",
-    "cookie-parser": "^1.4.6",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",

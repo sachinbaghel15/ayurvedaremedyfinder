@@ -161,7 +161,7 @@
                     <div class="search-section">
                         <div class="search-box">
                             <i class="fas fa-search"></i>
-                            <input type="text" id="symptom-search" placeholder="Search symptoms, conditions, or ICD codes...">
+                            <input type="text" id="symptom-search" placeholder="Search symptoms, conditions, or health issues...">
                         </div>
                         <div class="category-tabs">
                             <button class="category-tab active" data-category="digestive">
@@ -179,25 +179,45 @@
                             <button class="category-tab" data-category="joints">
                                 <i class="fas fa-bone"></i> Joints
                             </button>
+                            <button class="category-tab" data-category="cardiovascular">
+                                <i class="fas fa-heartbeat"></i> Cardiovascular
+                            </button>
+                            <button class="category-tab" data-category="endocrine">
+                                <i class="fas fa-balance-scale"></i> Endocrine
+                            </button>
+                            <button class="category-tab" data-category="immune">
+                                <i class="fas fa-shield-alt"></i> Immune
+                            </button>
+                            <button class="category-tab" data-category="reproductive">
+                                <i class="fas fa-venus-mars"></i> Reproductive
+                            </button>
+                            <button class="category-tab" data-category="urinary">
+                                <i class="fas fa-tint"></i> Urinary
+                            </button>
+                            <button class="category-tab" data-category="eye_ear">
+                                <i class="fas fa-eye"></i> Eye & Ear
+                            </button>
                             <button class="category-tab" data-category="general">
                                 <i class="fas fa-heartbeat"></i> General
                             </button>
                         </div>
                     </div>
 
-                    <div class="symptoms-grid" id="symptoms-grid">
-                        <!-- Symptoms will be loaded here -->
-                    </div>
-
-                    <div class="selected-symptoms">
-                        <h3>Selected Symptoms</h3>
-                        <div class="selected-list" id="selected-symptoms">
-                            <p class="empty-message">No symptoms selected yet. Please select at least 3 symptoms.</p>
+                    <div class="symptoms-content">
+                        <div class="symptoms-grid" id="symptoms-container">
+                            <!-- Symptoms will be loaded here -->
                         </div>
-                        <div class="priority-controls">
-                            <button class="btn btn-secondary" data-action="prioritize-symptoms">
-                                <i class="fas fa-sort"></i> Prioritize Symptoms
-                            </button>
+
+                        <div class="selected-symptoms">
+                            <h3>Selected Symptoms (<span id="symptom-count">0</span>)</h3>
+                            <div class="selected-list" id="selected-symptoms">
+                                <p class="empty-message">No symptoms selected yet. Please select at least 3 symptoms.</p>
+                            </div>
+                            <div class="priority-controls">
+                                <button class="btn btn-secondary" data-action="prioritize-symptoms">
+                                    <i class="fas fa-sort"></i> Prioritize Symptoms
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -290,40 +310,7 @@
                     </div>
 
                     <div class="remedies-section">
-                        <div class="filter-bar">
-                            <div class="filter-group">
-                                <label>Filter by:</label>
-                                <select id="remedy-category-filter">
-                                    <option value="">All Categories</option>
-                                    <option value="digestive">Digestive</option>
-                                    <option value="respiratory">Respiratory</option>
-                                    <option value="nervous">Nervous</option>
-                                    <option value="skin">Skin</option>
-                                    <option value="joints">Joints</option>
-                                    <option value="immunity">Immunity</option>
-                                </select>
-                            </div>
-                            <div class="filter-group">
-                                <label>Dosha:</label>
-                                <select id="remedy-dosha-filter">
-                                    <option value="">All Doshas</option>
-                                    <option value="vata">Vata</option>
-                                    <option value="pitta">Pitta</option>
-                                    <option value="kapha">Kapha</option>
-                                </select>
-                            </div>
-                            <div class="filter-group">
-                                <label>Difficulty:</label>
-                                <select id="remedy-difficulty-filter">
-                                    <option value="">All Levels</option>
-                                    <option value="easy">Easy</option>
-                                    <option value="medium">Medium</option>
-                                    <option value="hard">Hard</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="remedies-grid" id="remedies-grid">
+                        <div id="remedies-container">
                             <!-- Remedies will be loaded here -->
                         </div>
                         
@@ -397,22 +384,20 @@
                                 <ul>
                                     <li><i class="fas fa-check"></i> Unlimited diagnostics</li>
                                     <li><i class="fas fa-check"></i> All remedies</li>
-                                    <li><i class="fas fa-check"></i> Progress tracking</li>
-                                    <li><i class="fas fa-check"></i> PDF reports</li>
+                                    <li><i class="fas fa-check"></i> Detailed reports</li>
                                     <li><i class="fas fa-check"></i> Priority support</li>
                                 </ul>
-                                <button class="btn btn-premium" data-action="subscribe" data-plan="professional">
+                                <button class="btn btn-primary" data-action="subscribe" data-plan="professional">
                                     Choose Professional
                                 </button>
                             </div>
                             <div class="pricing-card">
                                 <h3>Enterprise</h3>
-                                <div class="price">$49.99<span>/month</span></div>
+                                <div class="price">$29.99<span>/month</span></div>
                                 <ul>
                                     <li><i class="fas fa-check"></i> Everything in Professional</li>
-                                    <li><i class="fas fa-check"></i> Expert consultation</li>
-                                    <li><i class="fas fa-check"></i> Custom formulations</li>
                                     <li><i class="fas fa-check"></i> API access</li>
+                                    <li><i class="fas fa-check"></i> Custom integrations</li>
                                     <li><i class="fas fa-check"></i> Dedicated support</li>
                                 </ul>
                                 <button class="btn btn-primary" data-action="subscribe" data-plan="enterprise">

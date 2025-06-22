@@ -1492,4 +1492,330 @@ body {
     .suggestion-actions {
         justify-content: center;
     }
+}
+
+/* Comprehensive Symptoms and Remedies Styles */
+
+.symptoms-content {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    margin-top: 1rem;
+}
+
+.symptoms-grid {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.symptom-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border: 1px solid #e1e5e9;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #fff;
+}
+
+.symptom-item:hover {
+    border-color: #007bff;
+    box-shadow: 0 2px 8px rgba(0,123,255,0.2);
+}
+
+.symptom-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+.symptom-name {
+    font-weight: 500;
+    color: #333;
+}
+
+.severity-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.severity-badge.mild {
+    background: #d4edda;
+    color: #155724;
+}
+
+.severity-badge.moderate {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.severity-badge.severe {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.symptom-checkbox {
+    position: relative;
+}
+
+.symptom-checkbox input[type="checkbox"] {
+    display: none;
+}
+
+.symptom-checkbox label {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.symptom-checkbox input[type="checkbox"]:checked + label {
+    background: #007bff;
+    border-color: #007bff;
+}
+
+.symptom-checkbox input[type="checkbox"]:checked + label::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* Remedies Styles */
+.remedies-header {
+    margin-bottom: 2rem;
+}
+
+.remedies-header h3 {
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.remedies-filters {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+
+.remedies-filters select {
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: white;
+    font-size: 0.9rem;
+}
+
+.remedies-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+}
+
+.remedy-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border: 1px solid #e1e5e9;
+    transition: all 0.3s ease;
+}
+
+.remedy-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+}
+
+.remedy-header {
+    margin-bottom: 1rem;
+}
+
+.remedy-header h4 {
+    margin: 0 0 0.5rem 0;
+    color: #333;
+    font-size: 1.2rem;
+}
+
+.remedy-badges {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.category-badge, .origin-badge, .effectiveness-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.category-badge {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.origin-badge {
+    background: #f3e5f5;
+    color: #7b1fa2;
+}
+
+.effectiveness-badge {
+    font-weight: 700;
+}
+
+.effectiveness-badge.high {
+    background: #d4edda;
+    color: #155724;
+}
+
+.effectiveness-badge.moderate {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.effectiveness-badge.low {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.remedy-description {
+    margin-bottom: 1rem;
+}
+
+.remedy-description p {
+    color: #666;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.remedy-details {
+    margin-bottom: 1.5rem;
+}
+
+.remedy-details h5 {
+    margin: 0 0 0.5rem 0;
+    color: #333;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.remedy-details ul {
+    margin: 0 0 1rem 0;
+    padding-left: 1.2rem;
+}
+
+.remedy-details li {
+    color: #666;
+    margin-bottom: 0.25rem;
+}
+
+.remedy-details p {
+    color: #666;
+    line-height: 1.4;
+    margin: 0 0 1rem 0;
+}
+
+.contraindications {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 6px;
+    padding: 0.75rem;
+    margin-top: 1rem;
+}
+
+.contraindications h5 {
+    color: #856404;
+    margin: 0 0 0.5rem 0;
+}
+
+.contraindications p {
+    color: #856404;
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.remedy-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.remedy-actions .btn {
+    flex: 1;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+
+/* Loading and Empty States */
+.loading {
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+    font-style: italic;
+}
+
+.no-symptoms, .no-remedies {
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+    font-style: italic;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px dashed #dee2e6;
+}
+
+/* Symptom Count */
+#symptom-count {
+    color: #007bff;
+    font-weight: 600;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .symptoms-content {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .remedies-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .remedies-filters {
+        flex-direction: column;
+    }
+    
+    .remedy-actions {
+        flex-direction: column;
+    }
+    
+    .category-tabs {
+        overflow-x: auto;
+        white-space: nowrap;
+        padding-bottom: 0.5rem;
+    }
+    
+    .category-tab {
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
 } 

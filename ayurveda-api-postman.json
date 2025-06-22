@@ -1,0 +1,304 @@
+{
+  "info": {
+    "name": "Ayurveda Remedy API",
+    "description": "Professional Ayurvedic diagnostic and remedy recommendation API for health and wellness applications",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {
+        "key": "X-RapidAPI-Key",
+        "value": "{{rapidapi_key}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://ayurvedaremedyfinder.onrender.com"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/health",
+              "host": ["{{base_url}}"],
+              "path": ["api", "health"]
+            },
+            "description": "Check API health and status"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/health",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "health"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Ayurveda Remedy API is running\",\n  \"timestamp\": \"2024-01-01T00:00:00.000Z\",\n  \"version\": \"1.0.0\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Doshas",
+      "item": [
+        {
+          "name": "Get Dosha Information",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/doshas/info",
+              "host": ["{{base_url}}"],
+              "path": ["api", "doshas", "info"]
+            },
+            "description": "Get comprehensive dosha information (Vata, Pitta, Kapha)"
+          },
+          "response": []
+        },
+        {
+          "name": "Submit Dosha Assessment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"answers\": [\"vata\", \"pitta\", \"kapha\", \"vata\", \"pitta\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/doshas/assessment",
+              "host": ["{{base_url}}"],
+              "path": ["api", "doshas", "assessment"]
+            },
+            "description": "Submit dosha assessment and get personalized results"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"answers\": [\"vata\", \"pitta\", \"kapha\", \"vata\", \"pitta\"]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/doshas/assessment",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "doshas", "assessment"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"scores\": {\n      \"vata\": 3,\n      \"pitta\": 2,\n      \"kapha\": 1\n    },\n    \"dominantDosha\": \"vata\",\n    \"secondaryDosha\": \"pitta\",\n    \"doshaType\": \"vata-pitta\",\n    \"recommendations\": {\n      \"lifestyle\": [\"Follow a regular daily routine\"],\n      \"foods\": [\"Eat warm, cooked, and easily digestible foods\"],\n      \"avoid\": [\"Irregular eating habits\"]\n    }\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Remedies",
+      "item": [
+        {
+          "name": "Get Remedies",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/remedies?category=digestive&dosha=vata&limit=5",
+              "host": ["{{base_url}}"],
+              "path": ["api", "remedies"],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "digestive",
+                  "description": "Filter by remedy category"
+                },
+                {
+                  "key": "dosha",
+                  "value": "vata",
+                  "description": "Filter by suitable dosha"
+                },
+                {
+                  "key": "limit",
+                  "value": "5",
+                  "description": "Number of results to return"
+                }
+              ]
+            },
+            "description": "Get Ayurvedic remedies with filtering options"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/remedies?category=digestive&dosha=vata&limit=5",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "remedies"],
+                  "query": [
+                    {
+                      "key": "category",
+                      "value": "digestive"
+                    },
+                    {
+                      "key": "dosha",
+                      "value": "vata"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "5"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"count\": 3,\n  \"total\": 50,\n  \"limit\": 5,\n  \"offset\": 0,\n  \"hasMore\": true,\n  \"data\": [\n    {\n      \"id\": 1,\n      \"name\": \"Ginger Tea for Digestion\",\n      \"description\": \"A warming tea to improve digestion...\",\n      \"category\": \"digestive\",\n      \"difficulty\": \"easy\",\n      \"suitableFor\": [\"vata\", \"kapha\"],\n      \"benefits\": [\"Improves digestion\", \"Reduces bloating\"],\n      \"ingredients\": [\"Fresh ginger\", \"Hot water\"],\n      \"instructions\": [\"Boil 1 cup of water\", \"Add 1 inch of fresh ginger\"],\n      \"preparationTime\": \"10 minutes\",\n      \"dosage\": \"1-2 cups daily\"\n    }\n  ]\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Documentation",
+      "item": [
+        {
+          "name": "API Documentation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/docs",
+              "host": ["{{base_url}}"],
+              "path": ["api", "docs"]
+            },
+            "description": "Get complete API documentation"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Metadata",
+      "item": [
+        {
+          "name": "API Metadata",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/meta",
+              "host": ["{{base_url}}"],
+              "path": ["api", "meta"]
+            },
+            "description": "Get API metadata and information"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Analytics",
+      "item": [
+        {
+          "name": "Analytics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/analytics",
+              "host": ["{{base_url}}"],
+              "path": ["api", "analytics"]
+            },
+            "description": "Get API usage analytics (for RapidAPI tracking)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Status",
+      "item": [
+        {
+          "name": "API Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "status"]
+            },
+            "description": "Get API status and endpoint information"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+} 

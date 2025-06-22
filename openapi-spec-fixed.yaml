@@ -1,0 +1,462 @@
+openapi: 3.0.0
+info:
+  title: Ayurveda Remedy API
+  description: Professional Ayurvedic diagnostic and remedy recommendation API for health and wellness applications
+  version: 1.0.0
+  contact:
+    name: Ayurveda Remedy API Support
+    email: support@ayurvedaremedyfinder.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://ayurvedaremedyfinder.onrender.com
+    description: Production server
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  /api/health:
+    get:
+      summary: Health Check
+      description: Check API health and status
+      tags:
+        - Health
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Ayurveda Remedy API is running"
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2024-01-01T00:00:00.000Z"
+                  version:
+                    type: string
+                    example: "1.0.0"
+
+  /api/doshas/info:
+    get:
+      summary: Get Dosha Information
+      description: Get comprehensive dosha information (Vata, Pitta, Kapha)
+      tags:
+        - Doshas
+      responses:
+        '200':
+          description: Dosha information retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      doshas:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Dosha'
+
+  /api/doshas/assessment:
+    post:
+      summary: Submit Dosha Assessment
+      description: Submit dosha assessment and get personalized results
+      tags:
+        - Doshas
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - answers
+              properties:
+                answers:
+                  type: array
+                  items:
+                    type: string
+                    enum: [vata, pitta, kapha]
+                  description: Array of dosha answers from assessment questions
+                  example: ["vata", "pitta", "kapha", "vata", "pitta"]
+      responses:
+        '200':
+          description: Assessment completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/AssessmentResult'
+
+  /api/remedies:
+    get:
+      summary: Get Remedies
+      description: Get Ayurvedic remedies with filtering options
+      tags:
+        - Remedies
+      parameters:
+        - name: category
+          in: query
+          description: Filter by remedy category
+          schema:
+            type: string
+            enum: [digestive, immunity, stress, detox, energy]
+        - name: dosha
+          in: query
+          description: Filter by suitable dosha
+          schema:
+            type: string
+            enum: [vata, pitta, kapha]
+        - name: difficulty
+          in: query
+          description: Filter by preparation difficulty
+          schema:
+            type: string
+            enum: [easy, medium, hard]
+        - name: limit
+          in: query
+          description: Number of results to return
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+        - name: offset
+          in: query
+          description: Pagination offset
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+      responses:
+        '200':
+          description: Remedies retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  count:
+                    type: integer
+                    example: 6
+                  total:
+                    type: integer
+                    example: 50
+                  limit:
+                    type: integer
+                    example: 20
+                  offset:
+                    type: integer
+                    example: 0
+                  hasMore:
+                    type: boolean
+                    example: false
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Remedy'
+
+  /api/docs:
+    get:
+      summary: API Documentation
+      description: Get complete API documentation
+      tags:
+        - Documentation
+      responses:
+        '200':
+          description: Documentation retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      endpoints:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Endpoint'
+
+  /api/meta:
+    get:
+      summary: API Metadata
+      description: Get API metadata and information
+      tags:
+        - Metadata
+      responses:
+        '200':
+          description: Metadata retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/ApiMetadata'
+
+  /api/analytics:
+    get:
+      summary: Analytics
+      description: Get API usage analytics (for RapidAPI tracking)
+      tags:
+        - Analytics
+      responses:
+        '200':
+          description: Analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Analytics'
+
+  /api/status:
+    get:
+      summary: API Status
+      description: Get API status and endpoint information
+      tags:
+        - Status
+      responses:
+        '200':
+          description: Status retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/ApiStatus'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-RapidAPI-Key
+      description: RapidAPI key for authentication
+
+  schemas:
+    Dosha:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "vata"
+        title:
+          type: string
+          example: "Vata Dosha"
+        description:
+          type: string
+          example: "Vata is the energy of movement..."
+        characteristics:
+          type: array
+          items:
+            type: string
+          example: ["Creative", "Quick-thinking", "Variable appetite"]
+
+    AssessmentResult:
+      type: object
+      properties:
+        scores:
+          type: object
+          properties:
+            vata:
+              type: integer
+              example: 3
+            pitta:
+              type: integer
+              example: 2
+            kapha:
+              type: integer
+              example: 1
+        dominantDosha:
+          type: string
+          example: "vata"
+        secondaryDosha:
+          type: string
+          example: "pitta"
+        doshaType:
+          type: string
+          example: "vata-pitta"
+        recommendations:
+          type: object
+          properties:
+            lifestyle:
+              type: array
+              items:
+                type: string
+            foods:
+              type: array
+              items:
+                type: string
+            avoid:
+              type: array
+              items:
+                type: string
+
+    Remedy:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Ginger Tea for Digestion"
+        description:
+          type: string
+          example: "A warming tea to improve digestion..."
+        category:
+          type: string
+          example: "digestive"
+        difficulty:
+          type: string
+          example: "easy"
+        suitableFor:
+          type: array
+          items:
+            type: string
+          example: ["vata", "kapha"]
+        benefits:
+          type: array
+          items:
+            type: string
+          example: ["Improves digestion", "Reduces bloating"]
+        ingredients:
+          type: array
+          items:
+            type: string
+          example: ["Fresh ginger", "Hot water"]
+        instructions:
+          type: array
+          items:
+            type: string
+          example: ["Boil 1 cup of water", "Add 1 inch of fresh ginger"]
+        preparationTime:
+          type: string
+          example: "10 minutes"
+        dosage:
+          type: string
+          example: "1-2 cups daily"
+
+    Endpoint:
+      type: object
+      properties:
+        path:
+          type: string
+          example: "/api/health"
+        method:
+          type: string
+          example: "GET"
+        description:
+          type: string
+          example: "Check API health and status"
+
+    ApiMetadata:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Ayurveda Remedy API"
+        version:
+          type: string
+          example: "1.0.0"
+        description:
+          type: string
+          example: "Professional Ayurvedic diagnostic and remedy recommendation API"
+        endpoints:
+          type: integer
+          example: 8
+        categories:
+          type: array
+          items:
+            type: string
+          example: ["Health", "Wellness", "Ayurveda"]
+
+    Analytics:
+      type: object
+      properties:
+        totalRequests:
+          type: integer
+          example: 1500
+        requestsToday:
+          type: integer
+          example: 45
+        popularEndpoints:
+          type: array
+          items:
+            type: object
+            properties:
+              endpoint:
+                type: string
+              requests:
+                type: integer
+
+    ApiStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "operational"
+        uptime:
+          type: string
+          example: "99.9%"
+        responseTime:
+          type: string
+          example: "< 200ms"
+        endpoints:
+          type: array
+          items:
+            $ref: '#/components/schemas/Endpoint'
+
+tags:
+  - name: Health
+    description: Health check endpoints
+  - name: Doshas
+    description: Dosha assessment and information endpoints
+  - name: Remedies
+    description: Ayurvedic remedies endpoints
+  - name: Documentation
+    description: API documentation endpoints
+  - name: Metadata
+    description: API metadata endpoints
+  - name: Analytics
+    description: Analytics and tracking endpoints
+  - name: Status
+    description: API status endpoints 

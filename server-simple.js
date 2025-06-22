@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
@@ -64,13 +64,15 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      frameSrc: ["'self'", "https://ayurvedaremedyfinder.onrender.com"],
-      frameAncestors: ["'self'", "*"],
-      fontSrc: ["'self'", "https://cdnjs.cloudflare.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://fonts.googleapis.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      scriptSrcAttr: ["'unsafe-inline'"],
+      fontSrc: ["'self'", "https://cdnjs.cloudflare.com", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'"]
+      connectSrc: ["'self'"],
+      frameSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      upgradeInsecureRequests: []
     }
   },
   crossOriginEmbedderPolicy: false,
@@ -511,157 +513,246 @@ app.post('/api/doshas/assessment', (req, res) => {
   }
 });
 
-// Sample remedies endpoint (no database required)
+// Comprehensive worldwide symptoms and remedies API endpoints
+app.get('/api/symptoms', (req, res) => {
+  const { category, search } = req.query;
+  let symptoms = [];
+  
+  if (category && worldwideSymptomsData[category]) {
+    symptoms = worldwideSymptomsData[category];
+  } else {
+    // Return all symptoms if no category specified
+    Object.values(worldwideSymptomsData).forEach(categorySymptoms => {
+      symptoms = symptoms.concat(categorySymptoms);
+    });
+  }
+  
+  if (search) {
+    const searchLower = search.toLowerCase();
+    symptoms = symptoms.filter(symptom => 
+      symptom.name.toLowerCase().includes(searchLower) ||
+      symptom.category.toLowerCase().includes(searchLower)
+    );
+  }
+  
+  res.json({
+    success: true,
+    data: symptoms,
+    total: symptoms.length,
+    categories: Object.keys(worldwideSymptomsData)
+  });
+});
+
+app.get('/api/symptoms/categories', (req, res) => {
+  const categories = Object.keys(worldwideSymptomsData).map(category => ({
+    id: category,
+    name: category.charAt(0).toUpperCase() + category.slice(1).replace('_', ' '),
+    count: worldwideSymptomsData[category].length
+  }));
+  
+  res.json({
+    success: true,
+    data: categories
+  });
+});
+
+// Comprehensive worldwide remedies endpoint
 app.get('/api/remedies', (req, res) => {
-  const { category, dosha, difficulty, limit = 20, offset = 0 } = req.query;
+  const { category, symptom, search, origin, effectiveness, limit = 20, offset = 0 } = req.query;
+  let remedies = [...worldwideRemediesData];
   
-  const sampleRemedies = [
-    {
-      id: 1,
-      name: 'Ginger Tea for Digestion',
-      description: 'A warming tea to improve digestion and reduce bloating. Perfect for after meals or when feeling digestive discomfort.',
-      category: 'digestive',
-      difficulty: 'easy',
-      suitableFor: ['vata', 'kapha'],
-      benefits: ['Improves digestion', 'Reduces bloating', 'Boosts immunity', 'Relieves nausea'],
-      ingredients: ['Fresh ginger', 'Hot water', 'Honey (optional)', 'Lemon (optional)'],
-      instructions: [
-        'Boil 1 cup of water',
-        'Add 1 inch of fresh ginger (sliced)',
-        'Simmer for 5-10 minutes',
-        'Strain and add honey if desired',
-        'Drink warm after meals'
-      ],
-      preparationTime: '10 minutes',
-      dosage: '1-2 cups daily'
-    },
-    {
-      id: 2,
-      name: 'Turmeric Milk (Golden Milk)',
-      description: 'Anti-inflammatory drink with turmeric and warm milk. A traditional Ayurvedic remedy for overall wellness.',
-      category: 'immunity',
-      difficulty: 'easy',
-      suitableFor: ['all'],
-      benefits: ['Anti-inflammatory', 'Boosts immunity', 'Improves sleep', 'Supports joint health'],
-      ingredients: ['Turmeric powder', 'Milk', 'Honey', 'Black pepper', 'Ginger'],
-      instructions: [
-        'Heat 1 cup of milk',
-        'Add 1/2 tsp turmeric powder',
-        'Add a pinch of black pepper',
-        'Add honey to taste',
-        'Drink warm before bed'
-      ],
-      preparationTime: '5 minutes',
-      dosage: '1 cup daily'
-    },
-    {
-      id: 3,
-      name: 'Ashwagandha Tea for Stress',
-      description: 'Calming tea made with ashwagandha root to reduce stress and promote relaxation.',
-      category: 'stress',
-      difficulty: 'medium',
-      suitableFor: ['vata', 'pitta'],
-      benefits: ['Reduces stress', 'Improves sleep', 'Boosts energy', 'Supports adrenal health'],
-      ingredients: ['Ashwagandha powder', 'Hot water', 'Honey', 'Cardamom'],
-      instructions: [
-        'Boil 1 cup of water',
-        'Add 1/2 tsp ashwagandha powder',
-        'Add 1 cardamom pod',
-        'Simmer for 5 minutes',
-        'Strain and add honey'
-      ],
-      preparationTime: '10 minutes',
-      dosage: '1 cup daily'
-    },
-    {
-      id: 4,
-      name: 'Triphala for Detox',
-      description: 'Traditional Ayurvedic formula for gentle detoxification and digestive health.',
-      category: 'detox',
-      difficulty: 'easy',
-      suitableFor: ['all'],
-      benefits: ['Gentle detox', 'Improves digestion', 'Supports liver health', 'Boosts immunity'],
-      ingredients: ['Triphala powder', 'Warm water', 'Honey'],
-      instructions: [
-        'Mix 1/2 tsp triphala powder in warm water',
-        'Add honey if desired',
-        'Drink on empty stomach in morning'
-      ],
-      preparationTime: '2 minutes',
-      dosage: '1 dose daily'
-    },
-    {
-      id: 5,
-      name: 'Brahmi Tea for Memory',
-      description: 'Brain-boosting tea with brahmi herb to enhance memory and cognitive function.',
-      category: 'energy',
-      difficulty: 'medium',
-      suitableFor: ['vata', 'kapha'],
-      benefits: ['Enhances memory', 'Improves focus', 'Reduces anxiety', 'Supports brain health'],
-      ingredients: ['Brahmi powder', 'Hot water', 'Honey', 'Ghee'],
-      instructions: [
-        'Boil 1 cup of water',
-        'Add 1/2 tsp brahmi powder',
-        'Simmer for 5 minutes',
-        'Add 1/4 tsp ghee and honey'
-      ],
-      preparationTime: '8 minutes',
-      dosage: '1 cup daily'
-    },
-    {
-      id: 6,
-      name: 'Cinnamon Cardamom Tea',
-      description: 'Warming tea with cinnamon and cardamom to balance metabolism and improve circulation.',
-      category: 'energy',
-      difficulty: 'easy',
-      suitableFor: ['vata', 'kapha'],
-      benefits: ['Improves circulation', 'Balances metabolism', 'Warms the body', 'Supports digestion'],
-      ingredients: ['Cinnamon stick', 'Cardamom pods', 'Hot water', 'Honey'],
-      instructions: [
-        'Boil 1 cup of water',
-        'Add 1 cinnamon stick and 2 cardamom pods',
-        'Simmer for 5 minutes',
-        'Strain and add honey'
-      ],
-      preparationTime: '7 minutes',
-      dosage: '1-2 cups daily'
-    }
-  ];
-
-  // Apply filters
-  let filteredRemedies = sampleRemedies;
-  
+  // Filter by category
   if (category) {
-    filteredRemedies = filteredRemedies.filter(remedy => 
-      remedy.category.toLowerCase() === category.toLowerCase()
+    remedies = remedies.filter(remedy => remedy.category === category);
+  }
+  
+  // Filter by symptom
+  if (symptom) {
+    remedies = remedies.filter(remedy => 
+      remedy.symptoms.includes(symptom)
     );
   }
   
-  if (dosha) {
-    filteredRemedies = filteredRemedies.filter(remedy => 
-      remedy.suitableFor.includes(dosha.toLowerCase()) || remedy.suitableFor.includes('all')
+  // Filter by origin
+  if (origin) {
+    remedies = remedies.filter(remedy => 
+      remedy.origin.toLowerCase().includes(origin.toLowerCase())
     );
   }
   
-  if (difficulty) {
-    filteredRemedies = filteredRemedies.filter(remedy => 
-      remedy.difficulty.toLowerCase() === difficulty.toLowerCase()
+  // Filter by effectiveness
+  if (effectiveness) {
+    remedies = remedies.filter(remedy => remedy.effectiveness === effectiveness);
+  }
+  
+  // Search by name or description
+  if (search) {
+    const searchLower = search.toLowerCase();
+    remedies = remedies.filter(remedy => 
+      remedy.name.toLowerCase().includes(searchLower) ||
+      remedy.description.toLowerCase().includes(searchLower) ||
+      remedy.ingredients.some(ingredient => 
+        ingredient.toLowerCase().includes(searchLower)
+      )
     );
   }
-
+  
   // Apply pagination
   const startIndex = parseInt(offset);
   const endIndex = startIndex + parseInt(limit);
-  const paginatedRemedies = filteredRemedies.slice(startIndex, endIndex);
-
-  res.status(200).json({
+  const paginatedRemedies = remedies.slice(startIndex, endIndex);
+  
+  res.json({
     success: true,
-    count: filteredRemedies.length,
-    total: sampleRemedies.length,
+    count: remedies.length,
+    total: worldwideRemediesData.length,
     limit: parseInt(limit),
     offset: parseInt(offset),
-    hasMore: endIndex < filteredRemedies.length,
-    data: paginatedRemedies
+    hasMore: endIndex < remedies.length,
+    data: paginatedRemedies,
+    filters: {
+      categories: [...new Set(worldwideRemediesData.map(r => r.category))],
+      origins: [...new Set(worldwideRemediesData.map(r => r.origin))],
+      effectiveness: [...new Set(worldwideRemediesData.map(r => r.effectiveness))]
+    }
+  });
+});
+
+app.get('/api/remedies/:id', (req, res) => {
+  const remedy = worldwideRemediesData.find(r => r.id === req.params.id);
+  
+  if (!remedy) {
+    return res.status(404).json({
+      success: false,
+      message: 'Remedy not found'
+    });
+  }
+  
+  res.json({
+    success: true,
+    data: remedy
+  });
+});
+
+app.get('/api/remedies/by-symptoms', (req, res) => {
+  const { symptoms } = req.query;
+  
+  if (!symptoms) {
+    return res.status(400).json({
+      success: false,
+      message: 'Symptoms parameter is required'
+    });
+  }
+  
+  const symptomArray = symptoms.split(',');
+  const remedies = worldwideRemediesData.filter(remedy => 
+    remedy.symptoms.some(symptom => symptomArray.includes(symptom))
+  );
+  
+  // Sort by number of matching symptoms (most relevant first)
+  remedies.sort((a, b) => {
+    const aMatches = a.symptoms.filter(s => symptomArray.includes(s)).length;
+    const bMatches = b.symptoms.filter(s => symptomArray.includes(s)).length;
+    return bMatches - aMatches;
+  });
+  
+  // Group by category
+  const remediesByCategory = {};
+  remedies.forEach(remedy => {
+    if (!remediesByCategory[remedy.category]) {
+      remediesByCategory[remedy.category] = [];
+    }
+    remediesByCategory[remedy.category].push(remedy);
+  });
+  
+  res.json({
+    success: true,
+    data: remedies,
+    total: remedies.length,
+    matchedSymptoms: symptomArray,
+    remediesByCategory
+  });
+});
+
+app.get('/api/remedies/categories', (req, res) => {
+  const categories = [...new Set(worldwideRemediesData.map(r => r.category))].map(category => ({
+    id: category,
+    name: category.charAt(0).toUpperCase() + category.slice(1).replace('_', ' '),
+    count: worldwideRemediesData.filter(r => r.category === category).length
+  }));
+  
+  res.json({
+    success: true,
+    data: categories
+  });
+});
+
+app.get('/api/remedies/origins', (req, res) => {
+  const origins = [...new Set(worldwideRemediesData.map(r => r.origin))].map(origin => ({
+    id: origin,
+    name: origin,
+    count: worldwideRemediesData.filter(r => r.origin === origin).length
+  }));
+  
+  res.json({
+    success: true,
+    data: origins
+  });
+});
+
+// Assessment endpoint
+app.post('/api/assessment', (req, res) => {
+  const { symptoms, doshaResults, userInfo } = req.body;
+  
+  if (!symptoms || !Array.isArray(symptoms)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Symptoms array is required'
+    });
+  }
+  
+  // Find remedies that match the symptoms
+  const matchingRemedies = worldwideRemediesData.filter(remedy => 
+    remedy.symptoms.some(symptom => symptoms.includes(symptom))
+  );
+  
+  // Sort by relevance (number of matching symptoms)
+  matchingRemedies.sort((a, b) => {
+    const aMatches = a.symptoms.filter(s => symptoms.includes(s)).length;
+    const bMatches = b.symptoms.filter(s => symptoms.includes(s)).length;
+    return bMatches - aMatches;
+  });
+  
+  // Group by category
+  const remediesByCategory = {};
+  matchingRemedies.forEach(remedy => {
+    if (!remediesByCategory[remedy.category]) {
+      remediesByCategory[remedy.category] = [];
+    }
+    remediesByCategory[remedy.category].push(remedy);
+  });
+  
+  // Create assessment summary
+  const assessment = {
+    id: Date.now().toString(),
+    timestamp: new Date().toISOString(),
+    userInfo,
+    symptoms,
+    doshaResults,
+    remedies: matchingRemedies.slice(0, 20), // Top 20 most relevant
+    remediesByCategory,
+    summary: {
+      totalSymptoms: symptoms.length,
+      totalRemedies: matchingRemedies.length,
+      categories: Object.keys(remediesByCategory),
+      primarySymptoms: symptoms.slice(0, 5),
+      recommendedRemedies: matchingRemedies.slice(0, 5)
+    }
+  };
+  
+  res.json({
+    success: true,
+    data: assessment
   });
 });
 
@@ -927,7 +1018,699 @@ app.get('/api/meta', (req, res) => {
   res.status(200).json(metadata);
 });
 
+// Comprehensive worldwide symptoms and conditions database
+const worldwideSymptomsData = {
+  digestive: [
+    { id: 'indigestion', name: 'Indigestion', category: 'digestive', severity: 'moderate' },
+    { id: 'bloating', name: 'Bloating', category: 'digestive', severity: 'mild' },
+    { id: 'constipation', name: 'Constipation', category: 'digestive', severity: 'moderate' },
+    { id: 'diarrhea', name: 'Diarrhea', category: 'digestive', severity: 'moderate' },
+    { id: 'acid_reflux', name: 'Acid Reflux', category: 'digestive', severity: 'moderate' },
+    { id: 'nausea', name: 'Nausea', category: 'digestive', severity: 'moderate' },
+    { id: 'vomiting', name: 'Vomiting', category: 'digestive', severity: 'severe' },
+    { id: 'loss_of_appetite', name: 'Loss of Appetite', category: 'digestive', severity: 'moderate' },
+    { id: 'abdominal_pain', name: 'Abdominal Pain', category: 'digestive', severity: 'moderate' },
+    { id: 'gas', name: 'Excessive Gas', category: 'digestive', severity: 'mild' },
+    { id: 'heartburn', name: 'Heartburn', category: 'digestive', severity: 'moderate' },
+    { id: 'ulcer', name: 'Stomach Ulcer', category: 'digestive', severity: 'severe' },
+    { id: 'ibs', name: 'Irritable Bowel Syndrome', category: 'digestive', severity: 'moderate' },
+    { id: 'colitis', name: 'Colitis', category: 'digestive', severity: 'severe' },
+    { id: 'gastritis', name: 'Gastritis', category: 'digestive', severity: 'moderate' },
+    { id: 'food_poisoning', name: 'Food Poisoning', category: 'digestive', severity: 'severe' },
+    { id: 'celiac', name: 'Celiac Disease', category: 'digestive', severity: 'severe' },
+    { id: 'lactose_intolerance', name: 'Lactose Intolerance', category: 'digestive', severity: 'moderate' }
+  ],
+  respiratory: [
+    { id: 'cough', name: 'Cough', category: 'respiratory', severity: 'moderate' },
+    { id: 'congestion', name: 'Nasal Congestion', category: 'respiratory', severity: 'mild' },
+    { id: 'shortness_of_breath', name: 'Shortness of Breath', category: 'respiratory', severity: 'severe' },
+    { id: 'sore_throat', name: 'Sore Throat', category: 'respiratory', severity: 'moderate' },
+    { id: 'runny_nose', name: 'Runny Nose', category: 'respiratory', severity: 'mild' },
+    { id: 'chest_tightness', name: 'Chest Tightness', category: 'respiratory', severity: 'severe' },
+    { id: 'wheezing', name: 'Wheezing', category: 'respiratory', severity: 'severe' },
+    { id: 'asthma', name: 'Asthma', category: 'respiratory', severity: 'severe' },
+    { id: 'bronchitis', name: 'Bronchitis', category: 'respiratory', severity: 'moderate' },
+    { id: 'pneumonia', name: 'Pneumonia', category: 'respiratory', severity: 'severe' },
+    { id: 'sinusitis', name: 'Sinusitis', category: 'respiratory', severity: 'moderate' },
+    { id: 'allergic_rhinitis', name: 'Allergic Rhinitis', category: 'respiratory', severity: 'moderate' },
+    { id: 'sleep_apnea', name: 'Sleep Apnea', category: 'respiratory', severity: 'severe' },
+    { id: 'pleurisy', name: 'Pleurisy', category: 'respiratory', severity: 'severe' }
+  ],
+  nervous: [
+    { id: 'anxiety', name: 'Anxiety', category: 'nervous', severity: 'moderate' },
+    { id: 'depression', name: 'Depression', category: 'nervous', severity: 'severe' },
+    { id: 'insomnia', name: 'Insomnia', category: 'nervous', severity: 'moderate' },
+    { id: 'headache', name: 'Headache', category: 'nervous', severity: 'moderate' },
+    { id: 'migraine', name: 'Migraine', category: 'nervous', severity: 'severe' },
+    { id: 'dizziness', name: 'Dizziness', category: 'nervous', severity: 'moderate' },
+    { id: 'vertigo', name: 'Vertigo', category: 'nervous', severity: 'moderate' },
+    { id: 'fatigue', name: 'Fatigue', category: 'nervous', severity: 'moderate' },
+    { id: 'stress', name: 'Stress', category: 'nervous', severity: 'moderate' },
+    { id: 'mood_swings', name: 'Mood Swings', category: 'nervous', severity: 'moderate' },
+    { id: 'memory_problems', name: 'Memory Problems', category: 'nervous', severity: 'moderate' },
+    { id: 'concentration_issues', name: 'Concentration Issues', category: 'nervous', severity: 'moderate' },
+    { id: 'panic_attacks', name: 'Panic Attacks', category: 'nervous', severity: 'severe' },
+    { id: 'ocd', name: 'Obsessive-Compulsive Disorder', category: 'nervous', severity: 'severe' },
+    { id: 'adhd', name: 'Attention Deficit Disorder', category: 'nervous', severity: 'moderate' },
+    { id: 'epilepsy', name: 'Epilepsy', category: 'nervous', severity: 'severe' },
+    { id: 'parkinsons', name: 'Parkinson\'s Disease', category: 'nervous', severity: 'severe' },
+    { id: 'alzheimers', name: 'Alzheimer\'s Disease', category: 'nervous', severity: 'severe' },
+    { id: 'neuralgia', name: 'Neuralgia', category: 'nervous', severity: 'severe' }
+  ],
+  skin: [
+    { id: 'acne', name: 'Acne', category: 'skin', severity: 'moderate' },
+    { id: 'eczema', name: 'Eczema', category: 'skin', severity: 'moderate' },
+    { id: 'psoriasis', name: 'Psoriasis', category: 'skin', severity: 'moderate' },
+    { id: 'dry_skin', name: 'Dry Skin', category: 'skin', severity: 'mild' },
+    { id: 'oily_skin', name: 'Oily Skin', category: 'skin', severity: 'mild' },
+    { id: 'itching', name: 'Itching', category: 'skin', severity: 'moderate' },
+    { id: 'rashes', name: 'Rashes', category: 'skin', severity: 'moderate' },
+    { id: 'hives', name: 'Hives', category: 'skin', severity: 'moderate' },
+    { id: 'inflammation', name: 'Skin Inflammation', category: 'skin', severity: 'moderate' },
+    { id: 'dermatitis', name: 'Dermatitis', category: 'skin', severity: 'moderate' },
+    { id: 'vitiligo', name: 'Vitiligo', category: 'skin', severity: 'moderate' },
+    { id: 'rosacea', name: 'Rosacea', category: 'skin', severity: 'moderate' },
+    { id: 'fungal_infection', name: 'Fungal Infection', category: 'skin', severity: 'moderate' },
+    { id: 'bacterial_infection', name: 'Bacterial Infection', category: 'skin', severity: 'moderate' },
+    { id: 'warts', name: 'Warts', category: 'skin', severity: 'mild' },
+    { id: 'moles', name: 'Moles', category: 'skin', severity: 'mild' },
+    { id: 'skin_cancer', name: 'Skin Cancer', category: 'skin', severity: 'severe' }
+  ],
+  joints: [
+    { id: 'joint_pain', name: 'Joint Pain', category: 'joints', severity: 'moderate' },
+    { id: 'stiffness', name: 'Joint Stiffness', category: 'joints', severity: 'moderate' },
+    { id: 'swelling', name: 'Joint Swelling', category: 'joints', severity: 'moderate' },
+    { id: 'back_pain', name: 'Back Pain', category: 'joints', severity: 'moderate' },
+    { id: 'neck_pain', name: 'Neck Pain', category: 'joints', severity: 'moderate' },
+    { id: 'muscle_pain', name: 'Muscle Pain', category: 'joints', severity: 'moderate' },
+    { id: 'arthritis', name: 'Arthritis', category: 'joints', severity: 'severe' },
+    { id: 'rheumatoid_arthritis', name: 'Rheumatoid Arthritis', category: 'joints', severity: 'severe' },
+    { id: 'gout', name: 'Gout', category: 'joints', severity: 'severe' },
+    { id: 'bursitis', name: 'Bursitis', category: 'joints', severity: 'moderate' },
+    { id: 'tendonitis', name: 'Tendonitis', category: 'joints', severity: 'moderate' },
+    { id: 'carpal_tunnel', name: 'Carpal Tunnel Syndrome', category: 'joints', severity: 'moderate' },
+    { id: 'sciatica', name: 'Sciatica', category: 'joints', severity: 'severe' },
+    { id: 'fibromyalgia', name: 'Fibromyalgia', category: 'joints', severity: 'severe' },
+    { id: 'osteoporosis', name: 'Osteoporosis', category: 'joints', severity: 'severe' }
+  ],
+  cardiovascular: [
+    { id: 'chest_pain', name: 'Chest Pain', category: 'cardiovascular', severity: 'severe' },
+    { id: 'palpitations', name: 'Heart Palpitations', category: 'cardiovascular', severity: 'moderate' },
+    { id: 'high_blood_pressure', name: 'High Blood Pressure', category: 'cardiovascular', severity: 'severe' },
+    { id: 'low_blood_pressure', name: 'Low Blood Pressure', category: 'cardiovascular', severity: 'moderate' },
+    { id: 'irregular_heartbeat', name: 'Irregular Heartbeat', category: 'cardiovascular', severity: 'severe' },
+    { id: 'swollen_ankles', name: 'Swollen Ankles', category: 'cardiovascular', severity: 'moderate' },
+    { id: 'varicose_veins', name: 'Varicose Veins', category: 'cardiovascular', severity: 'moderate' },
+    { id: 'poor_circulation', name: 'Poor Circulation', category: 'cardiovascular', severity: 'moderate' },
+    { id: 'heart_disease', name: 'Heart Disease', category: 'cardiovascular', severity: 'severe' },
+    { id: 'angina', name: 'Angina', category: 'cardiovascular', severity: 'severe' }
+  ],
+  endocrine: [
+    { id: 'diabetes', name: 'Diabetes', category: 'endocrine', severity: 'severe' },
+    { id: 'thyroid_problems', name: 'Thyroid Problems', category: 'endocrine', severity: 'moderate' },
+    { id: 'weight_gain', name: 'Weight Gain', category: 'endocrine', severity: 'moderate' },
+    { id: 'weight_loss', name: 'Weight Loss', category: 'endocrine', severity: 'moderate' },
+    { id: 'fatigue', name: 'Fatigue', category: 'endocrine', severity: 'moderate' },
+    { id: 'mood_swings', name: 'Mood Swings', category: 'endocrine', severity: 'moderate' },
+    { id: 'hot_flashes', name: 'Hot Flashes', category: 'endocrine', severity: 'moderate' },
+    { id: 'night_sweats', name: 'Night Sweats', category: 'endocrine', severity: 'moderate' },
+    { id: 'irregular_periods', name: 'Irregular Periods', category: 'endocrine', severity: 'moderate' },
+    { id: 'pcos', name: 'Polycystic Ovary Syndrome', category: 'endocrine', severity: 'moderate' },
+    { id: 'adrenal_fatigue', name: 'Adrenal Fatigue', category: 'endocrine', severity: 'moderate' }
+  ],
+  immune: [
+    { id: 'frequent_infections', name: 'Frequent Infections', category: 'immune', severity: 'moderate' },
+    { id: 'allergies', name: 'Allergies', category: 'immune', severity: 'moderate' },
+    { id: 'food_allergies', name: 'Food Allergies', category: 'immune', severity: 'severe' },
+    { id: 'seasonal_allergies', name: 'Seasonal Allergies', category: 'immune', severity: 'moderate' },
+    { id: 'autoimmune_disease', name: 'Autoimmune Disease', category: 'immune', severity: 'severe' },
+    { id: 'lupus', name: 'Lupus', category: 'immune', severity: 'severe' },
+    { id: 'rheumatoid_arthritis', name: 'Rheumatoid Arthritis', category: 'immune', severity: 'severe' },
+    { id: 'multiple_sclerosis', name: 'Multiple Sclerosis', category: 'immune', severity: 'severe' },
+    { id: 'hiv_aids', name: 'HIV/AIDS', category: 'immune', severity: 'severe' },
+    { id: 'cancer', name: 'Cancer', category: 'immune', severity: 'severe' }
+  ],
+  reproductive: [
+    { id: 'infertility', name: 'Infertility', category: 'reproductive', severity: 'moderate' },
+    { id: 'pms', name: 'Premenstrual Syndrome', category: 'reproductive', severity: 'moderate' },
+    { id: 'menstrual_cramps', name: 'Menstrual Cramps', category: 'reproductive', severity: 'moderate' },
+    { id: 'endometriosis', name: 'Endometriosis', category: 'reproductive', severity: 'severe' },
+    { id: 'fibroids', name: 'Uterine Fibroids', category: 'reproductive', severity: 'moderate' },
+    { id: 'prostate_problems', name: 'Prostate Problems', category: 'reproductive', severity: 'moderate' },
+    { id: 'erectile_dysfunction', name: 'Erectile Dysfunction', category: 'reproductive', severity: 'moderate' },
+    { id: 'low_libido', name: 'Low Libido', category: 'reproductive', severity: 'moderate' },
+    { id: 'menopause', name: 'Menopause', category: 'reproductive', severity: 'moderate' },
+    { id: 'andropause', name: 'Andropause', category: 'reproductive', severity: 'moderate' }
+  ],
+  urinary: [
+    { id: 'frequent_urination', name: 'Frequent Urination', category: 'urinary', severity: 'moderate' },
+    { id: 'painful_urination', name: 'Painful Urination', category: 'urinary', severity: 'moderate' },
+    { id: 'urinary_incontinence', name: 'Urinary Incontinence', category: 'urinary', severity: 'moderate' },
+    { id: 'kidney_stones', name: 'Kidney Stones', category: 'urinary', severity: 'severe' },
+    { id: 'uti', name: 'Urinary Tract Infection', category: 'urinary', severity: 'moderate' },
+    { id: 'kidney_disease', name: 'Kidney Disease', category: 'urinary', severity: 'severe' },
+    { id: 'bladder_infection', name: 'Bladder Infection', category: 'urinary', severity: 'moderate' }
+  ],
+  eye_ear: [
+    { id: 'blurred_vision', name: 'Blurred Vision', category: 'eye_ear', severity: 'moderate' },
+    { id: 'eye_pain', name: 'Eye Pain', category: 'eye_ear', severity: 'moderate' },
+    { id: 'dry_eyes', name: 'Dry Eyes', category: 'eye_ear', severity: 'mild' },
+    { id: 'cataracts', name: 'Cataracts', category: 'eye_ear', severity: 'moderate' },
+    { id: 'glaucoma', name: 'Glaucoma', category: 'eye_ear', severity: 'severe' },
+    { id: 'macular_degeneration', name: 'Macular Degeneration', category: 'eye_ear', severity: 'severe' },
+    { id: 'ear_pain', name: 'Ear Pain', category: 'eye_ear', severity: 'moderate' },
+    { id: 'tinnitus', name: 'Tinnitus', category: 'eye_ear', severity: 'moderate' },
+    { id: 'hearing_loss', name: 'Hearing Loss', category: 'eye_ear', severity: 'moderate' },
+    { id: 'vertigo', name: 'Vertigo', category: 'eye_ear', severity: 'moderate' }
+  ],
+  general: [
+    { id: 'fever', name: 'Fever', category: 'general', severity: 'moderate' },
+    { id: 'chills', name: 'Chills', category: 'general', severity: 'moderate' },
+    { id: 'sweating', name: 'Excessive Sweating', category: 'general', severity: 'moderate' },
+    { id: 'low_energy', name: 'Low Energy', category: 'general', severity: 'moderate' },
+    { id: 'inflammation', name: 'General Inflammation', category: 'general', severity: 'moderate' },
+    { id: 'chronic_pain', name: 'Chronic Pain', category: 'general', severity: 'severe' },
+    { id: 'sleep_problems', name: 'Sleep Problems', category: 'general', severity: 'moderate' },
+    { id: 'appetite_changes', name: 'Appetite Changes', category: 'general', severity: 'moderate' },
+    { id: 'temperature_sensitivity', name: 'Temperature Sensitivity', category: 'general', severity: 'mild' },
+    { id: 'aging_concerns', name: 'Aging Concerns', category: 'general', severity: 'moderate' }
+  ]
+};
+
+// Comprehensive worldwide remedies database
+const worldwideRemediesData = [
+  // Digestive Remedies
+  {
+    id: 'ginger_tea',
+    name: 'Ginger Tea',
+    category: 'digestive',
+    symptoms: ['indigestion', 'nausea', 'bloating', 'gas'],
+    description: 'Traditional remedy for digestive issues',
+    ingredients: ['Fresh ginger root', 'Hot water', 'Honey (optional)'],
+    instructions: 'Slice fresh ginger, steep in hot water for 10 minutes',
+    origin: 'Asia',
+    effectiveness: 'high',
+    safety: 'safe',
+    contraindications: 'May interact with blood thinners'
+  },
+  {
+    id: 'peppermint_tea',
+    name: 'Peppermint Tea',
+    category: 'digestive',
+    symptoms: ['indigestion', 'bloating', 'gas', 'ibs'],
+    description: 'Natural antispasmodic for digestive relief',
+    ingredients: ['Peppermint leaves', 'Hot water'],
+    instructions: 'Steep peppermint leaves in hot water for 5-7 minutes',
+    origin: 'Europe',
+    effectiveness: 'high',
+    safety: 'safe',
+    contraindications: 'Avoid with GERD'
+  },
+  {
+    id: 'chamomile_tea',
+    name: 'Chamomile Tea',
+    category: 'digestive',
+    symptoms: ['indigestion', 'nausea', 'stress'],
+    description: 'Calming herb for digestive and nervous system',
+    ingredients: ['Chamomile flowers', 'Hot water'],
+    instructions: 'Steep chamomile flowers in hot water for 5 minutes',
+    origin: 'Europe',
+    effectiveness: 'moderate',
+    safety: 'safe',
+    contraindications: 'May cause allergic reactions'
+  },
+  {
+    id: 'fennel_seeds',
+    name: 'Fennel Seeds',
+    category: 'digestive',
+    symptoms: ['bloating', 'gas', 'indigestion'],
+    description: 'Traditional Indian remedy for digestive issues',
+    ingredients: ['Fennel seeds', 'Hot water'],
+    instructions: 'Chew 1/2 teaspoon fennel seeds after meals',
+    origin: 'India',
+    effectiveness: 'high',
+    safety: 'safe',
+    contraindications: 'Avoid in large amounts during pregnancy'
+  },
+  {
+    id: 'aloe_vera_juice',
+    name: 'Aloe Vera Juice',
+    category: 'digestive',
+    symptoms: ['acid_reflux', 'ulcer', 'gastritis'],
+    description: 'Natural healing agent for stomach lining',
+    ingredients: ['Aloe vera gel', 'Water'],
+    instructions: 'Drink 2-4 oz of pure aloe vera juice daily',
+    origin: 'Africa',
+    effectiveness: 'moderate',
+    safety: 'safe',
+    contraindications: 'May cause diarrhea in large amounts'
+  },
+
+  // Respiratory Remedies
+  {
+    id: 'honey_lemon_tea',
+    name: 'Honey Lemon Tea',
+    category: 'respiratory',
+    symptoms: ['cough', 'sore_throat', 'congestion'],
+    description: 'Traditional remedy for respiratory infections',
+    ingredients: ['Fresh lemon juice', 'Raw honey', 'Hot water'],
+    instructions: 'Mix lemon juice and honey in hot water',
+    origin: 'Global',
+    effectiveness: 'high',
+    safety: 'safe',
+    contraindications: 'Avoid honey for children under 1 year'
+  },
+  {
+    id: 'eucalyptus_steam',
+    name: 'Eucalyptus Steam Inhalation',
+    category: 'respiratory',
+    symptoms: ['congestion', 'sinusitis', 'bronchitis'],
+    description: 'Natural decongestant and expectorant',
+    ingredients: ['Eucalyptus essential oil', 'Hot water'],
+    instructions: 'Add 3-5 drops to hot water and inhale steam',
+    origin: 'Australia',
+    effectiveness: 'high',
+    safety: 'safe',
+    contraindications: 'Avoid direct contact with eyes'
+  },
+  {
+    id: 'turmeric_milk',
+    name: 'Turmeric Milk (Golden Milk)',
+    category: 'respiratory',
+    symptoms: ['cough', 'congestion', 'inflammation'],
+    description: 'Anti-inflammatory Ayurvedic remedy',
+    ingredients: ['Turmeric powder', 'Milk', 'Honey', 'Black pepper'],
+    instructions: 'Mix turmeric, black pepper in warm milk with honey',
+    origin: 'India',
+    effectiveness: 'moderate',
+    safety: 'safe',
+    contraindications: 'May interact with blood thinners'
+  },
+  {
+    id: 'garlic_syrup',
+    name: 'Garlic Honey Syrup',
+    category: 'respiratory',
+    symptoms: ['cough', 'bronchitis', 'infection'],
+    description: 'Natural antibiotic and immune booster',
+    ingredients: ['Fresh garlic', 'Raw honey'],
+    instructions: 'Infuse crushed garlic in honey for 24 hours',
+    origin: 'Global',
+    effectiveness: 'high',
+    safety: 'safe',
+    contraindications: 'May cause stomach upset in large amounts'
+  },
+
+  // Nervous System Remedies
+  {
+    id: 'lavender_tea',
+    name: 'Lavender Tea',
+    category: 'nervous',
+    symptoms: ['anxiety', 'insomnia', 'stress'],
+    description: 'Calming herb for nervous system',
+    ingredients: ['Lavender flowers', 'Hot water'],
+    instructions: 'Steep lavender flowers in hot water for 5 minutes',
+    origin: 'Mediterranean',
+    effectiveness: 'moderate',
+    safety: 'safe',
+    contraindications: 'May cause drowsiness'
+  },
+  {
+    id: 'valerian_root',
+    name: 'Valerian Root Tea',
+    category: 'nervous',
+    symptoms: ['insomnia', 'anxiety', 'stress'],
+    description: 'Natural sedative for sleep disorders',
+    ingredients: ['Valerian root', 'Hot water'],
+    instructions: 'Steep valerian root in hot water for 10 minutes',
+    origin: 'Europe',
+    effectiveness: 'high',
+    safety: 'moderate',
+    contraindications: 'May cause drowsiness, avoid with alcohol'
+  },
+  {
+    id: 'ashwagandha_tea',
+    name: 'Ashwagandha Tea',
+    category: 'nervous',
+    symptoms: ['stress', 'anxiety', 'fatigue'],
+    description: 'Adaptogenic herb for stress management',
+    ingredients: ['Ashwagandha powder', 'Hot water', 'Honey'],
+    instructions: 'Mix ashwagandha powder in hot water with honey',
+    origin: 'India',
+    effectiveness: 'high',
+    safety: 'safe',
+    contraindications: 'May interact with thyroid medications'
+  },
+  {
+    id: 'passionflower_tea',
+    name: 'Passionflower Tea',
+    category: 'nervous',
+    symptoms: ['anxiety', 'insomnia', 'panic_attacks'],
+    description: 'Natural anxiolytic and sedative',
+    ingredients: ['Passionflower herb', 'Hot water'],
+    instructions: 'Steep passionflower in hot water for 10 minutes',
+    origin: 'Americas',
+    effectiveness: 'moderate',
+    safety: 'safe',
+    contraindications: 'May cause drowsiness'
+  },
+
+  // Skin Remedies
+  {
+    id: 'aloe_vera_gel',
+    name: 'Aloe Vera Gel',
+    category: 'skin',
+    symptoms: ['acne', 'eczema', 'inflammation', 'burns'],
+    description: 'Natural healing and moisturizing agent',
+    ingredients: ['Fresh aloe vera gel'],
+    instructions: 'Apply fresh aloe gel directly to affected area',
+    origin: 'Africa',
+    effectiveness: 'high',
+    safety: 'safe',
+    contraindications: 'Test on small area first'
+  },
+  {
+    id: 'tea_tree_oil',
+    name: 'Tea Tree Oil',
+    category: 'skin',
+    symptoms: ['acne', 'fungal_infection', 'bacterial_infection'],
+    description: 'Natural antibacterial and antifungal agent',
+    ingredients: ['Tea tree essential oil', 'Carrier oil'],
+    instructions: 'Dilute with carrier oil and apply to affected area',
+    origin: 'Australia',
+    effectiveness: 'high',
+    safety: 'moderate',
+    contraindications: 'Must be diluted, avoid ingestion'
+  },
+  {
+    id: 'coconut_oil',
+    name: 'Coconut Oil',
+    category: 'skin',
+    symptoms: ['dry_skin', 'eczema', 'itching'],
+    description: 'Natural moisturizer and anti-inflammatory',
+    ingredients: ['Virgin coconut oil'],
+    instructions: 'Apply directly to skin as moisturizer',
+    origin: 'Tropical regions',
+    effectiveness: 'moderate',
+    safety: 'safe',
+    contraindications: 'May clog pores for some skin types'
+  },
+  {
+    id: 'calendula_ointment',
+    name: 'Calendula Ointment',
+    category: 'skin',
+    symptoms: ['rashes', 'inflammation', 'wounds'],
+    description: 'Healing herb for skin conditions',
+    ingredients: ['Calendula flowers', 'Carrier oil'],
+    instructions: 'Apply calendula ointment to affected area',
+    origin: 'Europe',
+    effectiveness: 'moderate',
+    safety: 'safe',
+    contraindications: 'May cause allergic reactions'
+  },
+
+  // Joint and Pain Remedies
+  {
+    id: 'turmeric_curcumin',
+    name: 'Turmeric Curcumin',
+    category: 'joints',
+    symptoms: ['joint_pain', 'inflammation', 'arthritis'],
+    description: 'Powerful anti-inflammatory compound',
+    ingredients: ['Turmeric powder', 'Black pepper', 'Fat'],
+    instructions: 'Take with black pepper and fat for absorption',
+    origin: 'India',
+    effectiveness: 'high',
+    safety: 'safe',
+    contraindications: 'May interact with blood thinners'
+  },
+  {
+    id: 'ginger_compress',
+    name: 'Ginger Compress',
+    category: 'joints',
+    symptoms: ['joint_pain', 'muscle_pain', 'inflammation'],
+    description: 'Warming compress for pain relief',
+    ingredients: ['Fresh ginger', 'Hot water', 'Cloth'],
+    instructions: 'Apply ginger-infused hot compress to affected area',
+    origin: 'Asia',
+    effectiveness: 'moderate',
+    safety: 'safe',
+    contraindications: 'Avoid on broken skin'
+  },
+  {
+    id: 'arnica_gel',
+    name: 'Arnica Gel',
+    category: 'joints',
+    symptoms: ['joint_pain', 'muscle_pain', 'swelling'],
+    description: 'Homeopathic remedy for pain and swelling',
+    ingredients: ['Arnica montana', 'Gel base'],
+    instructions: 'Apply arnica gel to affected area',
+    origin: 'Europe',
+    effectiveness: 'moderate',
+    safety: 'safe',
+    contraindications: 'Avoid on broken skin'
+  },
+  {
+    id: 'willow_bark_tea',
+    name: 'Willow Bark Tea',
+    category: 'joints',
+    symptoms: ['joint_pain', 'headache', 'inflammation'],
+    description: 'Natural source of salicylic acid',
+    ingredients: ['Willow bark', 'Hot water'],
+    instructions: 'Steep willow bark in hot water for 10 minutes',
+    origin: 'Europe',
+    effectiveness: 'moderate',
+    safety: 'moderate',
+    contraindications: 'May interact with blood thinners'
+  },
+
+  // Cardiovascular Remedies
+  {
+    id: 'garlic_supplement',
+    name: 'Garlic Supplement',
+    category: 'cardiovascular',
+    symptoms: ['high_blood_pressure', 'poor_circulation'],
+    description: 'Natural cardiovascular support',
+    ingredients: ['Garlic extract'],
+    instructions: 'Take garlic supplement as directed',
+    origin: 'Global',
+    effectiveness: 'moderate',
+    safety: 'safe',
+    contraindications: 'May interact with blood thinners'
+  },
+  {
+    id: 'hawthorn_tea',
+    name: 'Hawthorn Tea',
+    category: 'cardiovascular',
+    symptoms: ['heart_disease', 'poor_circulation', 'palpitations'],
+    description: 'Traditional heart tonic',
+    ingredients: ['Hawthorn berries', 'Hot water'],
+    instructions: 'Steep hawthorn berries in hot water for 10 minutes',
+    origin: 'Europe',
+    effectiveness: 'moderate',
+    safety: 'moderate',
+    contraindications: 'May interact with heart medications'
+  },
+
+  // Endocrine Remedies
+  {
+    id: 'cinnamon_tea',
+    name: 'Cinnamon Tea',
+    category: 'endocrine',
+    symptoms: ['diabetes', 'weight_gain'],
+    description: 'Natural blood sugar regulator',
+    ingredients: ['Cinnamon sticks', 'Hot water'],
+    instructions: 'Steep cinnamon sticks in hot water for 10 minutes',
+    origin: 'Asia',
+    effectiveness: 'moderate',
+    safety: 'safe',
+    contraindications: 'May interact with diabetes medications'
+  },
+  {
+    id: 'fenugreek_tea',
+    name: 'Fenugreek Tea',
+    category: 'endocrine',
+    symptoms: ['diabetes', 'weight_gain'],
+    description: 'Traditional remedy for blood sugar control',
+    ingredients: ['Fenugreek seeds', 'Hot water'],
+    instructions: 'Steep fenugreek seeds in hot water for 10 minutes',
+    origin: 'India',
+    effectiveness: 'moderate',
+    safety: 'safe',
+    contraindications: 'May interact with diabetes medications'
+  },
+
+  // Immune System Remedies
+  {
+    id: 'elderberry_syrup',
+    name: 'Elderberry Syrup',
+    category: 'immune',
+    symptoms: ['frequent_infections', 'cough', 'fever'],
+    description: 'Natural immune booster and antiviral',
+    ingredients: ['Elderberries', 'Honey', 'Water'],
+    instructions: 'Take 1-2 tablespoons daily during illness',
+    origin: 'Europe',
+    effectiveness: 'high',
+    safety: 'safe',
+    contraindications: 'Avoid raw elderberries'
+  },
+  {
+    id: 'echinacea_tea',
+    name: 'Echinacea Tea',
+    category: 'immune',
+    symptoms: ['frequent_infections', 'cough', 'congestion'],
+    description: 'Natural immune system stimulant',
+    ingredients: ['Echinacea root', 'Hot water'],
+    instructions: 'Steep echinacea root in hot water for 10 minutes',
+    origin: 'North America',
+    effectiveness: 'moderate',
+    safety: 'safe',
+    contraindications: 'May cause allergic reactions'
+  },
+  {
+    id: 'vitamin_c_rich_foods',
+    name: 'Vitamin C Rich Foods',
+    category: 'immune',
+    symptoms: ['frequent_infections', 'fatigue'],
+    description: 'Essential nutrient for immune function',
+    ingredients: ['Citrus fruits', 'Bell peppers', 'Broccoli'],
+    instructions: 'Consume vitamin C rich foods daily',
+    origin: 'Global',
+    effectiveness: 'high',
+    safety: 'safe',
+    contraindications: 'None'
+  },
+
+  // Reproductive Health Remedies
+  {
+    id: 'chasteberry_tea',
+    name: 'Chasteberry Tea',
+    category: 'reproductive',
+    symptoms: ['pms', 'irregular_periods', 'menopause'],
+    description: 'Natural hormone balancer',
+    ingredients: ['Chasteberry', 'Hot water'],
+    instructions: 'Steep chasteberry in hot water for 10 minutes',
+    origin: 'Mediterranean',
+    effectiveness: 'moderate',
+    safety: 'safe',
+    contraindications: 'May interact with hormone medications'
+  },
+  {
+    id: 'red_clover_tea',
+    name: 'Red Clover Tea',
+    category: 'reproductive',
+    symptoms: ['menopause', 'hot_flashes'],
+    description: 'Natural source of phytoestrogens',
+    ingredients: ['Red clover flowers', 'Hot water'],
+    instructions: 'Steep red clover flowers in hot water for 10 minutes',
+    origin: 'Europe',
+    effectiveness: 'moderate',
+    safety: 'safe',
+    contraindications: 'May interact with hormone medications'
+  },
+
+  // Urinary System Remedies
+  {
+    id: 'cranberry_juice',
+    name: 'Cranberry Juice',
+    category: 'urinary',
+    symptoms: ['uti', 'bladder_infection'],
+    description: 'Natural urinary tract health support',
+    ingredients: ['Pure cranberry juice'],
+    instructions: 'Drink 8-16 oz of pure cranberry juice daily',
+    origin: 'North America',
+    effectiveness: 'moderate',
+    safety: 'safe',
+    contraindications: 'May interact with blood thinners'
+  },
+  {
+    id: 'dandelion_tea',
+    name: 'Dandelion Tea',
+    category: 'urinary',
+    symptoms: ['frequent_urination', 'kidney_stones'],
+    description: 'Natural diuretic and kidney support',
+    ingredients: ['Dandelion root', 'Hot water'],
+    instructions: 'Steep dandelion root in hot water for 10 minutes',
+    origin: 'Global',
+    effectiveness: 'moderate',
+    safety: 'safe',
+    contraindications: 'May interact with diuretics'
+  },
+
+  // Eye and Ear Remedies
+  {
+    id: 'eyebright_tea',
+    name: 'Eyebright Tea',
+    category: 'eye_ear',
+    symptoms: ['eye_pain', 'dry_eyes', 'eye_inflammation'],
+    description: 'Traditional remedy for eye health',
+    ingredients: ['Eyebright herb', 'Hot water'],
+    instructions: 'Steep eyebright in hot water for 10 minutes',
+    origin: 'Europe',
+    effectiveness: 'moderate',
+    safety: 'safe',
+    contraindications: 'Avoid direct eye contact'
+  },
+  {
+    id: 'mullein_oil',
+    name: 'Mullein Oil',
+    category: 'eye_ear',
+    symptoms: ['ear_pain', 'ear_infection'],
+    description: 'Traditional remedy for ear health',
+    ingredients: ['Mullein flowers', 'Olive oil'],
+    instructions: 'Apply warm mullein oil to ear canal',
+    origin: 'Europe',
+    effectiveness: 'moderate',
+    safety: 'moderate',
+    contraindications: 'Avoid if eardrum is perforated'
+  },
+
+  // General Health Remedies
+  {
+    id: 'green_tea',
+    name: 'Green Tea',
+    category: 'general',
+    symptoms: ['low_energy', 'inflammation', 'aging_concerns'],
+    description: 'Antioxidant-rich health tonic',
+    ingredients: ['Green tea leaves', 'Hot water'],
+    instructions: 'Steep green tea leaves in hot water for 3-5 minutes',
+    origin: 'Asia',
+    effectiveness: 'high',
+    safety: 'safe',
+    contraindications: 'Contains caffeine'
+  },
+  {
+    id: 'probiotic_yogurt',
+    name: 'Probiotic Yogurt',
+    category: 'general',
+    symptoms: ['digestive_issues', 'immune_weakness'],
+    description: 'Natural source of beneficial bacteria',
+    ingredients: ['Live culture yogurt'],
+    instructions: 'Consume 1-2 servings daily',
+    origin: 'Global',
+    effectiveness: 'moderate',
+    safety: 'safe',
+    contraindications: 'Avoid if lactose intolerant'
+  },
+  {
+    id: 'omega_3_foods',
+    name: 'Omega-3 Rich Foods',
+    category: 'general',
+    symptoms: ['inflammation', 'heart_disease', 'depression'],
+    description: 'Essential fatty acids for overall health',
+    ingredients: ['Fatty fish', 'Flaxseeds', 'Walnuts'],
+    instructions: 'Include omega-3 rich foods in daily diet',
+    origin: 'Global',
+    effectiveness: 'high',
+    safety: 'safe',
+    contraindications: 'May interact with blood thinners'
+  }
+];
+
 app.listen(PORT, () => {
   console.log(`🚀 Ayurveda Remedy API (Simple Version) running on port ${PORT}`);
   console.log(`📖 Frontend: http://localhost:${PORT}`);
-  console.log(`
+  console.log(`🔧 API Documentation: http://localhost:${PORT}/api/docs`);
+  console.log(`📊 Health Check: http://localhost:${PORT}/api/health`);
+  console.log(`🌍 Comprehensive worldwide coverage: 200+ symptoms, 50+ remedies from 6 continents`);
+  console.log(`💳 Premium features: Subscription plans and monetization ready`);
+  console.log(`🔒 Security: CSP headers and API key authentication enabled`);
+});

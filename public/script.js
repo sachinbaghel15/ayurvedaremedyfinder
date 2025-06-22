@@ -13,61 +13,182 @@ let remedyCount = 0; // Track free remedy usage
 let userUsage = null; // Track user usage
 let pricing = null; // Store pricing information
 
-// Sample symptoms data
+// Sample symptoms data - Updated with comprehensive worldwide database
 const symptomsData = {
     digestive: [
-        { id: 'indigestion', name: 'Indigestion', category: 'digestive' },
-        { id: 'bloating', name: 'Bloating', category: 'digestive' },
-        { id: 'constipation', name: 'Constipation', category: 'digestive' },
-        { id: 'diarrhea', name: 'Diarrhea', category: 'digestive' },
-        { id: 'acid_reflux', name: 'Acid Reflux', category: 'digestive' },
-        { id: 'nausea', name: 'Nausea', category: 'digestive' },
-        { id: 'loss_of_appetite', name: 'Loss of Appetite', category: 'digestive' },
-        { id: 'abdominal_pain', name: 'Abdominal Pain', category: 'digestive' }
+        { id: 'indigestion', name: 'Indigestion', category: 'digestive', severity: 'moderate' },
+        { id: 'bloating', name: 'Bloating', category: 'digestive', severity: 'mild' },
+        { id: 'constipation', name: 'Constipation', category: 'digestive', severity: 'moderate' },
+        { id: 'diarrhea', name: 'Diarrhea', category: 'digestive', severity: 'moderate' },
+        { id: 'acid_reflux', name: 'Acid Reflux', category: 'digestive', severity: 'moderate' },
+        { id: 'nausea', name: 'Nausea', category: 'digestive', severity: 'moderate' },
+        { id: 'vomiting', name: 'Vomiting', category: 'digestive', severity: 'severe' },
+        { id: 'loss_of_appetite', name: 'Loss of Appetite', category: 'digestive', severity: 'moderate' },
+        { id: 'abdominal_pain', name: 'Abdominal Pain', category: 'digestive', severity: 'moderate' },
+        { id: 'gas', name: 'Excessive Gas', category: 'digestive', severity: 'mild' },
+        { id: 'heartburn', name: 'Heartburn', category: 'digestive', severity: 'moderate' },
+        { id: 'ulcer', name: 'Stomach Ulcer', category: 'digestive', severity: 'severe' },
+        { id: 'ibs', name: 'Irritable Bowel Syndrome', category: 'digestive', severity: 'moderate' },
+        { id: 'colitis', name: 'Colitis', category: 'digestive', severity: 'severe' },
+        { id: 'gastritis', name: 'Gastritis', category: 'digestive', severity: 'moderate' },
+        { id: 'food_poisoning', name: 'Food Poisoning', category: 'digestive', severity: 'severe' },
+        { id: 'celiac', name: 'Celiac Disease', category: 'digestive', severity: 'severe' },
+        { id: 'lactose_intolerance', name: 'Lactose Intolerance', category: 'digestive', severity: 'moderate' }
     ],
     respiratory: [
-        { id: 'cough', name: 'Cough', category: 'respiratory' },
-        { id: 'congestion', name: 'Nasal Congestion', category: 'respiratory' },
-        { id: 'shortness_of_breath', name: 'Shortness of Breath', category: 'respiratory' },
-        { id: 'sore_throat', name: 'Sore Throat', category: 'respiratory' },
-        { id: 'runny_nose', name: 'Runny Nose', category: 'respiratory' },
-        { id: 'chest_tightness', name: 'Chest Tightness', category: 'respiratory' },
-        { id: 'wheezing', name: 'Wheezing', category: 'respiratory' }
+        { id: 'cough', name: 'Cough', category: 'respiratory', severity: 'moderate' },
+        { id: 'congestion', name: 'Nasal Congestion', category: 'respiratory', severity: 'mild' },
+        { id: 'shortness_of_breath', name: 'Shortness of Breath', category: 'respiratory', severity: 'severe' },
+        { id: 'sore_throat', name: 'Sore Throat', category: 'respiratory', severity: 'moderate' },
+        { id: 'runny_nose', name: 'Runny Nose', category: 'respiratory', severity: 'mild' },
+        { id: 'chest_tightness', name: 'Chest Tightness', category: 'respiratory', severity: 'severe' },
+        { id: 'wheezing', name: 'Wheezing', category: 'respiratory', severity: 'severe' },
+        { id: 'asthma', name: 'Asthma', category: 'respiratory', severity: 'severe' },
+        { id: 'bronchitis', name: 'Bronchitis', category: 'respiratory', severity: 'moderate' },
+        { id: 'pneumonia', name: 'Pneumonia', category: 'respiratory', severity: 'severe' },
+        { id: 'sinusitis', name: 'Sinusitis', category: 'respiratory', severity: 'moderate' },
+        { id: 'allergic_rhinitis', name: 'Allergic Rhinitis', category: 'respiratory', severity: 'moderate' },
+        { id: 'sleep_apnea', name: 'Sleep Apnea', category: 'respiratory', severity: 'severe' },
+        { id: 'pleurisy', name: 'Pleurisy', category: 'respiratory', severity: 'severe' }
     ],
     nervous: [
-        { id: 'anxiety', name: 'Anxiety', category: 'nervous' },
-        { id: 'insomnia', name: 'Insomnia', category: 'nervous' },
-        { id: 'headache', name: 'Headache', category: 'nervous' },
-        { id: 'dizziness', name: 'Dizziness', category: 'nervous' },
-        { id: 'fatigue', name: 'Fatigue', category: 'nervous' },
-        { id: 'stress', name: 'Stress', category: 'nervous' },
-        { id: 'mood_swings', name: 'Mood Swings', category: 'nervous' },
-        { id: 'memory_problems', name: 'Memory Problems', category: 'nervous' }
+        { id: 'anxiety', name: 'Anxiety', category: 'nervous', severity: 'moderate' },
+        { id: 'depression', name: 'Depression', category: 'nervous', severity: 'severe' },
+        { id: 'insomnia', name: 'Insomnia', category: 'nervous', severity: 'moderate' },
+        { id: 'headache', name: 'Headache', category: 'nervous', severity: 'moderate' },
+        { id: 'migraine', name: 'Migraine', category: 'nervous', severity: 'severe' },
+        { id: 'dizziness', name: 'Dizziness', category: 'nervous', severity: 'moderate' },
+        { id: 'vertigo', name: 'Vertigo', category: 'nervous', severity: 'moderate' },
+        { id: 'fatigue', name: 'Fatigue', category: 'nervous', severity: 'moderate' },
+        { id: 'stress', name: 'Stress', category: 'nervous', severity: 'moderate' },
+        { id: 'mood_swings', name: 'Mood Swings', category: 'nervous', severity: 'moderate' },
+        { id: 'memory_problems', name: 'Memory Problems', category: 'nervous', severity: 'moderate' },
+        { id: 'concentration_issues', name: 'Concentration Issues', category: 'nervous', severity: 'moderate' },
+        { id: 'panic_attacks', name: 'Panic Attacks', category: 'nervous', severity: 'severe' },
+        { id: 'ocd', name: 'Obsessive-Compulsive Disorder', category: 'nervous', severity: 'severe' },
+        { id: 'adhd', name: 'Attention Deficit Disorder', category: 'nervous', severity: 'moderate' },
+        { id: 'epilepsy', name: 'Epilepsy', category: 'nervous', severity: 'severe' },
+        { id: 'parkinsons', name: 'Parkinson\'s Disease', category: 'nervous', severity: 'severe' },
+        { id: 'alzheimers', name: 'Alzheimer\'s Disease', category: 'nervous', severity: 'severe' },
+        { id: 'neuralgia', name: 'Neuralgia', category: 'nervous', severity: 'severe' }
     ],
     skin: [
-        { id: 'acne', name: 'Acne', category: 'skin' },
-        { id: 'eczema', name: 'Eczema', category: 'skin' },
-        { id: 'dry_skin', name: 'Dry Skin', category: 'skin' },
-        { id: 'itching', name: 'Itching', category: 'skin' },
-        { id: 'rashes', name: 'Rashes', category: 'skin' },
-        { id: 'inflammation', name: 'Skin Inflammation', category: 'skin' }
+        { id: 'acne', name: 'Acne', category: 'skin', severity: 'moderate' },
+        { id: 'eczema', name: 'Eczema', category: 'skin', severity: 'moderate' },
+        { id: 'psoriasis', name: 'Psoriasis', category: 'skin', severity: 'moderate' },
+        { id: 'dry_skin', name: 'Dry Skin', category: 'skin', severity: 'mild' },
+        { id: 'oily_skin', name: 'Oily Skin', category: 'skin', severity: 'mild' },
+        { id: 'itching', name: 'Itching', category: 'skin', severity: 'moderate' },
+        { id: 'rashes', name: 'Rashes', category: 'skin', severity: 'moderate' },
+        { id: 'hives', name: 'Hives', category: 'skin', severity: 'moderate' },
+        { id: 'inflammation', name: 'Skin Inflammation', category: 'skin', severity: 'moderate' },
+        { id: 'dermatitis', name: 'Dermatitis', category: 'skin', severity: 'moderate' },
+        { id: 'vitiligo', name: 'Vitiligo', category: 'skin', severity: 'moderate' },
+        { id: 'rosacea', name: 'Rosacea', category: 'skin', severity: 'moderate' },
+        { id: 'fungal_infection', name: 'Fungal Infection', category: 'skin', severity: 'moderate' },
+        { id: 'bacterial_infection', name: 'Bacterial Infection', category: 'skin', severity: 'moderate' },
+        { id: 'warts', name: 'Warts', category: 'skin', severity: 'mild' },
+        { id: 'moles', name: 'Moles', category: 'skin', severity: 'mild' },
+        { id: 'skin_cancer', name: 'Skin Cancer', category: 'skin', severity: 'severe' }
     ],
     joints: [
-        { id: 'joint_pain', name: 'Joint Pain', category: 'joints' },
-        { id: 'stiffness', name: 'Joint Stiffness', category: 'joints' },
-        { id: 'swelling', name: 'Joint Swelling', category: 'joints' },
-        { id: 'back_pain', name: 'Back Pain', category: 'joints' },
-        { id: 'muscle_pain', name: 'Muscle Pain', category: 'joints' },
-        { id: 'arthritis', name: 'Arthritis', category: 'joints' }
+        { id: 'joint_pain', name: 'Joint Pain', category: 'joints', severity: 'moderate' },
+        { id: 'stiffness', name: 'Joint Stiffness', category: 'joints', severity: 'moderate' },
+        { id: 'swelling', name: 'Joint Swelling', category: 'joints', severity: 'moderate' },
+        { id: 'back_pain', name: 'Back Pain', category: 'joints', severity: 'moderate' },
+        { id: 'neck_pain', name: 'Neck Pain', category: 'joints', severity: 'moderate' },
+        { id: 'muscle_pain', name: 'Muscle Pain', category: 'joints', severity: 'moderate' },
+        { id: 'arthritis', name: 'Arthritis', category: 'joints', severity: 'severe' },
+        { id: 'rheumatoid_arthritis', name: 'Rheumatoid Arthritis', category: 'joints', severity: 'severe' },
+        { id: 'gout', name: 'Gout', category: 'joints', severity: 'severe' },
+        { id: 'bursitis', name: 'Bursitis', category: 'joints', severity: 'moderate' },
+        { id: 'tendonitis', name: 'Tendonitis', category: 'joints', severity: 'moderate' },
+        { id: 'carpal_tunnel', name: 'Carpal Tunnel Syndrome', category: 'joints', severity: 'moderate' },
+        { id: 'sciatica', name: 'Sciatica', category: 'joints', severity: 'severe' },
+        { id: 'fibromyalgia', name: 'Fibromyalgia', category: 'joints', severity: 'severe' },
+        { id: 'osteoporosis', name: 'Osteoporosis', category: 'joints', severity: 'severe' }
+    ],
+    cardiovascular: [
+        { id: 'chest_pain', name: 'Chest Pain', category: 'cardiovascular', severity: 'severe' },
+        { id: 'palpitations', name: 'Heart Palpitations', category: 'cardiovascular', severity: 'moderate' },
+        { id: 'high_blood_pressure', name: 'High Blood Pressure', category: 'cardiovascular', severity: 'severe' },
+        { id: 'low_blood_pressure', name: 'Low Blood Pressure', category: 'cardiovascular', severity: 'moderate' },
+        { id: 'irregular_heartbeat', name: 'Irregular Heartbeat', category: 'cardiovascular', severity: 'severe' },
+        { id: 'swollen_ankles', name: 'Swollen Ankles', category: 'cardiovascular', severity: 'moderate' },
+        { id: 'varicose_veins', name: 'Varicose Veins', category: 'cardiovascular', severity: 'moderate' },
+        { id: 'poor_circulation', name: 'Poor Circulation', category: 'cardiovascular', severity: 'moderate' },
+        { id: 'heart_disease', name: 'Heart Disease', category: 'cardiovascular', severity: 'severe' },
+        { id: 'angina', name: 'Angina', category: 'cardiovascular', severity: 'severe' }
+    ],
+    endocrine: [
+        { id: 'diabetes', name: 'Diabetes', category: 'endocrine', severity: 'severe' },
+        { id: 'thyroid_problems', name: 'Thyroid Problems', category: 'endocrine', severity: 'moderate' },
+        { id: 'weight_gain', name: 'Weight Gain', category: 'endocrine', severity: 'moderate' },
+        { id: 'weight_loss', name: 'Weight Loss', category: 'endocrine', severity: 'moderate' },
+        { id: 'fatigue', name: 'Fatigue', category: 'endocrine', severity: 'moderate' },
+        { id: 'mood_swings', name: 'Mood Swings', category: 'endocrine', severity: 'moderate' },
+        { id: 'hot_flashes', name: 'Hot Flashes', category: 'endocrine', severity: 'moderate' },
+        { id: 'night_sweats', name: 'Night Sweats', category: 'endocrine', severity: 'moderate' },
+        { id: 'irregular_periods', name: 'Irregular Periods', category: 'endocrine', severity: 'moderate' },
+        { id: 'pcos', name: 'Polycystic Ovary Syndrome', category: 'endocrine', severity: 'moderate' },
+        { id: 'adrenal_fatigue', name: 'Adrenal Fatigue', category: 'endocrine', severity: 'moderate' }
+    ],
+    immune: [
+        { id: 'frequent_infections', name: 'Frequent Infections', category: 'immune', severity: 'moderate' },
+        { id: 'allergies', name: 'Allergies', category: 'immune', severity: 'moderate' },
+        { id: 'food_allergies', name: 'Food Allergies', category: 'immune', severity: 'severe' },
+        { id: 'seasonal_allergies', name: 'Seasonal Allergies', category: 'immune', severity: 'moderate' },
+        { id: 'autoimmune_disease', name: 'Autoimmune Disease', category: 'immune', severity: 'severe' },
+        { id: 'lupus', name: 'Lupus', category: 'immune', severity: 'severe' },
+        { id: 'rheumatoid_arthritis', name: 'Rheumatoid Arthritis', category: 'immune', severity: 'severe' },
+        { id: 'multiple_sclerosis', name: 'Multiple Sclerosis', category: 'immune', severity: 'severe' },
+        { id: 'hiv_aids', name: 'HIV/AIDS', category: 'immune', severity: 'severe' },
+        { id: 'cancer', name: 'Cancer', category: 'immune', severity: 'severe' }
+    ],
+    reproductive: [
+        { id: 'infertility', name: 'Infertility', category: 'reproductive', severity: 'moderate' },
+        { id: 'pms', name: 'Premenstrual Syndrome', category: 'reproductive', severity: 'moderate' },
+        { id: 'menstrual_cramps', name: 'Menstrual Cramps', category: 'reproductive', severity: 'moderate' },
+        { id: 'endometriosis', name: 'Endometriosis', category: 'reproductive', severity: 'severe' },
+        { id: 'fibroids', name: 'Uterine Fibroids', category: 'reproductive', severity: 'moderate' },
+        { id: 'prostate_problems', name: 'Prostate Problems', category: 'reproductive', severity: 'moderate' },
+        { id: 'erectile_dysfunction', name: 'Erectile Dysfunction', category: 'reproductive', severity: 'moderate' },
+        { id: 'low_libido', name: 'Low Libido', category: 'reproductive', severity: 'moderate' },
+        { id: 'menopause', name: 'Menopause', category: 'reproductive', severity: 'moderate' },
+        { id: 'andropause', name: 'Andropause', category: 'reproductive', severity: 'moderate' }
+    ],
+    urinary: [
+        { id: 'frequent_urination', name: 'Frequent Urination', category: 'urinary', severity: 'moderate' },
+        { id: 'painful_urination', name: 'Painful Urination', category: 'urinary', severity: 'moderate' },
+        { id: 'urinary_incontinence', name: 'Urinary Incontinence', category: 'urinary', severity: 'moderate' },
+        { id: 'kidney_stones', name: 'Kidney Stones', category: 'urinary', severity: 'severe' },
+        { id: 'uti', name: 'Urinary Tract Infection', category: 'urinary', severity: 'moderate' },
+        { id: 'kidney_disease', name: 'Kidney Disease', category: 'urinary', severity: 'severe' },
+        { id: 'bladder_infection', name: 'Bladder Infection', category: 'urinary', severity: 'moderate' }
+    ],
+    eye_ear: [
+        { id: 'blurred_vision', name: 'Blurred Vision', category: 'eye_ear', severity: 'moderate' },
+        { id: 'eye_pain', name: 'Eye Pain', category: 'eye_ear', severity: 'moderate' },
+        { id: 'dry_eyes', name: 'Dry Eyes', category: 'eye_ear', severity: 'mild' },
+        { id: 'cataracts', name: 'Cataracts', category: 'eye_ear', severity: 'moderate' },
+        { id: 'glaucoma', name: 'Glaucoma', category: 'eye_ear', severity: 'severe' },
+        { id: 'macular_degeneration', name: 'Macular Degeneration', category: 'eye_ear', severity: 'severe' },
+        { id: 'ear_pain', name: 'Ear Pain', category: 'eye_ear', severity: 'moderate' },
+        { id: 'tinnitus', name: 'Tinnitus', category: 'eye_ear', severity: 'moderate' },
+        { id: 'hearing_loss', name: 'Hearing Loss', category: 'eye_ear', severity: 'moderate' },
+        { id: 'vertigo', name: 'Vertigo', category: 'eye_ear', severity: 'moderate' }
     ],
     general: [
-        { id: 'fever', name: 'Fever', category: 'general' },
-        { id: 'chills', name: 'Chills', category: 'general' },
-        { id: 'sweating', name: 'Excessive Sweating', category: 'general' },
-        { id: 'weight_gain', name: 'Weight Gain', category: 'general' },
-        { id: 'weight_loss', name: 'Weight Loss', category: 'general' },
-        { id: 'low_energy', name: 'Low Energy', category: 'general' },
-        { id: 'inflammation', name: 'General Inflammation', category: 'general' }
+        { id: 'fever', name: 'Fever', category: 'general', severity: 'moderate' },
+        { id: 'chills', name: 'Chills', category: 'general', severity: 'moderate' },
+        { id: 'sweating', name: 'Excessive Sweating', category: 'general', severity: 'moderate' },
+        { id: 'low_energy', name: 'Low Energy', category: 'general', severity: 'moderate' },
+        { id: 'inflammation', name: 'General Inflammation', category: 'general', severity: 'moderate' },
+        { id: 'chronic_pain', name: 'Chronic Pain', category: 'general', severity: 'severe' },
+        { id: 'sleep_problems', name: 'Sleep Problems', category: 'general', severity: 'moderate' },
+        { id: 'appetite_changes', name: 'Appetite Changes', category: 'general', severity: 'moderate' },
+        { id: 'temperature_sensitivity', name: 'Temperature Sensitivity', category: 'general', severity: 'mild' },
+        { id: 'aging_concerns', name: 'Aging Concerns', category: 'general', severity: 'moderate' }
     ]
 };
 
@@ -198,9 +319,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
+            // Check for subscription buttons
+            if (e.target.closest('[data-action="subscribe"]')) {
+                const subscribeBtn = e.target.closest('[data-action="subscribe"]');
+                const plan = subscribeBtn.getAttribute('data-plan');
+                console.log('Subscription button clicked, plan:', plan);
+                handleSubscription(plan);
+                return;
+            }
+            
             // Check for pricing button
             if (e.target.id === 'pricing-btn') {
                 showPricingModal();
+                return;
+            }
+            
+            // Check for close modal button
+            if (e.target.closest('.close-btn') || e.target.closest('[data-action="close-modal"]')) {
+                const modal = document.querySelector('.modal.show');
+                if (modal) {
+                    modal.style.display = 'none';
+                    modal.classList.remove('show');
+                }
+                return;
+            }
+            
+            // Check for modal background click
+            if (e.target.classList.contains('modal')) {
+                e.target.style.display = 'none';
+                e.target.classList.remove('show');
                 return;
             }
             
@@ -455,23 +602,49 @@ function validateSymptoms() {
 
 // Symptoms management
 function loadSymptoms(category) {
-    console.log('Loading symptoms for category:', category);
+    const symptomsContainer = document.getElementById('symptoms-container');
     
-    try {
-        const symptomsGrid = document.getElementById('symptoms-grid');
-        const symptoms = symptomsData[category] || [];
-        
-        symptomsGrid.innerHTML = symptoms.map(symptom => `
-            <div class="symptom-item" data-symptom-id="${symptom.id}" data-symptom-name="${symptom.name}">
-                <i class="fas fa-plus"></i>
-                ${symptom.name}
-            </div>
-        `).join('');
-        
-        console.log('Loaded', symptoms.length, 'symptoms');
-    } catch (error) {
-        console.error('Error in loadSymptoms:', error);
+    // Show loading state
+    symptomsContainer.innerHTML = '<div class="loading">Loading symptoms...</div>';
+    
+    // Try to fetch from API first
+    fetch(`/api/symptoms?category=${category}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.data && data.data.length > 0) {
+                displaySymptoms(data.data, symptomsContainer);
+            } else {
+                // Fallback to static data if API fails or returns empty
+                const staticSymptoms = symptomsData[category] || [];
+                displaySymptoms(staticSymptoms, symptomsContainer);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading symptoms from API:', error);
+            // Fallback to static data
+            const staticSymptoms = symptomsData[category] || [];
+            displaySymptoms(staticSymptoms, symptomsContainer);
+        });
+}
+
+function displaySymptoms(symptoms, container) {
+    if (symptoms.length === 0) {
+        container.innerHTML = '<div class="no-symptoms">No symptoms found for this category.</div>';
+        return;
     }
+    
+    container.innerHTML = symptoms.map(symptom => `
+        <div class="symptom-item" data-symptom-id="${symptom.id}" data-symptom-name="${symptom.name}">
+            <div class="symptom-info">
+                <span class="symptom-name">${symptom.name}</span>
+                ${symptom.severity ? `<span class="severity-badge ${symptom.severity}">${symptom.severity}</span>` : ''}
+            </div>
+            <div class="symptom-checkbox">
+                <input type="checkbox" id="symptom-${symptom.id}" ${selectedSymptoms.some(s => s.id === symptom.id) ? 'checked' : ''}>
+                <label for="symptom-${symptom.id}"></label>
+            </div>
+        </div>
+    `).join('');
 }
 
 function searchSymptoms(query) {
@@ -533,41 +706,25 @@ function toggleSymptom(id, name) {
 }
 
 function updateSelectedSymptoms() {
-    const selectedList = document.getElementById('selected-symptoms');
+    const selectedContainer = document.getElementById('selected-symptoms');
+    const symptomCount = document.getElementById('symptom-count');
+    
+    // Update count
+    symptomCount.textContent = selectedSymptoms.length;
     
     if (selectedSymptoms.length === 0) {
-        selectedList.innerHTML = '<p class="empty-message">No symptoms selected yet. Please select at least 3 symptoms.</p>';
+        selectedContainer.innerHTML = '<p class="empty-message">No symptoms selected yet. Please select at least 3 symptoms.</p>';
         return;
     }
     
-    selectedList.innerHTML = selectedSymptoms.map((symptom, index) => `
+    selectedContainer.innerHTML = selectedSymptoms.map((symptom, index) => `
         <div class="selected-symptom">
-            <span>${symptom.name}</span>
+            <span class="symptom-name">${symptom.name}</span>
             <button class="remove-btn" data-index="${index}">
                 <i class="fas fa-times"></i>
             </button>
         </div>
     `).join('');
-    
-    // Update visual state of symptom items
-    document.querySelectorAll('.symptom-item').forEach(item => {
-        const symptomId = item.getAttribute('data-symptom-id');
-        const isSelected = selectedSymptoms.some(s => s.id === symptomId);
-        
-        if (isSelected) {
-            item.classList.add('selected');
-            const icon = item.querySelector('i');
-            if (icon) {
-                icon.className = 'fas fa-check';
-            }
-        } else {
-            item.classList.remove('selected');
-            const icon = item.querySelector('i');
-            if (icon) {
-                icon.className = 'fas fa-plus';
-            }
-        }
-    });
 }
 
 function removeSymptom(index) {
@@ -733,211 +890,208 @@ function showUpgradeSuggestion() {
 
 // Remedies functions
 function loadRemedies() {
-    console.log('Loading remedies...');
+    const remediesContainer = document.getElementById('remedies-container');
+    const selectedSymptomIds = selectedSymptoms.map(s => s.id);
     
-    // Show assessment summary
-    showAssessmentSummary();
+    if (selectedSymptomIds.length === 0) {
+        remediesContainer.innerHTML = '<div class="no-remedies">Please select symptoms first to get personalized remedies.</div>';
+        return;
+    }
     
-    // Load and display remedies
-    fetch('/api/remedies')
+    // Show loading state
+    remediesContainer.innerHTML = '<div class="loading">Finding remedies for your symptoms...</div>';
+    
+    // Fetch remedies from API based on selected symptoms
+    fetch(`/api/remedies/by-symptoms?symptoms=${selectedSymptomIds.join(',')}`)
         .then(response => response.json())
-        .then(response => {
-            console.log('API response:', response);
-            
-            // Handle the API response structure - remedies are in response.data
-            const remedies = response.data || response;
-            
-            if (!Array.isArray(remedies)) {
-                console.error('Remedies is not an array:', remedies);
-                throw new Error('Invalid remedies data');
-            }
-            
-            if (!isPremiumUser) {
-                // Limit free users to 3 remedies
-                const limitedRemedies = remedies.slice(0, 3);
-                displayRemedies(limitedRemedies);
-                
-                // Show premium banner
-                const premiumBanner = document.getElementById('premium-banner');
-                if (premiumBanner) {
-                    premiumBanner.style.display = 'block';
-                }
+        .then(data => {
+            if (data.success) {
+                displayRemedies(data.data);
             } else {
-                // Premium users get all remedies
-                displayRemedies(remedies);
+                // Fallback to sample remedies
+                displayRemedies(getSampleRemedies());
             }
         })
         .catch(error => {
             console.error('Error loading remedies:', error);
-            // Fallback to sample data
-            const sampleRemedies = getSampleRemedies();
-            if (!isPremiumUser) {
-                displayRemedies(sampleRemedies.slice(0, 3));
-            } else {
-                displayRemedies(sampleRemedies);
-            }
+            // Fallback to sample remedies
+            displayRemedies(getSampleRemedies());
         });
 }
 
-function showAssessmentSummary() {
-    const summary = document.getElementById('assessment-summary');
-    const dominantDosha = Object.keys(doshaScores).reduce((a, b) => 
-        doshaScores[a] > doshaScores[b] ? a : b
-    );
+function displayRemedies(remedies) {
+    const remediesContainer = document.getElementById('remedies-container');
     
-    // Safely handle riskFactors - ensure it's an array
-    const riskFactors = userData.riskFactors || [];
+    if (remedies.length === 0) {
+        remediesContainer.innerHTML = '<div class="no-remedies">No remedies found for your symptoms. Please try different symptoms or consult a healthcare provider.</div>';
+        return;
+    }
     
-    summary.innerHTML = `
-        <div class="summary-item">
-            <h4>Basic Info</h4>
-            <p>${userData.gender || 'Not specified'}, ${userData.age || 'Not specified'}</p>
+    remediesContainer.innerHTML = `
+        <div class="remedies-header">
+            <h3>Found ${remedies.length} remedies for your symptoms</h3>
+            <div class="remedies-filters">
+                <select id="category-filter">
+                    <option value="">All Categories</option>
+                    ${[...new Set(remedies.map(r => r.category))].map(category => 
+                        `<option value="${category}">${category.charAt(0).toUpperCase() + category.slice(1).replace('_', ' ')}</option>`
+                    ).join('')}
+                </select>
+                <select id="origin-filter">
+                    <option value="">All Origins</option>
+                    ${[...new Set(remedies.map(r => r.origin))].map(origin => 
+                        `<option value="${origin}">${origin}</option>`
+                    ).join('')}
+                </select>
+                <select id="effectiveness-filter">
+                    <option value="">All Effectiveness</option>
+                    <option value="high">High</option>
+                    <option value="moderate">Moderate</option>
+                    <option value="low">Low</option>
+                </select>
+            </div>
         </div>
-        <div class="summary-item">
-            <h4>Selected Symptoms</h4>
-            <p>${selectedSymptoms.length} symptoms</p>
-        </div>
-        <div class="summary-item">
-            <h4>Dominant Dosha</h4>
-            <p>${dominantDosha.charAt(0).toUpperCase() + dominantDosha.slice(1)}</p>
-        </div>
-        <div class="summary-item">
-            <h4>Risk Factors</h4>
-            <p>${riskFactors.length > 0 ? riskFactors.join(', ') : 'None'}</p>
+        <div class="remedies-grid">
+            ${remedies.map(remedy => `
+                <div class="remedy-card" data-category="${remedy.category}" data-origin="${remedy.origin}" data-effectiveness="${remedy.effectiveness}">
+                    <div class="remedy-header">
+                        <h4>${remedy.name}</h4>
+                        <div class="remedy-badges">
+                            <span class="category-badge">${remedy.category}</span>
+                            <span class="origin-badge">${remedy.origin}</span>
+                            <span class="effectiveness-badge ${remedy.effectiveness}">${remedy.effectiveness}</span>
+                        </div>
+                    </div>
+                    <div class="remedy-description">
+                        <p>${remedy.description}</p>
+                    </div>
+                    <div class="remedy-details">
+                        <div class="ingredients">
+                            <h5>Ingredients:</h5>
+                            <ul>
+                                ${remedy.ingredients.map(ingredient => `<li>${ingredient}</li>`).join('')}
+                            </ul>
+                        </div>
+                        <div class="instructions">
+                            <h5>Instructions:</h5>
+                            <p>${remedy.instructions}</p>
+                        </div>
+                        ${remedy.contraindications ? `
+                            <div class="contraindications">
+                                <h5>⚠️ Precautions:</h5>
+                                <p>${remedy.contraindications}</p>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="remedy-actions">
+                        <button class="btn btn-primary" onclick="saveRemedy('${remedy.id}')">Save Remedy</button>
+                        <button class="btn btn-secondary" onclick="shareRemedy('${remedy.id}')">Share</button>
+                    </div>
+                </div>
+            `).join('')}
         </div>
     `;
+    
+    // Add filter functionality
+    setupRemedyFilters();
 }
 
-function displayRemedies(remedies) {
-    const remediesGrid = document.getElementById('remedies-grid');
+function setupRemedyFilters() {
+    const categoryFilter = document.getElementById('category-filter');
+    const originFilter = document.getElementById('origin-filter');
+    const effectivenessFilter = document.getElementById('effectiveness-filter');
     
-    remediesGrid.innerHTML = remedies.map(remedy => {
-        // Handle different property names from API vs fallback data
-        const dosha = remedy.dosha || (remedy.suitableFor ? remedy.suitableFor.join(', ') : 'All');
-        const ingredients = remedy.ingredients || [];
-        const instructions = remedy.instructions || [];
+    function filterRemedies() {
+        const category = categoryFilter.value;
+        const origin = originFilter.value;
+        const effectiveness = effectivenessFilter.value;
         
-        return `
-            <div class="remedy-card">
-                <div class="remedy-header">
-                    <div>
-                        <div class="remedy-title">${remedy.name}</div>
-                        <div class="remedy-category">${remedy.category}</div>
-                    </div>
-                </div>
-                <div class="remedy-description">${remedy.description}</div>
-                <div class="remedy-details">
-                    <div class="detail-item">
-                        <i class="fas fa-balance-scale"></i>
-                        <span>Dosha: ${dosha}</span>
-                    </div>
-                    <div class="detail-item">
-                        <i class="fas fa-signal"></i>
-                        <span class="difficulty-${remedy.difficulty}">${remedy.difficulty}</span>
-                    </div>
-                </div>
-                ${ingredients.length > 0 ? `
-                    <div class="remedy-ingredients">
-                        <h4>Ingredients</h4>
-                        <div class="ingredients-list">
-                            ${ingredients.map(ingredient => 
-                                `<span class="ingredient-tag">${ingredient}</span>`
-                            ).join('')}
-                        </div>
-                    </div>
-                ` : ''}
-                ${instructions.length > 0 ? `
-                    <div class="remedy-instructions">
-                        <h4>Instructions</h4>
-                        <ol>
-                            ${instructions.map(instruction => 
-                                `<li>${instruction}</li>`
-                            ).join('')}
-                        </ol>
-                    </div>
-                ` : ''}
-                ${remedy.benefits ? `
-                    <div class="remedy-benefits">
-                        <h4>Benefits</h4>
-                        <div class="benefits-list">
-                            ${remedy.benefits.map(benefit => 
-                                `<span class="benefit-tag">${benefit}</span>`
-                            ).join('')}
-                        </div>
-                    </div>
-                ` : ''}
-            </div>
-        `;
-    }).join('');
+        const remedyCards = document.querySelectorAll('.remedy-card');
+        
+        remedyCards.forEach(card => {
+            const cardCategory = card.dataset.category;
+            const cardOrigin = card.dataset.origin;
+            const cardEffectiveness = card.dataset.effectiveness;
+            
+            const categoryMatch = !category || cardCategory === category;
+            const originMatch = !origin || cardOrigin === origin;
+            const effectivenessMatch = !effectiveness || cardEffectiveness === effectiveness;
+            
+            if (categoryMatch && originMatch && effectivenessMatch) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+    
+    categoryFilter.addEventListener('change', filterRemedies);
+    originFilter.addEventListener('change', filterRemedies);
+    effectivenessFilter.addEventListener('change', filterRemedies);
 }
 
-function filterRemedies() {
-    const categoryFilter = document.getElementById('remedy-category-filter').value;
-    const doshaFilter = document.getElementById('remedy-dosha-filter').value;
-    const difficultyFilter = document.getElementById('remedy-difficulty-filter').value;
-    
-    const remedyCards = document.querySelectorAll('.remedy-card');
-    
-    remedyCards.forEach(card => {
-        const category = card.querySelector('.remedy-category').textContent.toLowerCase();
-        const dosha = card.querySelector('.detail-item span').textContent.split(': ')[1].toLowerCase();
-        const difficulty = card.querySelector('.difficulty-easy, .difficulty-medium, .difficulty-hard').textContent.toLowerCase();
-        
-        const categoryMatch = !categoryFilter || category === categoryFilter;
-        const doshaMatch = !doshaFilter || dosha === doshaFilter;
-        const difficultyMatch = !difficultyFilter || difficulty === difficultyFilter;
-        
-        if (categoryMatch && doshaMatch && difficultyMatch) {
-            card.style.display = 'block';
-        } else {
-            card.style.display = 'none';
-        }
-    });
+// Helper functions for remedies
+function saveRemedy(remedyId) {
+    // In a real app, this would save to user's account
+    showNotification('Remedy saved to your favorites!', 'success');
 }
 
-// Utility functions
+function shareRemedy(remedyId) {
+    // In a real app, this would share the remedy
+    if (navigator.share) {
+        navigator.share({
+            title: 'Ayurvedic Remedy',
+            text: 'Check out this natural remedy!',
+            url: window.location.href
+        });
+    } else {
+        // Fallback: copy to clipboard
+        navigator.clipboard.writeText(window.location.href);
+        showNotification('Link copied to clipboard!', 'success');
+    }
+}
+
 function getSampleRemedies() {
+    // Fallback sample remedies with new structure
     return [
         {
-            name: "Ginger-Turmeric Tea",
-            description: "A warming tea that helps with digestion and reduces inflammation.",
-            category: "digestive",
-            dosha: "vata",
-            difficulty: "easy",
-            ingredients: ["Fresh ginger", "Turmeric powder", "Honey", "Black pepper"],
-            instructions: [
-                "Boil 2 cups of water",
-                "Add 1 inch of fresh ginger and 1/2 tsp turmeric",
-                "Simmer for 10 minutes",
-                "Strain and add honey to taste"
-            ]
+            id: 'ginger_tea_sample',
+            name: 'Ginger Tea',
+            category: 'digestive',
+            symptoms: ['indigestion', 'nausea', 'bloating'],
+            description: 'Traditional remedy for digestive issues',
+            ingredients: ['Fresh ginger root', 'Hot water', 'Honey (optional)'],
+            instructions: 'Slice fresh ginger, steep in hot water for 10 minutes',
+            origin: 'Asia',
+            effectiveness: 'high',
+            safety: 'safe',
+            contraindications: 'May interact with blood thinners'
         },
         {
-            name: "Triphala Churna",
-            description: "Traditional Ayurvedic formula for digestive health and detoxification.",
-            category: "digestive",
-            dosha: "all",
-            difficulty: "easy",
-            ingredients: ["Amla", "Bibhitaki", "Haritaki"],
-            instructions: [
-                "Take 1/2 tsp with warm water",
-                "Best taken before bedtime",
-                "Start with small dose and increase gradually"
-            ]
+            id: 'turmeric_milk_sample',
+            name: 'Turmeric Milk (Golden Milk)',
+            category: 'general',
+            symptoms: ['inflammation', 'low_energy'],
+            description: 'Anti-inflammatory Ayurvedic remedy',
+            ingredients: ['Turmeric powder', 'Milk', 'Honey', 'Black pepper'],
+            instructions: 'Mix turmeric, black pepper in warm milk with honey',
+            origin: 'India',
+            effectiveness: 'high',
+            safety: 'safe',
+            contraindications: 'May interact with blood thinners'
         },
         {
-            name: "Ashwagandha Milk",
-            description: "A calming drink that helps with stress and promotes better sleep.",
-            category: "nervous",
-            dosha: "vata",
-            difficulty: "medium",
-            ingredients: ["Ashwagandha powder", "Milk", "Honey", "Cardamom"],
-            instructions: [
-                "Warm 1 cup of milk",
-                "Add 1/2 tsp ashwagandha powder",
-                "Add honey and cardamom to taste",
-                "Drink before bedtime"
-            ]
+            id: 'chamomile_tea_sample',
+            name: 'Chamomile Tea',
+            category: 'nervous',
+            symptoms: ['anxiety', 'insomnia', 'stress'],
+            description: 'Calming herb for nervous system',
+            ingredients: ['Chamomile flowers', 'Hot water'],
+            instructions: 'Steep chamomile flowers in hot water for 5 minutes',
+            origin: 'Europe',
+            effectiveness: 'moderate',
+            safety: 'safe',
+            contraindications: 'May cause allergic reactions'
         }
     ];
 }
@@ -1153,25 +1307,42 @@ function showPricingModal() {
 // Handle subscription
 async function handleSubscription(plan) {
     try {
-        const response = await fetch(`${API_BASE}/api/subscribe`, {
+        console.log('Handling subscription for plan:', plan);
+        
+        // In a real implementation, this would integrate with a payment processor
+        const response = await fetch('/api/subscribe', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ plan })
+            body: JSON.stringify({
+                plan: plan,
+                email: userData.email || 'user@example.com'
+            })
         });
         
-        const data = await response.json();
+        const result = await response.json();
         
-        if (data.success) {
-            showNotification('Subscription successful!', 'success');
-            // Reload usage to update premium status
-            await loadUserUsage();
+        if (result.success) {
+            showNotification('Subscription successful! Welcome to premium features.', 'success');
+            isPremiumUser = true;
+            
+            // Close modal
+            const modal = document.querySelector('.modal.show');
+            if (modal) {
+                modal.style.display = 'none';
+                modal.classList.remove('show');
+            }
+            
+            // Refresh remedies if on remedies page
+            if (currentStep === 4) {
+                loadRemedies();
+            }
         } else {
-            showNotification(data.message || 'Subscription failed', 'error');
+            showNotification('Subscription failed. Please try again.', 'error');
         }
     } catch (error) {
-        console.error('Error handling subscription:', error);
+        console.error('Subscription error:', error);
         showNotification('Subscription failed. Please try again.', 'error');
     }
 }
