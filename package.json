@@ -8,8 +8,8 @@
     "npm": ">=8.0.0"
   },
   "scripts": {
-    "start": "node server-simple.js",
-    "dev": "nodemon server-simple.js",
+    "start": "node server-enhanced-model.js",
+    "dev": "nodemon server-enhanced-model.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",

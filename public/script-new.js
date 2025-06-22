@@ -289,10 +289,12 @@ async function getRemedies() {
 function displayRemedies(remedies) {
     const remediesContainer = document.getElementById('remedies-container');
     if (!remediesContainer) return;
+    
     if (remedies.length === 0) {
         remediesContainer.innerHTML = '<div class="no-remedies">No remedies found for your symptoms. Please try different symptoms or consult a healthcare provider.</div>';
         return;
     }
+    
     const symptomsText = selectedSymptoms.map(s => s.name).join(', ');
     remediesContainer.innerHTML = `
         <div class="symptoms-summary">
@@ -309,20 +311,35 @@ function displayRemedies(remedies) {
                             <span class="effectiveness-badge ${remedy.effectiveness}">${remedy.effectiveness}</span>
                         </div>
                     </div>
+                    
                     <div class="remedy-description">
-                        <p>${remedy.description}</p>
+                        <p><strong>Benefits:</strong> ${remedy.benefits}</p>
+                        ${remedy.classical_reference ? `<p><strong>Classical Reference:</strong> ${remedy.classical_reference}</p>` : ''}
                     </div>
+                    
                     <div class="remedy-details">
-                        <div class="ingredients">
-                            <h5>Ingredients:</h5>
-                            <ul>
-                                ${remedy.ingredients.map(ingredient => `<li>${ingredient}</li>`).join('')}
-                            </ul>
+                        <div class="ingredients-section">
+                            <h5>Ingredients & Nutritional Information:</h5>
+                            ${Array.isArray(remedy.ingredients) && remedy.ingredients[0] && typeof remedy.ingredients[0] === 'object' ? 
+                                remedy.ingredients.map(ingredient => `
+                                    <div class="ingredient-item">
+                                        <h6>${ingredient.name}</h6>
+                                        <p><strong>Nutritional Info:</strong> ${ingredient.nutritional_info}</p>
+                                        <p><strong>Body Benefits:</strong> ${ingredient.body_benefits}</p>
+                                        <p><strong>Product Suggestion:</strong> ${ingredient.product_suggestion}</p>
+                                    </div>
+                                `).join('') :
+                                remedy.ingredients.map(ingredient => `<li>${ingredient}</li>`).join('')
+                            }
                         </div>
-                        <div class="instructions">
+                        
+                        <div class="instructions-section">
                             <h5>Instructions:</h5>
                             <p>${remedy.instructions}</p>
+                            ${remedy.preparation_time ? `<p><strong>Preparation Time:</strong> ${remedy.preparation_time}</p>` : ''}
+                            ${remedy.dosage ? `<p><strong>Dosage:</strong> ${remedy.dosage}</p>` : ''}
                         </div>
+                        
                         ${remedy.contraindications ? `
                             <div class="contraindications">
                                 <h5>⚠️ Precautions:</h5>

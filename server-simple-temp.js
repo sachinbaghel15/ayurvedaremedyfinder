@@ -1,7 +1,7 @@
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
-const fs = require('fs');
+const fs =require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -219,7 +219,7 @@ const symptomsData = {
   ],
   general: [
     { id: 'frequent_infections', name: 'Frequent Infections' },
-    { id: 'allergies', name: 'Allergies' },
+    { id: 'allergies', name:. 'Allergies' },
     { id: 'autoimmune_disease', name: 'Autoimmune Disease' },
     { id: 'diabetes', name: 'Diabetes' },
     { id: 'high_blood_pressure', name: 'High Blood Pressure' },
@@ -228,135 +228,6 @@ const symptomsData = {
     { id: 'weight_loss', name: 'Weight Loss' },
     { id: 'aging_concerns', name: 'Aging Concerns' },
     { id: 'vitamin_c_deficiency', name: 'Vitamin C Deficiency' }
-  ]
-};
-
-// ===== ENHANCED MODEL: Symptom → Cause → Remedy → Product =====
-
-// 2. CAUSES DATA (Root cause analysis)
-const causesData = {
-  // Respiratory causes
-  cough: ['viral_infection', 'bacterial_infection', 'allergies', 'smoking', 'pollution', 'dry_air'],
-  cold: ['viral_infection', 'weakened_immunity', 'seasonal_changes', 'stress'],
-  fever: ['infection', 'inflammation', 'immune_response', 'viral_bacterial'],
-  sore_throat: ['viral_infection', 'bacterial_infection', 'acid_reflux', 'dry_air', 'smoking'],
-  congestion: ['allergies', 'sinus_infection', 'viral_infection', 'environmental_factors'],
-  
-  // Digestive causes
-  indigestion: ['poor_diet', 'stress', 'overeating', 'food_intolerance', 'low_digestive_fire'],
-  bloating: ['poor_diet', 'food_intolerance', 'stress', 'imbalanced_doshas', 'weak_digestion'],
-  constipation: ['poor_diet', 'dehydration', 'lack_of_fiber', 'stress', 'vata_imbalance'],
-  diarrhea: ['food_poisoning', 'viral_infection', 'stress', 'pitta_imbalance', 'poor_diet'],
-  nausea: ['digestive_upset', 'stress', 'motion_sickness', 'pregnancy', 'medication'],
-  
-  // Mental causes
-  anxiety: ['stress', 'vata_imbalance', 'poor_sleep', 'caffeine', 'genetic_factors'],
-  stress: ['work_pressure', 'relationship_issues', 'financial_worries', 'health_concerns'],
-  insomnia: ['stress', 'vata_imbalance', 'poor_sleep_hygiene', 'caffeine', 'screen_time'],
-  depression: ['chemical_imbalance', 'stress', 'genetic_factors', 'life_events', 'kapha_imbalance'],
-  mood_swings: ['hormonal_imbalance', 'stress', 'pitta_imbalance', 'poor_diet'],
-  
-  // Pain causes
-  headache: ['stress', 'dehydration', 'poor_posture', 'eye_strain', 'vata_imbalance'],
-  back_pain: ['poor_posture', 'muscle_strain', 'stress', 'vata_imbalance', 'aging'],
-  joint_pain: ['inflammation', 'arthritis', 'overuse', 'kapha_imbalance', 'aging'],
-  muscle_pain: ['overuse', 'stress', 'poor_posture', 'dehydration', 'vata_imbalance'],
-  chronic_pain: ['inflammation', 'nerve_damage', 'stress', 'dosha_imbalance', 'aging'],
-  
-  // Skin causes
-  acne: ['hormonal_imbalance', 'poor_diet', 'stress', 'pitta_imbalance', 'bacteria'],
-  eczema: ['allergies', 'stress', 'dry_skin', 'immune_system_issues', 'vata_imbalance'],
-  dry_skin: ['dehydration', 'weather', 'aging', 'vata_imbalance', 'poor_skincare'],
-  itching: ['allergies', 'dry_skin', 'stress', 'vata_imbalance', 'skin_conditions'],
-  rashes: ['allergies', 'contact_dermatitis', 'stress', 'pitta_imbalance', 'infections'],
-  
-  // Energy causes
-  fatigue: ['poor_sleep', 'stress', 'poor_diet', 'dehydration', 'dosha_imbalance'],
-  low_energy: ['poor_diet', 'stress', 'lack_of_exercise', 'dosha_imbalance', 'sleep_issues'],
-  weakness: ['poor_diet', 'dehydration', 'stress', 'illness', 'vata_imbalance'],
-  tiredness: ['poor_sleep', 'stress', 'overwork', 'dosha_imbalance', 'poor_diet'],
-  adrenal_fatigue: ['chronic_stress', 'poor_diet', 'lack_of_sleep', 'overwork', 'dosha_imbalance']
-};
-
-// 4. PRODUCT RECOMMENDATIONS (Ethical and scalable)
-const productRecommendations = {
-  tulsi: [
-    {
-      name: 'Organic India Tulsi Tea',
-      type: 'tea_bags',
-      price: '$12.99',
-      quantity: '25 bags',
-      rating: 4.5,
-      ethical_score: 9.2,
-      sustainability: 'high',
-      certifications: ['USDA Organic', 'Fair Trade'],
-      availability: 'global',
-      supplier: 'Organic India'
-    },
-    {
-      name: 'Traditional Medicinals Tulsi Tea',
-      type: 'tea_bags',
-      price: '$8.99',
-      quantity: '16 bags',
-      rating: 4.3,
-      ethical_score: 8.8,
-      sustainability: 'high',
-      certifications: ['USDA Organic', 'Non-GMO'],
-      availability: 'global',
-      supplier: 'Traditional Medicinals'
-    }
-  ],
-  turmeric: [
-    {
-      name: 'Frontier Co-op Organic Turmeric',
-      type: 'powder',
-      price: '$9.99',
-      quantity: '8 oz',
-      rating: 4.6,
-      ethical_score: 9.0,
-      sustainability: 'high',
-      certifications: ['USDA Organic', 'Fair Trade'],
-      availability: 'global',
-      supplier: 'Frontier Co-op'
-    },
-    {
-      name: 'Simply Organic Turmeric',
-      type: 'powder',
-      price: '$7.99',
-      quantity: '4.5 oz',
-      rating: 4.4,
-      ethical_score: 8.5,
-      sustainability: 'medium',
-      certifications: ['USDA Organic'],
-      availability: 'global',
-      supplier: 'Simply Organic'
-    }
-  ],
-  ashwagandha: [
-    {
-      name: 'Organic India Ashwagandha',
-      type: 'powder',
-      price: '$19.99',
-      quantity: '8 oz',
-      rating: 4.7,
-      ethical_score: 9.3,
-      sustainability: 'high',
-      certifications: ['USDA Organic', 'Fair Trade'],
-      availability: 'global',
-      supplier: 'Organic India'
-    },
-    {
-      name: 'Himalaya Ashwagandha',
-      type: 'capsules',
-      price: '$24.99',
-      quantity: '60 capsules',
-      rating: 4.5,
-      ethical_score: 8.9,
-      sustainability: 'high',
-      certifications: ['USDA Organic'],
-      availability: 'global',
-      supplier: 'Himalaya'
-    }
   ]
 };
 
@@ -789,35 +660,6 @@ const remediesData = [
     dosage: '1 dose before bed'
   }
 ];
-
-// Helper functions for enhanced model
-function getProductRecommendations(ingredients) {
-  const recommendations = [];
-  ingredients.forEach(ingredient => {
-    const ingredientName = ingredient.name.toLowerCase().split(' ')[0];
-    if (productRecommendations[ingredientName]) {
-      recommendations.push({
-        ingredient: ingredient.name,
-        products: productRecommendations[ingredientName]
-      });
-    }
-  });
-  return recommendations;
-}
-
-function getProductRecommendationsForSymptom(symptom) {
-  const remedies = remediesData.filter(remedy => 
-    remedy.symptoms.includes(symptom)
-  );
-  
-  const allProducts = [];
-  remedies.forEach(remedy => {
-    const products = getProductRecommendations(remedy.ingredients);
-    allProducts.push(...products);
-  });
-  
-  return allProducts;
-}
 
 // Routes
 app.get('/api/doshas/info', (req, res) => {

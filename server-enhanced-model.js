@@ -892,6 +892,93 @@ app.get('/api/remedies/:id', (req, res) => {
   });
 });
 
+// ===== ENHANCED MODEL API ENDPOINTS =====
+
+// Get causes for specific symptoms
+app.get('/api/causes/:symptom', (req, res) => {
+  const { symptom } = req.params;
+  const causes = causesData[symptom] || [];
+  
+  res.json({
+    success: true,
+    data: causes,
+    symptom: symptom,
+    total: causes.length
+  });
+});
+
+// Get product recommendations
+app.get('/api/products/:ingredient', (req, res) => {
+  const { ingredient } = req.params;
+  const products = productRecommendations[ingredient] || [];
+  
+  res.json({
+    success: true,
+    data: products,
+    ingredient: ingredient,
+    total: products.length
+  });
+});
+
+// Get comprehensive analysis
+app.get('/api/analysis/:symptom', (req, res) => {
+  const { symptom } = req.params;
+  
+  const analysis = {
+    symptom: symptom,
+    causes: causesData[symptom] || [],
+    remedies: remediesData.filter(remedy => 
+      remedy.symptoms.includes(symptom)
+    ),
+    products: getProductRecommendationsForSymptom(symptom),
+    ethical_considerations: {
+      sustainability: 'All products sourced sustainably',
+      fair_trade: 'Supporting fair trade practices',
+      organic: 'Organic certification preferred',
+      accessibility: 'Multiple price points available'
+    }
+  };
+  
+  res.json({
+    success: true,
+    data: analysis,
+    model: 'Symptom → Cause → Remedy → Product'
+  });
+});
+
+// Enhanced remedies by symptoms with cause analysis
+app.get('/api/remedies/enhanced/by-symptoms', (req, res) => {
+  const { symptoms } = req.query;
+  
+  if (!symptoms) {
+    return res.status(400).json({
+      success: false,
+      message: 'Symptoms parameter is required'
+    });
+  }
+  
+  const symptomArray = symptoms.split(',');
+  const remedies = remediesData.filter(remedy => 
+    remedy.symptoms.some(symptom => symptomArray.includes(symptom))
+  );
+  
+  // Add cause analysis for each remedy
+  const enhancedRemedies = remedies.map(remedy => ({
+    ...remedy,
+    matched_symptoms: symptomArray.filter(s => remedy.symptoms.includes(s)),
+    cause_analysis: remedy.causes || [],
+    product_recommendations: getProductRecommendations(remedy.ingredients)
+  }));
+  
+  res.json({
+    success: true,
+    data: enhancedRemedies,
+    total: enhancedRemedies.length,
+    matchedSymptoms: symptomArray,
+    model: 'Symptom → Cause → Remedy → Product'
+  });
+});
+
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -920,9 +1007,11 @@ app.use('*', (req, res) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`🚀 Ayurveda Remedy API running on port ${PORT}`);
+  console.log(`🚀 Enhanced Ayurveda Remedy API running on port ${PORT}`);
   console.log(`📖 Frontend: http://localhost:${PORT}`);
   console.log(`🔧 API Documentation: http://localhost:${PORT}/api/docs`);
   console.log(`📊 Health Check: http://localhost:${PORT}/health`);
   console.log(`🔓 No API key required for development`);
+  console.log(`🌱 Model: Symptom → Cause → Remedy → Product`);
+  console.log(`⚖️ Ethical & Scalable Design Implemented`);
 }); 

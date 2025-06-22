@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Final Test - Symptoms Fix</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        .symptoms-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin: 10px 0; }
+        .symptom-item { padding: 10px; border: 1px solid #ccc; cursor: pointer; }
+        .symptom-item:hover { background-color: #f0f0f0; }
+        .symptom-item.selected { background-color: #e8f5e8; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>Final Test - Symptoms Loading Fix</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Check if symptoms-container exists</h2>
+        <div id="symptoms-container" class="symptoms-grid">
+            <!-- Symptoms will be loaded here -->
+        </div>
+        <div id="test1-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Load symptoms by category</h2>
+        <button onclick="testLoadSymptoms('digestive')">Load Digestive Symptoms</button>
+        <button onclick="testLoadSymptoms('respiratory')">Load Respiratory Symptoms</button>
+        <button onclick="testLoadSymptoms('nervous')">Load Nervous Symptoms</button>
+        <div id="test2-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Search symptoms</h2>
+        <input type="text" id="search-input" placeholder="Search symptoms..." oninput="testSearchSymptoms(this.value)">
+        <div id="test3-result"></div>
+    </div>
+
+    <script>
+        // Sample symptoms data
+        const symptomsData = {
+            digestive: [
+                { id: 'd1', name: 'Indigestion' },
+                { id: 'd2', name: 'Bloating' },
+                { id: 'd3', name: 'Acidity' },
+                { id: 'd4', name: 'Constipation' }
+            ],
+            respiratory: [
+                { id: 'r1', name: 'Cough' },
+                { id: 'r2', name: 'Cold' },
+                { id: 'r3', name: 'Sore throat' },
+                { id: 'r4', name: 'Breathing difficulty' }
+            ],
+            nervous: [
+                { id: 'n1', name: 'Anxiety' },
+                { id: 'n2', name: 'Insomnia' },
+                { id: 'n3', name: 'Headache' },
+                { id: 'n4', name: 'Stress' }
+            ]
+        };
+
+        // Test 1: Check if symptoms-container exists
+        function test1() {
+            const container = document.getElementById('symptoms-container');
+            const result = document.getElementById('test1-result');
+            
+            if (container) {
+                result.innerHTML = '<span class="success">✅ SUCCESS: symptoms-container element found!</span>';
+                return true;
+            } else {
+                result.innerHTML = '<span class="error">❌ ERROR: symptoms-container element not found!</span>';
+                return false;
+            }
+        }
+
+        // Test 2: Load symptoms by category
+        function testLoadSymptoms(category) {
+            const container = document.getElementById('symptoms-container');
+            const result = document.getElementById('test2-result');
+            
+            if (!container) {
+                result.innerHTML = '<span class="error">❌ ERROR: symptoms-container not found!</span>';
+                return;
+            }
+
+            const symptoms = symptomsData[category] || [];
+            container.innerHTML = symptoms.map(symptom => `
+                <div class="symptom-item" data-symptom-id="${symptom.id}" data-symptom-name="${symptom.name}">
+                    <i class="fas fa-plus"></i>
+                    ${symptom.name}
+                </div>
+            `).join('');
+
+            result.innerHTML = `<span class="success">✅ SUCCESS: Loaded ${symptoms.length} ${category} symptoms!</span>`;
+        }
+
+        // Test 3: Search symptoms
+        function testSearchSymptoms(query) {
+            const container = document.getElementById('symptoms-container');
+            const result = document.getElementById('test3-result');
+            
+            if (!container) {
+                result.innerHTML = '<span class="error">❌ ERROR: symptoms-container not found!</span>';
+                return;
+            }
+
+            if (!query.trim()) {
+                result.innerHTML = '<span class="error">❌ ERROR: No search query provided!</span>';
+                return;
+            }
+
+            const allSymptoms = Object.values(symptomsData).flat();
+            const filteredSymptoms = allSymptoms.filter(symptom => 
+                symptom.name.toLowerCase().includes(query.toLowerCase())
+            );
+
+            container.innerHTML = filteredSymptoms.map(symptom => `
+                <div class="symptom-item" data-symptom-id="${symptom.id}" data-symptom-name="${symptom.name}">
+                    <i class="fas fa-plus"></i>
+                    ${symptom.name}
+                </div>
+            `).join('');
+
+            result.innerHTML = `<span class="success">✅ SUCCESS: Found ${filteredSymptoms.length} symptoms matching "${query}"!</span>`;
+        }
+
+        // Run initial test
+        window.onload = function() {
+            test1();
+        };
+    </script>
+</body>
+</html> 

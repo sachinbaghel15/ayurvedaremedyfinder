@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Fix - Ayurveda Remedy</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .btn {
+            background: #27ae60;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .btn:hover {
+            background: #219a52;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .category-tab {
+            background: #ecf0f1;
+            border: none;
+            padding: 10px 15px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .category-tab.active {
+            background: #3498db;
+            color: white;
+        }
+        .symptom-item {
+            background: #f8f9fa;
+            padding: 10px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: inline-block;
+        }
+        .symptom-item:hover {
+            background: #e9ecef;
+        }
+        #symptoms-container {
+            margin: 20px 0;
+            min-height: 100px;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Test Fix - Ayurveda Remedy</h1>
+        <p>This page tests if the JavaScript fixes are working correctly.</p>
+        
+        <div id="status"></div>
+        
+        <h2>Test 1: Script Loading</h2>
+        <div id="script-status" class="status info">Checking script status...</div>
+        
+        <h2>Test 2: Symptoms Loading</h2>
+        <div class="category-tabs">
+            <button class="category-tab active" data-category="digestive">Digestive</button>
+            <button class="category-tab" data-category="respiratory">Respiratory</button>
+            <button class="category-tab" data-category="nervous">Nervous</button>
+            <button class="category-tab" data-category="skin">Skin</button>
+        </div>
+        
+        <div id="symptoms-container">
+            <p>Click a category tab above to test symptoms loading...</p>
+        </div>
+        
+        <h2>Test 3: PDF Generation</h2>
+        <button class="btn" onclick="testPDF()">Test PDF Generation</button>
+        
+        <h2>Test 4: Pricing Modal</h2>
+        <button class="btn" onclick="testPricing()">Test Pricing Modal</button>
+        
+        <h2>Console Output</h2>
+        <div id="console-output" style="background: #000; color: #0f0; padding: 10px; height: 200px; overflow-y: scroll; font-family: monospace; font-size: 12px;"></div>
+    </div>
+
+    <!-- Load the new script -->
+    <script src="script-new.js?v=1.5"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <script>
+        function log(message) {
+            console.log(message);
+            const output = document.getElementById('console-output');
+            output.innerHTML += message + '<br>';
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        // Test script loading
+        function checkScriptStatus() {
+            const statusDiv = document.getElementById('script-status');
+            
+            if (typeof symptomsData !== 'undefined') {
+                statusDiv.innerHTML = `<div class="status success">✅ Script loaded successfully! Found ${Object.keys(symptomsData).length} symptom categories.</div>`;
+                log('✅ Script loaded successfully');
+            } else {
+                statusDiv.innerHTML = `<div class="status error">❌ Script not loaded properly!</div>`;
+                log('❌ Script not loaded properly');
+            }
+            
+            if (typeof loadSymptomsByCategory !== 'function') {
+                statusDiv.innerHTML = `<div class="status error">❌ loadSymptomsByCategory function not found!</div>`;
+                log('❌ loadSymptomsByCategory function not found');
+            } else {
+                log('✅ loadSymptomsByCategory function found');
+            }
+        }
+
+        // Test symptoms loading
+        document.addEventListener('DOMContentLoaded', function() {
+            log('DOM loaded, checking script status...');
+            checkScriptStatus();
+            
+            // Add click handlers for category tabs
+            document.querySelectorAll('.category-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const category = this.getAttribute('data-category');
+                    log(`Category clicked: ${category}`);
+                    
+                    // Update active tab
+                    document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Test symptoms loading
+                    if (typeof loadSymptomsByCategory === 'function') {
+                        log(`Calling loadSymptomsByCategory('${category}')`);
+                        loadSymptomsByCategory(category);
+                    } else {
+                        log('❌ loadSymptomsByCategory function not available');
+                    }
+                });
+            });
+        });
+
+        function testPDF() {
+            try {
+                if (typeof window.jspdf === 'undefined') {
+                    log('❌ jsPDF library not loaded');
+                    return;
+                }
+
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                doc.setFontSize(20);
+                doc.text('Test PDF - Fix Working!', 20, 30);
+                doc.setFontSize(12);
+                doc.text('PDF generation is working correctly.', 20, 50);
+                doc.text('Generated on: ' + new Date().toLocaleString(), 20, 70);
+                
+                doc.save('test-fix.pdf');
+                log('✅ PDF generated successfully');
+                showStatus('PDF generated successfully!', 'success');
+            } catch (error) {
+                log(`❌ PDF generation error: ${error.message}`);
+                showStatus('PDF generation failed: ' + error.message, 'error');
+            }
+        }
+
+        function testPricing() {
+            try {
+                if (typeof showPricingModal !== 'function') {
+                    log('❌ showPricingModal function not found');
+                    return;
+                }
+
+                // Set up sample pricing data
+                window.pricing = {
+                    premiumMonthlyPrice: 9.99,
+                    premiumYearlyPrice: 99.99
+                };
+
+                showPricingModal();
+                log('✅ Pricing modal should be displayed');
+                showStatus('Pricing modal displayed!', 'success');
+            } catch (error) {
+                log(`❌ Pricing modal error: ${error.message}`);
+                showStatus('Pricing modal failed: ' + error.message, 'error');
+            }
+        }
+
+        // Log initial status
+        log('=== TEST PAGE LOADED ===');
+        log('Checking for script-new.js...');
+        
+        // Check if script is loaded after a short delay
+        setTimeout(() => {
+            checkScriptStatus();
+        }, 1000);
+    </script>
+</body>
+</html> 
