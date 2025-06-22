@@ -530,7 +530,14 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Specific route handlers for static files (BEFORE static middleware to ensure correct MIME types)
+app.get('/test-css', (req, res) => {
+  console.log('Test CSS route called');
+  res.setHeader('Content-Type', 'text/css');
+  res.send('body { background: red; }');
+});
+
 app.get('/script-new.js', (req, res) => {
+  console.log('script-new.js route handler called');
   const fs = require('fs');
   const path = require('path');
   const filePath = path.join(__dirname, 'public', 'script-new.js');
@@ -548,6 +555,7 @@ app.get('/script-new.js', (req, res) => {
 });
 
 app.get('/jspdf.min.js', (req, res) => {
+  console.log('jspdf.min.js route handler called');
   const fs = require('fs');
   const path = require('path');
   const filePath = path.join(__dirname, 'public', 'jspdf.min.js');
@@ -565,6 +573,7 @@ app.get('/jspdf.min.js', (req, res) => {
 });
 
 app.get('/styles.css', (req, res) => {
+  console.log('styles.css route handler called');
   const fs = require('fs');
   const path = require('path');
   const filePath = path.join(__dirname, 'public', 'styles.css');
@@ -604,6 +613,29 @@ app.get('/styles-new.css', (req, res) => {
   }
 });
 
+app.get('/modern-styles.css', (req, res) => {
+  console.log('modern-styles.css route handler called');
+  const fs = require('fs');
+  const path = require('path');
+  const filePath = path.join(__dirname, 'public', 'modern-styles.css');
+  
+  console.log('Looking for file at:', filePath);
+  console.log('File exists:', fs.existsSync(filePath));
+  
+  if (fs.existsSync(filePath)) {
+    console.log('Serving modern-styles.css with text/css MIME type');
+    res.setHeader('Content-Type', 'text/css');
+    res.sendFile(filePath);
+  } else {
+    console.log('File not found, sending 404');
+    res.status(404).json({
+      error: 'File not found',
+      path: filePath,
+      currentDir: __dirname
+    });
+  }
+});
+
 // Serve static files from public directory with proper MIME types
 app.use(express.static(path.join(__dirname, 'public'), {
   setHeaders: (res, path) => {
@@ -616,9 +648,11 @@ app.use(express.static(path.join(__dirname, 'public'), {
     }
   },
   filter: (req, res) => {
-    // Skip files that have dedicated route handlers
-    const skipFiles = ['/script-new.js', '/jspdf.min.js', '/styles.css', '/styles-new.css'];
-    return !skipFiles.includes(req.path);
+    // Completely skip files that have dedicated route handlers
+    const skipFiles = ['/script-new.js', '/jspdf.min.js', '/styles.css', '/styles-new.css', '/modern-styles.css'];
+    const shouldSkip = skipFiles.includes(req.path);
+    console.log(`Static middleware: ${req.path} - ${shouldSkip ? 'SKIPPED' : 'ALLOWED'}`);
+    return !shouldSkip;
   }
 }));
 
