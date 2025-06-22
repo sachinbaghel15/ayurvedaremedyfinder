@@ -259,7 +259,7 @@ async function getRemedies() {
     // Get symptom IDs
     const symptomIds = selectedSymptoms.map(s => s.id).join(',');
     try {
-        const response = await fetch(`/api/remedies/by-symptoms?symptoms=${symptomIds}&api_key=frontend-key`);
+        const response = await fetch(`/api/remedies/by-symptoms?symptoms=${symptomIds}`);
         const data = await response.json();
         if (data.success && data.data) {
             displayRemedies(data.data);
