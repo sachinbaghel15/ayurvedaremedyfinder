@@ -132,12 +132,50 @@ const doshaInfo = {
 
 // Symptoms data
 const symptomsData = {
-  respiratory: ['cough', 'cold', 'fever', 'sore_throat', 'congestion', 'shortness_of_breath'],
-  digestive: ['indigestion', 'bloating', 'constipation', 'diarrhea', 'nausea', 'loss_of_appetite'],
-  mental: ['anxiety', 'stress', 'insomnia', 'depression', 'mood_swings', 'brain_fog'],
-  pain: ['headache', 'back_pain', 'joint_pain', 'muscle_pain', 'chronic_pain'],
-  skin: ['acne', 'eczema', 'dry_skin', 'itching', 'rashes'],
-  energy: ['fatigue', 'low_energy', 'weakness', 'tiredness']
+  respiratory: [
+    { id: 'cough', name: 'Cough' },
+    { id: 'cold', name: 'Cold' },
+    { id: 'fever', name: 'Fever' },
+    { id: 'sore_throat', name: 'Sore Throat' },
+    { id: 'congestion', name: 'Congestion' },
+    { id: 'shortness_of_breath', name: 'Shortness of Breath' }
+  ],
+  digestive: [
+    { id: 'indigestion', name: 'Indigestion' },
+    { id: 'bloating', name: 'Bloating' },
+    { id: 'constipation', name: 'Constipation' },
+    { id: 'diarrhea', name: 'Diarrhea' },
+    { id: 'nausea', name: 'Nausea' },
+    { id: 'loss_of_appetite', name: 'Loss of Appetite' }
+  ],
+  mental: [
+    { id: 'anxiety', name: 'Anxiety' },
+    { id: 'stress', name: 'Stress' },
+    { id: 'insomnia', name: 'Insomnia' },
+    { id: 'depression', name: 'Depression' },
+    { id: 'mood_swings', name: 'Mood Swings' },
+    { id: 'brain_fog', name: 'Brain Fog' }
+  ],
+  pain: [
+    { id: 'headache', name: 'Headache' },
+    { id: 'back_pain', name: 'Back Pain' },
+    { id: 'joint_pain', name: 'Joint Pain' },
+    { id: 'muscle_pain', name: 'Muscle Pain' },
+    { id: 'chronic_pain', name: 'Chronic Pain' }
+  ],
+  skin: [
+    { id: 'acne', name: 'Acne' },
+    { id: 'eczema', name: 'Eczema' },
+    { id: 'dry_skin', name: 'Dry Skin' },
+    { id: 'itching', name: 'Itching' },
+    { id: 'rashes', name: 'Rashes' }
+  ],
+  energy: [
+    { id: 'fatigue', name: 'Fatigue' },
+    { id: 'low_energy', name: 'Low Energy' },
+    { id: 'weakness', name: 'Weakness' },
+    { id: 'tiredness', name: 'Tiredness' }
+  ]
 };
 
 // Remedies data
@@ -211,6 +249,7 @@ app.get('/api/symptoms', (req, res) => {
       data: symptomsData[category]
     });
   } else {
+    // Return all symptoms
     const allSymptoms = Object.values(symptomsData).flat();
     res.json({
       success: true,
