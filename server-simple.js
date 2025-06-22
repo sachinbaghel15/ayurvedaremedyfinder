@@ -66,10 +66,10 @@ app.use(helmet({
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://fonts.googleapis.com"],
       scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-      scriptSrcAttr: ["'unsafe-inline'"],
+      scriptSrcAttr: ["'unsafe-inline'", "'unsafe-hashes'"],
       fontSrc: ["'self'", "https://cdnjs.cloudflare.com", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'"],
+      connectSrc: ["'self'", "https://ayurvedaremedyfinder.onrender.com"],
       frameSrc: ["'self'"],
       objectSrc: ["'none'"],
       upgradeInsecureRequests: []
@@ -133,7 +133,6 @@ const authenticateApiKey = (req, res, next) => {
 // Apply authentication to specific API routes only (not usage endpoints)
 app.use('/api/doshas/info', authenticateApiKey);
 app.use('/api/doshas/assessment', authenticateApiKey);
-app.use('/api/remedies', authenticateApiKey);
 app.use('/api/health', authenticateApiKey);
 
 // Health check endpoint
@@ -557,7 +556,7 @@ app.get('/api/symptoms/categories', (req, res) => {
 });
 
 // Comprehensive worldwide remedies endpoint
-app.get('/api/remedies', (req, res) => {
+app.get('/api/remedies', authenticateApiKey, (req, res) => {
   const { category, symptom, search, origin, effectiveness, limit = 20, offset = 0 } = req.query;
   let remedies = [...worldwideRemediesData];
   
@@ -618,7 +617,7 @@ app.get('/api/remedies', (req, res) => {
   });
 });
 
-app.get('/api/remedies/:id', (req, res) => {
+app.get('/api/remedies/:id', authenticateApiKey, (req, res) => {
   const remedy = worldwideRemediesData.find(r => r.id === req.params.id);
   
   if (!remedy) {
