@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ayurveda Remedy API - Pricing & Plans</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="pricing-header">
+            <h1>Choose Your Wellness Journey</h1>
+            <p>Unlock the power of Ayurvedic wisdom with our comprehensive plans</p>
+            <div class="pricing-toggle">
+                <span>Monthly</span>
+                <label class="switch">
+                    <input type="checkbox" id="billing-toggle">
+                    <span class="slider"></span>
+                </label>
+                <span>Yearly <span class="save-badge">Save 20%</span></span>
+            </div>
+        </header>
+
+        <!-- Pricing Cards -->
+        <div class="pricing-grid">
+            <!-- Free Plan -->
+            <div class="pricing-card free">
+                <div class="card-header">
+                    <h3>Free</h3>
+                    <div class="price">
+                        <span class="amount">$0</span>
+                        <span class="period">/month</span>
+                    </div>
+                    <p class="description">Perfect for getting started with Ayurvedic wellness</p>
+                </div>
+                <div class="card-features">
+                    <ul>
+                        <li><i class="fas fa-check"></i> 5 assessments per month</li>
+                        <li><i class="fas fa-check"></i> Basic dosha results</li>
+                        <li><i class="fas fa-check"></i> General remedy suggestions</li>
+                        <li><i class="fas fa-check"></i> Limited symptom filtering</li>
+                        <li><i class="fas fa-check"></i> Mobile-friendly interface</li>
+                    </ul>
+                </div>
+                <div class="card-footer">
+                    <button class="btn btn-outline" onclick="startFreeTrial()">Get Started Free</button>
+                </div>
+            </div>
+
+            <!-- Basic Plan -->
+            <div class="pricing-card basic featured">
+                <div class="popular-badge">Most Popular</div>
+                <div class="card-header">
+                    <h3>Basic</h3>
+                    <div class="price">
+                        <span class="amount">$9.99</span>
+                        <span class="period">/month</span>
+                    </div>
+                    <p class="description">Unlock unlimited assessments and detailed insights</p>
+                </div>
+                <div class="card-features">
+                    <ul>
+                        <li><i class="fas fa-check"></i> Unlimited assessments</li>
+                        <li><i class="fas fa-check"></i> Detailed dosha analysis</li>
+                        <li><i class="fas fa-check"></i> Personalized recommendations</li>
+                        <li><i class="fas fa-check"></i> Advanced symptom filtering</li>
+                        <li><i class="fas fa-check"></i> PDF reports</li>
+                        <li><i class="fas fa-check"></i> Email support</li>
+                        <li><i class="fas fa-check"></i> 50 premium remedies</li>
+                    </ul>
+                </div>
+                <div class="card-footer">
+                    <button class="btn btn-primary" onclick="subscribe('basic')">Start Basic Plan</button>
+                </div>
+            </div>
+
+            <!-- Professional Plan -->
+            <div class="pricing-card professional">
+                <div class="card-header">
+                    <h3>Professional</h3>
+                    <div class="price">
+                        <span class="amount">$19.99</span>
+                        <span class="period">/month</span>
+                    </div>
+                    <p class="description">Advanced features for wellness professionals</p>
+                </div>
+                <div class="card-features">
+                    <ul>
+                        <li><i class="fas fa-check"></i> All Basic features</li>
+                        <li><i class="fas fa-check"></i> Advanced wellness plans</li>
+                        <li><i class="fas fa-check"></i> Priority customer support</li>
+                        <li><i class="fas fa-check"></i> Exclusive content access</li>
+                        <li><i class="fas fa-check"></i> Monthly wellness newsletters</li>
+                        <li><i class="fas fa-check"></i> Lifestyle coaching tips</li>
+                        <li><i class="fas fa-check"></i> API access</li>
+                        <li><i class="fas fa-check"></i> White-label solutions</li>
+                    </ul>
+                </div>
+                <div class="card-footer">
+                    <button class="btn btn-primary" onclick="subscribe('professional')">Start Professional Plan</button>
+                </div>
+            </div>
+
+            <!-- Enterprise Plan -->
+            <div class="pricing-card enterprise">
+                <div class="card-header">
+                    <h3>Enterprise</h3>
+                    <div class="price">
+                        <span class="amount">$99.99</span>
+                        <span class="period">/month</span>
+                    </div>
+                    <p class="description">Complete solution for large organizations</p>
+                </div>
+                <div class="card-features">
+                    <ul>
+                        <li><i class="fas fa-check"></i> All Professional features</li>
+                        <li><i class="fas fa-check"></i> Custom integrations</li>
+                        <li><i class="fas fa-check"></i> Dedicated support</li>
+                        <li><i class="fas fa-check"></i> Custom branding</li>
+                        <li><i class="fas fa-check"></i> Advanced analytics</li>
+                        <li><i class="fas fa-check"></i> Team management</li>
+                        <li><i class="fas fa-check"></i> Unlimited API access</li>
+                        <li><i class="fas fa-check"></i> SLA guarantee</li>
+                    </ul>
+                </div>
+                <div class="card-footer">
+                    <button class="btn btn-primary" onclick="contactSales()">Contact Sales</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Marketplace Section -->
+        <section class="marketplace-section">
+            <h2>Additional Services & Integrations</h2>
+            <div class="marketplace-grid">
+                <div class="marketplace-card">
+                    <div class="card-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <h4>E-commerce Integrations</h4>
+                    <p>Connect Ayurvedic insights with your online store</p>
+                    <div class="integration-options">
+                        <div class="integration-item">
+                            <span>Shopify</span>
+                            <span class="price">$99.99</span>
+                        </div>
+                        <div class="integration-item">
+                            <span>WooCommerce</span>
+                            <span class="price">$79.99</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="viewIntegrations()">View All</button>
+                </div>
+
+                <div class="marketplace-card">
+                    <div class="card-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h4>Advanced Analytics</h4>
+                    <p>Comprehensive health and business insights</p>
+                    <div class="feature-price">
+                        <span class="price">$199.99</span>
+                        <span class="period">one-time</span>
+                    </div>
+                    <button class="btn btn-secondary" onclick="purchaseAddon('advanced_analytics')">Purchase</button>
+                </div>
+
+                <div class="marketplace-card">
+                    <div class="card-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h4>AI Wellness Coach</h4>
+                    <p>24/7 personalized AI-powered guidance</p>
+                    <div class="feature-price">
+                        <span class="price">$299.99</span>
+                        <span class="period">one-time</span>
+                    </div>
+                    <button class="btn btn-secondary" onclick="purchaseAddon('ai_coach')">Purchase</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- FAQ Section -->
+        <section class="faq-section">
+            <h2>Frequently Asked Questions</h2>
+            <div class="faq-grid">
+                <div class="faq-item">
+                    <h4>Can I cancel my subscription anytime?</h4>
+                    <p>Yes, you can cancel your subscription at any time. You'll continue to have access until the end of your billing period.</p>
+                </div>
+                <div class="faq-item">
+                    <h4>What payment methods do you accept?</h4>
+                    <p>We accept all major credit cards, debit cards, and PayPal. All payments are processed securely through Stripe.</p>
+                </div>
+                <div class="faq-item">
+                    <h4>Is there a free trial?</h4>
+                    <p>Yes! You can start with our free plan which includes 5 assessments per month. No credit card required.</p>
+                </div>
+                <div class="faq-item">
+                    <h4>Can I upgrade or downgrade my plan?</h4>
+                    <p>Absolutely! You can upgrade or downgrade your plan at any time. Changes will be reflected in your next billing cycle.</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="payment-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Complete Your Subscription</h3>
+            <form id="payment-form">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="card-element">Credit or debit card</label>
+                    <div id="card-element"></div>
+                    <div id="card-errors" role="alert"></div>
+                </div>
+                <button type="submit" class="btn btn-primary">Subscribe Now</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="pricing.js"></script>
+</body>
+</html> 

@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ayurveda Remedy API - Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-leaf"></i> Ayurveda Dashboard</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="active">
+                        <a href="#overview" onclick="showSection('overview')">
+                            <i class="fas fa-chart-line"></i> Overview
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#assessments" onclick="showSection('assessments')">
+                            <i class="fas fa-clipboard-list"></i> Assessments
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#remedies" onclick="showSection('remedies')">
+                            <i class="fas fa-pills"></i> Remedies
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#reports" onclick="showSection('reports')">
+                            <i class="fas fa-file-medical"></i> Reports
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#analytics" onclick="showSection('analytics')">
+                            <i class="fas fa-chart-bar"></i> Analytics
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#subscription" onclick="showSection('subscription')">
+                            <i class="fas fa-credit-card"></i> Subscription
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#api-keys" onclick="showSection('api-keys')">
+                            <i class="fas fa-key"></i> API Keys
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#settings" onclick="showSection('settings')">
+                            <i class="fas fa-cog"></i> Settings
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="dashboard-header">
+                <div class="header-left">
+                    <h1 id="section-title">Dashboard Overview</h1>
+                </div>
+                <div class="header-right">
+                    <div class="user-info">
+                        <span id="user-email">user@example.com</span>
+                        <span class="plan-badge" id="plan-badge">Free</span>
+                    </div>
+                    <button class="btn btn-outline" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </header>
+
+            <!-- Content Sections -->
+            <div class="content-area">
+                <!-- Overview Section -->
+                <section id="overview" class="dashboard-section active">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-clipboard-list"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="total-assessments">0</h3>
+                                <p>Total Assessments</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-pills"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="remedies-viewed">0</h3>
+                                <p>Remedies Viewed</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="api-calls">0</h3>
+                                <p>API Calls</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-calendar"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="days-active">0</h3>
+                                <p>Days Active</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="charts-grid">
+                        <div class="chart-card">
+                            <h3>Assessment History</h3>
+                            <canvas id="assessment-chart"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Dosha Distribution</h3>
+                            <canvas id="dosha-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="recent-activity">
+                        <h3>Recent Activity</h3>
+                        <div id="activity-list" class="activity-list">
+                            <!-- Activity items will be loaded here -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Assessments Section -->
+                <section id="assessments" class="dashboard-section">
+                    <div class="section-header">
+                        <h2>Your Assessments</h2>
+                        <button class="btn btn-primary" onclick="startNewAssessment()">
+                            <i class="fas fa-plus"></i> New Assessment
+                        </button>
+                    </div>
+                    <div id="assessments-list" class="assessments-list">
+                        <!-- Assessments will be loaded here -->
+                    </div>
+                </section>
+
+                <!-- Remedies Section -->
+                <section id="remedies" class="dashboard-section">
+                    <div class="section-header">
+                        <h2>Saved Remedies</h2>
+                        <div class="filter-controls">
+                            <select id="remedy-category-filter">
+                                <option value="">All Categories</option>
+                            </select>
+                            <input type="text" id="remedy-search" placeholder="Search remedies...">
+                        </div>
+                    </div>
+                    <div id="remedies-grid" class="remedies-grid">
+                        <!-- Saved remedies will be loaded here -->
+                    </div>
+                </section>
+
+                <!-- Reports Section -->
+                <section id="reports" class="dashboard-section">
+                    <div class="section-header">
+                        <h2>Health Reports</h2>
+                        <button class="btn btn-primary" onclick="generateNewReport()">
+                            <i class="fas fa-file-medical"></i> Generate Report
+                        </button>
+                    </div>
+                    <div id="reports-list" class="reports-list">
+                        <!-- Reports will be loaded here -->
+                    </div>
+                </section>
+
+                <!-- Analytics Section -->
+                <section id="analytics" class="dashboard-section">
+                    <div class="section-header">
+                        <h2>Advanced Analytics</h2>
+                        <div class="date-range">
+                            <input type="date" id="start-date">
+                            <input type="date" id="end-date">
+                            <button class="btn btn-secondary" onclick="updateAnalytics()">Update</button>
+                        </div>
+                    </div>
+                    <div class="analytics-grid">
+                        <div class="analytics-card">
+                            <h3>Usage Trends</h3>
+                            <canvas id="usage-trends-chart"></canvas>
+                        </div>
+                        <div class="analytics-card">
+                            <h3>Health Score</h3>
+                            <canvas id="health-score-chart"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Subscription Section -->
+                <section id="subscription" class="dashboard-section">
+                    <div class="subscription-info">
+                        <h2>Subscription Details</h2>
+                        <div class="subscription-card">
+                            <div class="subscription-header">
+                                <h3 id="current-plan">Free Plan</h3>
+                                <span class="plan-status" id="plan-status">Active</span>
+                            </div>
+                            <div class="subscription-details">
+                                <p><strong>Next Billing:</strong> <span id="next-billing">N/A</span></p>
+                                <p><strong>Amount:</strong> <span id="billing-amount">$0/month</span></p>
+                                <p><strong>Features:</strong> <span id="plan-features">Basic features</span></p>
+                            </div>
+                            <div class="subscription-actions">
+                                <button class="btn btn-primary" onclick="upgradePlan()">Upgrade Plan</button>
+                                <button class="btn btn-outline" onclick="cancelSubscription()">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- API Keys Section -->
+                <section id="api-keys" class="dashboard-section">
+                    <div class="section-header">
+                        <h2>API Keys</h2>
+                        <button class="btn btn-primary" onclick="generateApiKey()">
+                            <i class="fas fa-plus"></i> Generate New Key
+                        </button>
+                    </div>
+                    <div id="api-keys-list" class="api-keys-list">
+                        <!-- API keys will be loaded here -->
+                    </div>
+                </section>
+
+                <!-- Settings Section -->
+                <section id="settings" class="dashboard-section">
+                    <div class="settings-grid">
+                        <div class="settings-card">
+                            <h3>Profile Settings</h3>
+                            <form id="profile-form">
+                                <div class="form-group">
+                                    <label for="profile-email">Email</label>
+                                    <input type="email" id="profile-email" value="">
+                                </div>
+                                <div class="form-group">
+                                    <label for="profile-name">Name</label>
+                                    <input type="text" id="profile-name" value="">
+                                </div>
+                                <button type="submit" class="btn btn-primary">Update Profile</button>
+                            </form>
+                        </div>
+                        <div class="settings-card">
+                            <h3>Notification Settings</h3>
+                            <div class="setting-item">
+                                <label>
+                                    <input type="checkbox" id="email-notifications" checked>
+                                    Email Notifications
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <label>
+                                    <input type="checkbox" id="weekly-reports" checked>
+                                    Weekly Health Reports
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <label>
+                                    <input type="checkbox" id="reminder-emails">
+                                    Reminder Emails
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="api-key-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Generate New API Key</h3>
+            <form id="api-key-form">
+                <div class="form-group">
+                    <label for="key-name">Key Name</label>
+                    <input type="text" id="key-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="key-permissions">Permissions</label>
+                    <select id="key-permissions">
+                        <option value="read">Read Only</option>
+                        <option value="write">Read & Write</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="key-rate-limit">Rate Limit (requests/day)</label>
+                    <input type="number" id="key-rate-limit" value="1000" min="100" max="10000">
+                </div>
+                <button type="submit" class="btn btn-primary">Generate Key</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+</html> 
