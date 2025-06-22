@@ -194,6 +194,8 @@ function addSymptom(symptomName) {
                 selectedSymptoms.push(symptom);
             }
         });
+        // Update search bar to show selected symptoms
+        updateSearchBarDisplay();
         getRemedies();
     }
 }
@@ -244,8 +246,19 @@ function getRemediesFromModal() {
         alert('Please select at least one symptom');
         return;
     }
+    // Update search bar to show selected symptoms
+    updateSearchBarDisplay();
     closeCategoryModal();
     getRemedies();
+}
+
+// Update search bar to show selected symptoms
+function updateSearchBarDisplay() {
+    const searchInput = document.getElementById('symptom-search');
+    if (searchInput && selectedSymptoms.length > 0) {
+        const symptomsText = selectedSymptoms.map(s => s.name).join(', ');
+        searchInput.value = symptomsText;
+    }
 }
 
 // Get remedies for selected symptoms
