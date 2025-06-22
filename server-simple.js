@@ -10,8 +10,99 @@ const cookieParser = require('cookie-parser');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// In-memory storage for user usage (in production, use a database)
+// Enhanced subscription and pricing system
+const subscriptionPlans = {
+  free: {
+    name: 'Free',
+    price: 0,
+    features: [
+      '5 assessments per month',
+      'Basic dosha results',
+      'General remedy suggestions',
+      'Limited symptom filtering',
+      'Mobile-friendly interface'
+    ],
+    limits: {
+      assessments: 5,
+      remedies: 10,
+      apiCalls: 100
+    }
+  },
+  basic: {
+    name: 'Basic',
+    price: 9.99,
+    interval: 'month',
+    features: [
+      'Unlimited assessments',
+      'Detailed dosha analysis',
+      'Personalized remedy recommendations',
+      'Advanced symptom filtering',
+      'PDF reports',
+      'Email support'
+    ],
+    limits: {
+      assessments: -1, // unlimited
+      remedies: 50,
+      apiCalls: 1000
+    }
+  },
+  professional: {
+    name: 'Professional',
+    price: 19.99,
+    interval: 'month',
+    features: [
+      'All Basic features',
+      'Advanced wellness plans',
+      'Priority customer support',
+      'Exclusive content access',
+      'Monthly wellness newsletters',
+      'Lifestyle coaching tips',
+      'API access',
+      'White-label solutions'
+    ],
+    limits: {
+      assessments: -1,
+      remedies: -1,
+      apiCalls: 10000
+    }
+  },
+  enterprise: {
+    name: 'Enterprise',
+    price: 99.99,
+    interval: 'month',
+    features: [
+      'All Professional features',
+      'Custom integrations',
+      'Dedicated support',
+      'Custom branding',
+      'Advanced analytics',
+      'Team management',
+      'Unlimited API access'
+    ],
+    limits: {
+      assessments: -1,
+      remedies: -1,
+      apiCalls: -1
+    }
+  }
+};
+
+// Enhanced user usage tracking
 const userUsage = new Map();
+const subscriptionData = new Map();
+const paymentHistory = new Map();
+
+// Analytics and usage tracking
+const analytics = {
+  dailyUsage: new Map(),
+  monthlyUsage: new Map(),
+  userBehavior: new Map(),
+  revenue: {
+    daily: 0,
+    monthly: 0,
+    total: 0
+  }
+};
 
 // Function to generate unique user ID
 const generateUserId = () => {
@@ -791,918 +882,586 @@ app.use('*', (req, res) => {
   });
 });
 
-// Payment and subscription endpoints
-app.post('/api/subscribe', (req, res) => {
-    try {
-        const { plan, email } = req.body;
-        
-        // In a real implementation, you would:
-        // 1. Validate the payment with Stripe
-        // 2. Create a customer record
-        // 3. Set up subscription billing
-        // 4. Store user data in database
-        
-        console.log(`New subscription: ${plan} plan for ${email}`);
-        
-        // Simulate successful subscription
-        res.json({
-            success: true,
-            message: 'Subscription successful!',
-            plan: plan,
-            customerId: 'cust_' + Date.now(),
-            subscriptionId: 'sub_' + Date.now()
-        });
-    } catch (error) {
-        console.error('Subscription error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Subscription failed. Please try again.'
-        });
+// Payment and subscription management
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || 'sk_test_your_stripe_key');
+
+// Enhanced subscription endpoints
+app.post('/api/subscribe', async (req, res) => {
+  try {
+    const { plan, email, paymentMethodId, customerId } = req.body;
+    
+    if (!subscriptionPlans[plan]) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid subscription plan'
+      });
     }
+    
+    let customer;
+    
+    // Create or retrieve customer
+    if (customerId) {
+      customer = await stripe.customers.retrieve(customerId);
+    } else {
+      customer = await stripe.customers.create({
+        email: email,
+        payment_method: paymentMethodId,
+        invoice_settings: {
+          default_payment_method: paymentMethodId,
+        },
+      });
+    }
+    
+    // Create subscription
+    const subscription = await stripe.subscriptions.create({
+      customer: customer.id,
+      items: [{ price: getStripePriceId(plan) }],
+      payment_behavior: 'default_incomplete',
+      payment_settings: { save_default_payment_method: 'on_subscription' },
+      expand: ['latest_invoice.payment_intent'],
+    });
+    
+    // Store subscription data
+    subscriptionData.set(customer.id, {
+      customerId: customer.id,
+      plan: plan,
+      subscriptionId: subscription.id,
+      status: subscription.status,
+      currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+      features: subscriptionPlans[plan].features,
+      limits: subscriptionPlans[plan].limits
+    });
+    
+    res.json({
+      success: true,
+      subscriptionId: subscription.id,
+      clientSecret: subscription.latest_invoice.payment_intent.client_secret,
+      customerId: customer.id
+    });
+    
+  } catch (error) {
+    console.error('Subscription error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Subscription failed. Please try again.'
+    });
+  }
 });
 
-app.get('/api/subscription-status/:customerId', (req, res) => {
-    try {
-        const { customerId } = req.params;
-        
-        // In a real implementation, check subscription status in database
-        // For now, return mock data
-        res.json({
-            active: true,
-            plan: 'professional',
-            nextBilling: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-            customerId: customerId
-        });
-    } catch (error) {
-        console.error('Status check error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Unable to check subscription status'
-        });
-    }
-});
-
-// API Analytics endpoint (for RapidAPI tracking)
-app.get('/api/analytics', (req, res) => {
-  const analytics = {
-    totalRequests: userUsage.size,
-    totalAssessments: Array.from(userUsage.values()).reduce((sum, user) => sum + user.assessments, 0),
-    activeUsers: Array.from(userUsage.values()).filter(user => {
-      const lastActivity = new Date(user.lastAssessment);
-      const now = new Date();
-      return (now - lastActivity) < (7 * 24 * 60 * 60 * 1000); // Active in last 7 days
-    }).length,
-    premiumUsers: Array.from(userUsage.values()).filter(user => user.isPremium).length,
-    averageAssessmentsPerUser: Array.from(userUsage.values()).reduce((sum, user) => sum + user.assessments, 0) / userUsage.size || 0,
-    topDoshaTypes: {
-      vata: 0,
-      pitta: 0,
-      kapha: 0
-    },
-    apiHealth: {
-      uptime: process.uptime(),
-      memoryUsage: process.memoryUsage(),
-      timestamp: new Date().toISOString()
-    }
+// Get Stripe price ID for plan
+function getStripePriceId(plan) {
+  const priceIds = {
+    basic: 'price_basic_monthly',
+    professional: 'price_professional_monthly',
+    enterprise: 'price_enterprise_monthly'
   };
+  return priceIds[plan] || 'price_basic_monthly';
+}
+
+// One-time payment for premium features
+app.post('/api/purchase', async (req, res) => {
+  try {
+    const { amount, currency = 'usd', description, customerEmail } = req.body;
+    
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount * 100, // Convert to cents
+      currency: currency,
+      description: description,
+      receipt_email: customerEmail,
+      metadata: {
+        feature: description
+      }
+    });
+    
+    res.json({
+      success: true,
+      clientSecret: paymentIntent.client_secret
+    });
+    
+  } catch (error) {
+    console.error('Payment error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Payment failed. Please try again.'
+    });
+  }
+});
+
+// Webhook for Stripe events
+app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
   
-  res.status(200).json({
+  let event;
+  
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+  } catch (err) {
+    console.error('Webhook signature verification failed:', err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+  
+  // Handle the event
+  switch (event.type) {
+    case 'invoice.payment_succeeded':
+      const subscription = event.data.object;
+      handleSubscriptionUpdate(subscription);
+      break;
+    case 'invoice.payment_failed':
+      const failedSubscription = event.data.object;
+      handlePaymentFailure(failedSubscription);
+      break;
+    case 'customer.subscription.deleted':
+      const deletedSubscription = event.data.object;
+      handleSubscriptionCancellation(deletedSubscription);
+      break;
+    default:
+      console.log(`Unhandled event type ${event.type}`);
+  }
+  
+  res.json({ received: true });
+});
+
+function handleSubscriptionUpdate(subscription) {
+  const customerId = subscription.customer;
+  const subscriptionData = subscriptionData.get(customerId);
+  
+  if (subscriptionData) {
+    subscriptionData.status = 'active';
+    subscriptionData.currentPeriodEnd = new Date(subscription.current_period_end * 1000);
+    subscriptionData.set(customerId, subscriptionData);
+  }
+}
+
+function handlePaymentFailure(subscription) {
+  const customerId = subscription.customer;
+  const subscriptionData = subscriptionData.get(customerId);
+  
+  if (subscriptionData) {
+    subscriptionData.status = 'past_due';
+    subscriptionData.set(customerId, subscriptionData);
+  }
+}
+
+function handleSubscriptionCancellation(subscription) {
+  const customerId = subscription.customer;
+  subscriptionData.delete(customerId);
+}
+
+// Enhanced usage tracking middleware
+app.use('/api/*', (req, res, next) => {
+  const userId = getUser(req);
+  const endpoint = req.path;
+  const method = req.method;
+  
+  // Track API usage
+  trackApiUsage(userId, endpoint, method);
+  
+  // Track user behavior
+  trackUserBehavior(userId, endpoint, req.body);
+  
+  next();
+});
+
+function trackApiUsage(userId, endpoint, method) {
+  const today = new Date().toISOString().split('T')[0];
+  const month = new Date().toISOString().slice(0, 7);
+  
+  // Daily usage
+  if (!analytics.dailyUsage.has(today)) {
+    analytics.dailyUsage.set(today, {});
+  }
+  const dailyData = analytics.dailyUsage.get(today);
+  if (!dailyData[endpoint]) {
+    dailyData[endpoint] = { calls: 0, users: new Set() };
+  }
+  dailyData[endpoint].calls++;
+  dailyData[endpoint].users.add(userId);
+  
+  // Monthly usage
+  if (!analytics.monthlyUsage.has(month)) {
+    analytics.monthlyUsage.set(month, {});
+  }
+  const monthlyData = analytics.monthlyUsage.get(month);
+  if (!monthlyData[endpoint]) {
+    monthlyData[endpoint] = { calls: 0, users: new Set() };
+  }
+  monthlyData[endpoint].calls++;
+  monthlyData[endpoint].users.add(userId);
+}
+
+function trackUserBehavior(userId, endpoint, body) {
+  if (!analytics.userBehavior.has(userId)) {
+    analytics.userBehavior.set(userId, {
+      firstVisit: new Date(),
+      lastVisit: new Date(),
+      endpoints: [],
+      assessments: 0,
+      remediesViewed: 0,
+      subscriptionUpgrades: 0
+    });
+  }
+  
+  const userData = analytics.userBehavior.get(userId);
+  userData.lastVisit = new Date();
+  userData.endpoints.push({ endpoint, timestamp: new Date() });
+  
+  // Track specific behaviors
+  if (endpoint.includes('assessment')) userData.assessments++;
+  if (endpoint.includes('remedies')) userData.remediesViewed++;
+  if (endpoint.includes('subscribe')) userData.subscriptionUpgrades++;
+}
+
+// Analytics endpoints
+app.get('/api/analytics/usage', authenticateApiKey, (req, res) => {
+  const { period = 'daily', endpoint } = req.query;
+  
+  let data;
+  if (period === 'daily') {
+    data = analytics.dailyUsage;
+  } else if (period === 'monthly') {
+    data = analytics.monthlyUsage;
+  }
+  
+  if (endpoint) {
+    const filteredData = {};
+    for (const [date, endpoints] of data) {
+      if (endpoints[endpoint]) {
+        filteredData[date] = endpoints[endpoint];
+      }
+    }
+    data = filteredData;
+  }
+  
+  res.json({
     success: true,
-    data: analytics
+    data: Object.fromEntries(data),
+    period,
+    totalUsers: analytics.userBehavior.size
   });
 });
 
-// API Status endpoint
-app.get('/api/status', (req, res) => {
-  const status = {
-    service: 'Ayurveda Remedy API',
-    version: '1.0.0',
-    status: 'operational',
-    uptime: process.uptime(),
-    timestamp: new Date().toISOString(),
-    endpoints: {
-      health: '/api/health',
-      doshaInfo: '/api/doshas/info',
-      doshaAssessment: '/api/doshas/assessment',
-      remedies: '/api/remedies',
-      docs: '/api/docs',
-      meta: '/api/meta',
-      analytics: '/api/analytics'
-    },
-    rateLimits: {
-      requests: '100 per 15 minutes',
-      description: 'Rate limiting applied per IP address'
+app.get('/api/analytics/revenue', authenticateApiKey, (req, res) => {
+  res.json({
+    success: true,
+    data: analytics.revenue,
+    subscriptionCount: subscriptionData.size,
+    activeSubscriptions: Array.from(subscriptionData.values()).filter(sub => sub.status === 'active').length
+  });
+});
+
+app.get('/api/analytics/user-behavior', authenticateApiKey, (req, res) => {
+  const { userId } = req.query;
+  
+  if (userId) {
+    const userData = analytics.userBehavior.get(userId);
+    if (!userData) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
     }
+    return res.json({
+      success: true,
+      data: userData
+    });
+  }
+  
+  // Aggregate user behavior
+  const aggregated = {
+    totalUsers: analytics.userBehavior.size,
+    averageAssessments: 0,
+    averageRemediesViewed: 0,
+    subscriptionRate: 0,
+    activeUsers: 0
   };
   
-  res.status(200).json(status);
-});
-
-// API Documentation endpoint
-app.get('/api/docs', (req, res) => {
-  const documentation = {
-    name: 'Ayurveda Remedy API',
-    version: '1.0.0',
-    description: 'Comprehensive Ayurvedic diagnostic and remedy recommendation API',
-    baseUrl: 'https://ayurvedaremedyfinder.onrender.com',
-    endpoints: {
-      health: {
-        url: '/api/health',
-        method: 'GET',
-        description: 'Check API health and status',
-        parameters: [],
-        response: {
-          status: 'string',
-          message: 'string',
-          timestamp: 'string'
-        }
-      },
-      doshaInfo: {
-        url: '/api/doshas/info',
-        method: 'GET',
-        description: 'Get comprehensive dosha information',
-        parameters: [],
-        response: {
-          success: 'boolean',
-          data: {
-            vata: 'object',
-            pitta: 'object',
-            kapha: 'object'
-          }
-        }
-      },
-      doshaAssessment: {
-        url: '/api/doshas/assessment',
-        method: 'POST',
-        description: 'Submit dosha assessment and get results',
-        parameters: {
-          answers: 'array of dosha values (vata, pitta, kapha)'
-        },
-        response: {
-          success: 'boolean',
-          data: {
-            scores: 'object',
-            dominantDosha: 'string',
-            recommendations: 'object'
-          }
-        }
-      },
-      remedies: {
-        url: '/api/remedies',
-        method: 'GET',
-        description: 'Get Ayurvedic remedies with filtering options',
-        parameters: {
-          category: 'string (optional)',
-          dosha: 'string (optional)',
-          difficulty: 'string (optional)'
-        },
-        response: {
-          success: 'boolean',
-          count: 'number',
-          data: 'array of remedy objects'
-        }
-      }
-    },
-    authentication: {
-      type: 'API Key',
-      header: 'x-rapidapi-key',
-      description: 'Include your RapidAPI key in the request header'
-    },
-    rateLimits: {
-      requests: '100 per 15 minutes',
-      description: 'Rate limiting applied per IP address'
-    },
-    pricing: {
-      free: '1000 requests/month',
-      basic: '10,000 requests/month',
-      pro: '100,000 requests/month',
-      enterprise: 'Custom limits'
+  let totalAssessments = 0;
+  let totalRemediesViewed = 0;
+  let totalSubscriptions = 0;
+  let activeUsers = 0;
+  
+  for (const userData of analytics.userBehavior.values()) {
+    totalAssessments += userData.assessments;
+    totalRemediesViewed += userData.remediesViewed;
+    totalSubscriptions += userData.subscriptionUpgrades;
+    
+    // Check if user was active in last 30 days
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    if (userData.lastVisit > thirtyDaysAgo) {
+      activeUsers++;
     }
-  };
+  }
   
-  res.status(200).json(documentation);
+  aggregated.averageAssessments = totalAssessments / analytics.userBehavior.size;
+  aggregated.averageRemediesViewed = totalRemediesViewed / analytics.userBehavior.size;
+  aggregated.subscriptionRate = (totalSubscriptions / analytics.userBehavior.size) * 100;
+  aggregated.activeUsers = activeUsers;
+  
+  res.json({
+    success: true,
+    data: aggregated
+  });
 });
 
-// API Metadata endpoint
-app.get('/api/meta', (req, res) => {
-  const metadata = {
-    name: 'Ayurveda Remedy API',
-    version: '1.0.0',
-    description: 'Professional Ayurvedic diagnostic and remedy recommendation API for health and wellness applications',
-    category: 'Health & Wellness',
-    tags: ['ayurveda', 'health', 'wellness', 'remedies', 'dosha', 'natural-medicine'],
-    features: [
-      'Dosha assessment and analysis',
-      'Personalized remedy recommendations',
-      'Symptom-based filtering',
-      'Comprehensive Ayurvedic database',
-      'RESTful API design',
-      'JSON responses',
-      'Rate limiting',
-      'API key authentication'
-    ],
-    useCases: [
-      'Health and wellness apps',
-      'Ayurvedic consultation platforms',
-      'Natural medicine websites',
-      'Wellness blogs and content',
-      'Health assessment tools',
-      'Mobile health applications'
-    ],
-    documentation: 'https://ayurvedaremedyfinder.onrender.com/api/docs',
-    support: 'support@ayurvedaremedyfinder.com',
-    website: 'https://ayurvedaremedyfinder.onrender.com'
-  };
+// Premium features and exclusive content
+const premiumContent = {
+  wellnessPlans: {
+    vata: {
+      title: 'Vata Balancing Wellness Plan',
+      duration: '30 days',
+      dailyRoutine: [
+        'Wake up at 6 AM',
+        'Oil massage (Abhyanga)',
+        'Gentle yoga and meditation',
+        'Warm, nourishing breakfast',
+        'Regular meal times',
+        'Early bedtime (10 PM)'
+      ],
+      diet: [
+        'Warm, cooked foods',
+        'Sweet, sour, and salty tastes',
+        'Ghee and oils',
+        'Avoid cold, dry foods'
+      ],
+      remedies: ['ashwagandha_tea', 'sesame_oil_massage', 'ginger_tea'],
+      lifestyle: [
+        'Maintain regular routine',
+        'Avoid excessive travel',
+        'Practice grounding activities',
+        'Stay warm and hydrated'
+      ]
+    },
+    pitta: {
+      title: 'Pitta Balancing Wellness Plan',
+      duration: '30 days',
+      dailyRoutine: [
+        'Wake up at 5:30 AM',
+        'Cooling meditation',
+        'Moderate exercise',
+        'Cooling breakfast',
+        'Avoid midday sun',
+        'Relaxing evening routine'
+      ],
+      diet: [
+        'Cooling foods',
+        'Sweet, bitter, and astringent tastes',
+        'Avoid spicy, hot foods',
+        'Plenty of water'
+      ],
+      remedies: ['coconut_water', 'aloe_vera_juice', 'coriander_tea'],
+      lifestyle: [
+        'Stay cool and calm',
+        'Avoid excessive heat',
+        'Practice patience',
+        'Engage in creative activities'
+      ]
+    },
+    kapha: {
+      title: 'Kapha Balancing Wellness Plan',
+      duration: '30 days',
+      dailyRoutine: [
+        'Wake up at 5 AM',
+        'Energetic exercise',
+        'Light breakfast',
+        'Active throughout day',
+        'Avoid daytime naps',
+        'Light dinner'
+      ],
+      diet: [
+        'Light, dry foods',
+        'Pungent, bitter, astringent tastes',
+        'Avoid heavy, oily foods',
+        'Honey and warm water'
+      ],
+      remedies: ['ginger_tea', 'turmeric_milk', 'black_pepper_tea'],
+      lifestyle: [
+        'Stay active and energetic',
+        'Avoid excessive sleep',
+        'Regular exercise',
+        'Stimulating activities'
+      ]
+    }
+  },
   
-  res.status(200).json(metadata);
-});
-
-// Comprehensive worldwide symptoms and conditions database
-const worldwideSymptomsData = {
-  digestive: [
-    { id: 'indigestion', name: 'Indigestion', category: 'digestive', severity: 'moderate' },
-    { id: 'bloating', name: 'Bloating', category: 'digestive', severity: 'mild' },
-    { id: 'constipation', name: 'Constipation', category: 'digestive', severity: 'moderate' },
-    { id: 'diarrhea', name: 'Diarrhea', category: 'digestive', severity: 'moderate' },
-    { id: 'acid_reflux', name: 'Acid Reflux', category: 'digestive', severity: 'moderate' },
-    { id: 'nausea', name: 'Nausea', category: 'digestive', severity: 'moderate' },
-    { id: 'vomiting', name: 'Vomiting', category: 'digestive', severity: 'severe' },
-    { id: 'loss_of_appetite', name: 'Loss of Appetite', category: 'digestive', severity: 'moderate' },
-    { id: 'abdominal_pain', name: 'Abdominal Pain', category: 'digestive', severity: 'moderate' },
-    { id: 'gas', name: 'Excessive Gas', category: 'digestive', severity: 'mild' },
-    { id: 'heartburn', name: 'Heartburn', category: 'digestive', severity: 'moderate' },
-    { id: 'ulcer', name: 'Stomach Ulcer', category: 'digestive', severity: 'severe' },
-    { id: 'ibs', name: 'Irritable Bowel Syndrome', category: 'digestive', severity: 'moderate' },
-    { id: 'colitis', name: 'Colitis', category: 'digestive', severity: 'severe' },
-    { id: 'gastritis', name: 'Gastritis', category: 'digestive', severity: 'moderate' },
-    { id: 'food_poisoning', name: 'Food Poisoning', category: 'digestive', severity: 'severe' },
-    { id: 'celiac', name: 'Celiac Disease', category: 'digestive', severity: 'severe' },
-    { id: 'lactose_intolerance', name: 'Lactose Intolerance', category: 'digestive', severity: 'moderate' }
+  exclusiveRemedies: [
+    {
+      id: 'golden_milk_premium',
+      name: 'Golden Milk Premium Blend',
+      category: 'premium',
+      description: 'Exclusive blend with saffron, cardamom, and premium turmeric',
+      ingredients: ['Organic turmeric', 'Saffron', 'Cardamom', 'Black pepper', 'Coconut milk', 'Raw honey'],
+      instructions: 'Premium preparation method with specific timing and temperature control',
+      benefits: ['Anti-inflammatory', 'Immune boosting', 'Digestive health', 'Skin glow'],
+      price: 29.99,
+      subscriptionRequired: 'basic'
+    },
+    {
+      id: 'ayurvedic_face_mask',
+      name: 'Ayurvedic Face Mask Collection',
+      category: 'premium',
+      description: 'Customized face masks based on dosha type',
+      ingredients: ['Neem powder', 'Sandalwood', 'Rose petals', 'Honey', 'Yogurt'],
+      instructions: 'Dosha-specific application methods and timing',
+      benefits: ['Skin rejuvenation', 'Acne treatment', 'Anti-aging', 'Natural glow'],
+      price: 39.99,
+      subscriptionRequired: 'professional'
+    }
   ],
-  respiratory: [
-    { id: 'cough', name: 'Cough', category: 'respiratory', severity: 'moderate' },
-    { id: 'congestion', name: 'Nasal Congestion', category: 'respiratory', severity: 'mild' },
-    { id: 'shortness_of_breath', name: 'Shortness of Breath', category: 'respiratory', severity: 'severe' },
-    { id: 'sore_throat', name: 'Sore Throat', category: 'respiratory', severity: 'moderate' },
-    { id: 'runny_nose', name: 'Runny Nose', category: 'respiratory', severity: 'mild' },
-    { id: 'chest_tightness', name: 'Chest Tightness', category: 'respiratory', severity: 'severe' },
-    { id: 'wheezing', name: 'Wheezing', category: 'respiratory', severity: 'severe' },
-    { id: 'asthma', name: 'Asthma', category: 'respiratory', severity: 'severe' },
-    { id: 'bronchitis', name: 'Bronchitis', category: 'respiratory', severity: 'moderate' },
-    { id: 'pneumonia', name: 'Pneumonia', category: 'respiratory', severity: 'severe' },
-    { id: 'sinusitis', name: 'Sinusitis', category: 'respiratory', severity: 'moderate' },
-    { id: 'allergic_rhinitis', name: 'Allergic Rhinitis', category: 'respiratory', severity: 'moderate' },
-    { id: 'sleep_apnea', name: 'Sleep Apnea', category: 'respiratory', severity: 'severe' },
-    { id: 'pleurisy', name: 'Pleurisy', category: 'respiratory', severity: 'severe' }
-  ],
-  nervous: [
-    { id: 'anxiety', name: 'Anxiety', category: 'nervous', severity: 'moderate' },
-    { id: 'depression', name: 'Depression', category: 'nervous', severity: 'severe' },
-    { id: 'insomnia', name: 'Insomnia', category: 'nervous', severity: 'moderate' },
-    { id: 'headache', name: 'Headache', category: 'nervous', severity: 'moderate' },
-    { id: 'migraine', name: 'Migraine', category: 'nervous', severity: 'severe' },
-    { id: 'dizziness', name: 'Dizziness', category: 'nervous', severity: 'moderate' },
-    { id: 'vertigo', name: 'Vertigo', category: 'nervous', severity: 'moderate' },
-    { id: 'fatigue', name: 'Fatigue', category: 'nervous', severity: 'moderate' },
-    { id: 'stress', name: 'Stress', category: 'nervous', severity: 'moderate' },
-    { id: 'mood_swings', name: 'Mood Swings', category: 'nervous', severity: 'moderate' },
-    { id: 'memory_problems', name: 'Memory Problems', category: 'nervous', severity: 'moderate' },
-    { id: 'concentration_issues', name: 'Concentration Issues', category: 'nervous', severity: 'moderate' },
-    { id: 'panic_attacks', name: 'Panic Attacks', category: 'nervous', severity: 'severe' },
-    { id: 'ocd', name: 'Obsessive-Compulsive Disorder', category: 'nervous', severity: 'severe' },
-    { id: 'adhd', name: 'Attention Deficit Disorder', category: 'nervous', severity: 'moderate' },
-    { id: 'epilepsy', name: 'Epilepsy', category: 'nervous', severity: 'severe' },
-    { id: 'parkinsons', name: 'Parkinson\'s Disease', category: 'nervous', severity: 'severe' },
-    { id: 'alzheimers', name: 'Alzheimer\'s Disease', category: 'nervous', severity: 'severe' },
-    { id: 'neuralgia', name: 'Neuralgia', category: 'nervous', severity: 'severe' }
-  ],
-  skin: [
-    { id: 'acne', name: 'Acne', category: 'skin', severity: 'moderate' },
-    { id: 'eczema', name: 'Eczema', category: 'skin', severity: 'moderate' },
-    { id: 'psoriasis', name: 'Psoriasis', category: 'skin', severity: 'moderate' },
-    { id: 'dry_skin', name: 'Dry Skin', category: 'skin', severity: 'mild' },
-    { id: 'oily_skin', name: 'Oily Skin', category: 'skin', severity: 'mild' },
-    { id: 'itching', name: 'Itching', category: 'skin', severity: 'moderate' },
-    { id: 'rashes', name: 'Rashes', category: 'skin', severity: 'moderate' },
-    { id: 'hives', name: 'Hives', category: 'skin', severity: 'moderate' },
-    { id: 'inflammation', name: 'Skin Inflammation', category: 'skin', severity: 'moderate' },
-    { id: 'dermatitis', name: 'Dermatitis', category: 'skin', severity: 'moderate' },
-    { id: 'vitiligo', name: 'Vitiligo', category: 'skin', severity: 'moderate' },
-    { id: 'rosacea', name: 'Rosacea', category: 'skin', severity: 'moderate' },
-    { id: 'fungal_infection', name: 'Fungal Infection', category: 'skin', severity: 'moderate' },
-    { id: 'bacterial_infection', name: 'Bacterial Infection', category: 'skin', severity: 'moderate' },
-    { id: 'warts', name: 'Warts', category: 'skin', severity: 'mild' },
-    { id: 'moles', name: 'Moles', category: 'skin', severity: 'mild' },
-    { id: 'skin_cancer', name: 'Skin Cancer', category: 'skin', severity: 'severe' }
-  ],
-  joints: [
-    { id: 'joint_pain', name: 'Joint Pain', category: 'joints', severity: 'moderate' },
-    { id: 'stiffness', name: 'Joint Stiffness', category: 'joints', severity: 'moderate' },
-    { id: 'swelling', name: 'Joint Swelling', category: 'joints', severity: 'moderate' },
-    { id: 'back_pain', name: 'Back Pain', category: 'joints', severity: 'moderate' },
-    { id: 'neck_pain', name: 'Neck Pain', category: 'joints', severity: 'moderate' },
-    { id: 'muscle_pain', name: 'Muscle Pain', category: 'joints', severity: 'moderate' },
-    { id: 'arthritis', name: 'Arthritis', category: 'joints', severity: 'severe' },
-    { id: 'rheumatoid_arthritis', name: 'Rheumatoid Arthritis', category: 'joints', severity: 'severe' },
-    { id: 'gout', name: 'Gout', category: 'joints', severity: 'severe' },
-    { id: 'bursitis', name: 'Bursitis', category: 'joints', severity: 'moderate' },
-    { id: 'tendonitis', name: 'Tendonitis', category: 'joints', severity: 'moderate' },
-    { id: 'carpal_tunnel', name: 'Carpal Tunnel Syndrome', category: 'joints', severity: 'moderate' },
-    { id: 'sciatica', name: 'Sciatica', category: 'joints', severity: 'severe' },
-    { id: 'fibromyalgia', name: 'Fibromyalgia', category: 'joints', severity: 'severe' },
-    { id: 'osteoporosis', name: 'Osteoporosis', category: 'joints', severity: 'severe' }
-  ],
-  cardiovascular: [
-    { id: 'chest_pain', name: 'Chest Pain', category: 'cardiovascular', severity: 'severe' },
-    { id: 'palpitations', name: 'Heart Palpitations', category: 'cardiovascular', severity: 'moderate' },
-    { id: 'high_blood_pressure', name: 'High Blood Pressure', category: 'cardiovascular', severity: 'severe' },
-    { id: 'low_blood_pressure', name: 'Low Blood Pressure', category: 'cardiovascular', severity: 'moderate' },
-    { id: 'irregular_heartbeat', name: 'Irregular Heartbeat', category: 'cardiovascular', severity: 'severe' },
-    { id: 'swollen_ankles', name: 'Swollen Ankles', category: 'cardiovascular', severity: 'moderate' },
-    { id: 'varicose_veins', name: 'Varicose Veins', category: 'cardiovascular', severity: 'moderate' },
-    { id: 'poor_circulation', name: 'Poor Circulation', category: 'cardiovascular', severity: 'moderate' },
-    { id: 'heart_disease', name: 'Heart Disease', category: 'cardiovascular', severity: 'severe' },
-    { id: 'angina', name: 'Angina', category: 'cardiovascular', severity: 'severe' }
-  ],
-  endocrine: [
-    { id: 'diabetes', name: 'Diabetes', category: 'endocrine', severity: 'severe' },
-    { id: 'thyroid_problems', name: 'Thyroid Problems', category: 'endocrine', severity: 'moderate' },
-    { id: 'weight_gain', name: 'Weight Gain', category: 'endocrine', severity: 'moderate' },
-    { id: 'weight_loss', name: 'Weight Loss', category: 'endocrine', severity: 'moderate' },
-    { id: 'fatigue', name: 'Fatigue', category: 'endocrine', severity: 'moderate' },
-    { id: 'mood_swings', name: 'Mood Swings', category: 'endocrine', severity: 'moderate' },
-    { id: 'hot_flashes', name: 'Hot Flashes', category: 'endocrine', severity: 'moderate' },
-    { id: 'night_sweats', name: 'Night Sweats', category: 'endocrine', severity: 'moderate' },
-    { id: 'irregular_periods', name: 'Irregular Periods', category: 'endocrine', severity: 'moderate' },
-    { id: 'pcos', name: 'Polycystic Ovary Syndrome', category: 'endocrine', severity: 'moderate' },
-    { id: 'adrenal_fatigue', name: 'Adrenal Fatigue', category: 'endocrine', severity: 'moderate' }
-  ],
-  immune: [
-    { id: 'frequent_infections', name: 'Frequent Infections', category: 'immune', severity: 'moderate' },
-    { id: 'allergies', name: 'Allergies', category: 'immune', severity: 'moderate' },
-    { id: 'food_allergies', name: 'Food Allergies', category: 'immune', severity: 'severe' },
-    { id: 'seasonal_allergies', name: 'Seasonal Allergies', category: 'immune', severity: 'moderate' },
-    { id: 'autoimmune_disease', name: 'Autoimmune Disease', category: 'immune', severity: 'severe' },
-    { id: 'lupus', name: 'Lupus', category: 'immune', severity: 'severe' },
-    { id: 'rheumatoid_arthritis', name: 'Rheumatoid Arthritis', category: 'immune', severity: 'severe' },
-    { id: 'multiple_sclerosis', name: 'Multiple Sclerosis', category: 'immune', severity: 'severe' },
-    { id: 'hiv_aids', name: 'HIV/AIDS', category: 'immune', severity: 'severe' },
-    { id: 'cancer', name: 'Cancer', category: 'immune', severity: 'severe' }
-  ],
-  reproductive: [
-    { id: 'infertility', name: 'Infertility', category: 'reproductive', severity: 'moderate' },
-    { id: 'pms', name: 'Premenstrual Syndrome', category: 'reproductive', severity: 'moderate' },
-    { id: 'menstrual_cramps', name: 'Menstrual Cramps', category: 'reproductive', severity: 'moderate' },
-    { id: 'endometriosis', name: 'Endometriosis', category: 'reproductive', severity: 'severe' },
-    { id: 'fibroids', name: 'Uterine Fibroids', category: 'reproductive', severity: 'moderate' },
-    { id: 'prostate_problems', name: 'Prostate Problems', category: 'reproductive', severity: 'moderate' },
-    { id: 'erectile_dysfunction', name: 'Erectile Dysfunction', category: 'reproductive', severity: 'moderate' },
-    { id: 'low_libido', name: 'Low Libido', category: 'reproductive', severity: 'moderate' },
-    { id: 'menopause', name: 'Menopause', category: 'reproductive', severity: 'moderate' },
-    { id: 'andropause', name: 'Andropause', category: 'reproductive', severity: 'moderate' }
-  ],
-  urinary: [
-    { id: 'frequent_urination', name: 'Frequent Urination', category: 'urinary', severity: 'moderate' },
-    { id: 'painful_urination', name: 'Painful Urination', category: 'urinary', severity: 'moderate' },
-    { id: 'urinary_incontinence', name: 'Urinary Incontinence', category: 'urinary', severity: 'moderate' },
-    { id: 'kidney_stones', name: 'Kidney Stones', category: 'urinary', severity: 'severe' },
-    { id: 'uti', name: 'Urinary Tract Infection', category: 'urinary', severity: 'moderate' },
-    { id: 'kidney_disease', name: 'Kidney Disease', category: 'urinary', severity: 'severe' },
-    { id: 'bladder_infection', name: 'Bladder Infection', category: 'urinary', severity: 'moderate' }
-  ],
-  eye_ear: [
-    { id: 'blurred_vision', name: 'Blurred Vision', category: 'eye_ear', severity: 'moderate' },
-    { id: 'eye_pain', name: 'Eye Pain', category: 'eye_ear', severity: 'moderate' },
-    { id: 'dry_eyes', name: 'Dry Eyes', category: 'eye_ear', severity: 'mild' },
-    { id: 'cataracts', name: 'Cataracts', category: 'eye_ear', severity: 'moderate' },
-    { id: 'glaucoma', name: 'Glaucoma', category: 'eye_ear', severity: 'severe' },
-    { id: 'macular_degeneration', name: 'Macular Degeneration', category: 'eye_ear', severity: 'severe' },
-    { id: 'ear_pain', name: 'Ear Pain', category: 'eye_ear', severity: 'moderate' },
-    { id: 'tinnitus', name: 'Tinnitus', category: 'eye_ear', severity: 'moderate' },
-    { id: 'hearing_loss', name: 'Hearing Loss', category: 'eye_ear', severity: 'moderate' },
-    { id: 'vertigo', name: 'Vertigo', category: 'eye_ear', severity: 'moderate' }
-  ],
-  general: [
-    { id: 'fever', name: 'Fever', category: 'general', severity: 'moderate' },
-    { id: 'chills', name: 'Chills', category: 'general', severity: 'moderate' },
-    { id: 'sweating', name: 'Excessive Sweating', category: 'general', severity: 'moderate' },
-    { id: 'low_energy', name: 'Low Energy', category: 'general', severity: 'moderate' },
-    { id: 'inflammation', name: 'General Inflammation', category: 'general', severity: 'moderate' },
-    { id: 'chronic_pain', name: 'Chronic Pain', category: 'general', severity: 'severe' },
-    { id: 'sleep_problems', name: 'Sleep Problems', category: 'general', severity: 'moderate' },
-    { id: 'appetite_changes', name: 'Appetite Changes', category: 'general', severity: 'moderate' },
-    { id: 'temperature_sensitivity', name: 'Temperature Sensitivity', category: 'general', severity: 'mild' },
-    { id: 'aging_concerns', name: 'Aging Concerns', category: 'general', severity: 'moderate' }
-  ]
+  
+  detailedReports: {
+    comprehensive: {
+      name: 'Comprehensive Health Report',
+      sections: [
+        'Dosha Analysis',
+        'Symptom Assessment',
+        'Personalized Recommendations',
+        'Lifestyle Guidelines',
+        'Diet Plan',
+        'Remedy Schedule',
+        'Progress Tracking'
+      ],
+      price: 19.99,
+      subscriptionRequired: 'basic'
+    },
+    advanced: {
+      name: 'Advanced Wellness Report',
+      sections: [
+        'All Comprehensive sections',
+        'Seasonal Adjustments',
+        'Stress Management',
+        'Sleep Optimization',
+        'Exercise Recommendations',
+        'Supplements Guide',
+        'Long-term Health Plan'
+      ],
+      price: 49.99,
+      subscriptionRequired: 'professional'
+    }
+  }
 };
 
-// Comprehensive worldwide remedies database
-const worldwideRemediesData = [
-  // Digestive Remedies
-  {
-    id: 'ginger_tea',
-    name: 'Ginger Tea',
-    category: 'digestive',
-    symptoms: ['indigestion', 'nausea', 'bloating', 'gas'],
-    description: 'Traditional remedy for digestive issues',
-    ingredients: ['Fresh ginger root', 'Hot water', 'Honey (optional)'],
-    instructions: 'Slice fresh ginger, steep in hot water for 10 minutes',
-    origin: 'Asia',
-    effectiveness: 'high',
-    safety: 'safe',
-    contraindications: 'May interact with blood thinners'
-  },
-  {
-    id: 'peppermint_tea',
-    name: 'Peppermint Tea',
-    category: 'digestive',
-    symptoms: ['indigestion', 'bloating', 'gas', 'ibs'],
-    description: 'Natural antispasmodic for digestive relief',
-    ingredients: ['Peppermint leaves', 'Hot water'],
-    instructions: 'Steep peppermint leaves in hot water for 5-7 minutes',
-    origin: 'Europe',
-    effectiveness: 'high',
-    safety: 'safe',
-    contraindications: 'Avoid with GERD'
-  },
-  {
-    id: 'chamomile_tea',
-    name: 'Chamomile Tea',
-    category: 'digestive',
-    symptoms: ['indigestion', 'nausea', 'stress'],
-    description: 'Calming herb for digestive and nervous system',
-    ingredients: ['Chamomile flowers', 'Hot water'],
-    instructions: 'Steep chamomile flowers in hot water for 5 minutes',
-    origin: 'Europe',
-    effectiveness: 'moderate',
-    safety: 'safe',
-    contraindications: 'May cause allergic reactions'
-  },
-  {
-    id: 'fennel_seeds',
-    name: 'Fennel Seeds',
-    category: 'digestive',
-    symptoms: ['bloating', 'gas', 'indigestion'],
-    description: 'Traditional Indian remedy for digestive issues',
-    ingredients: ['Fennel seeds', 'Hot water'],
-    instructions: 'Chew 1/2 teaspoon fennel seeds after meals',
-    origin: 'India',
-    effectiveness: 'high',
-    safety: 'safe',
-    contraindications: 'Avoid in large amounts during pregnancy'
-  },
-  {
-    id: 'aloe_vera_juice',
-    name: 'Aloe Vera Juice',
-    category: 'digestive',
-    symptoms: ['acid_reflux', 'ulcer', 'gastritis'],
-    description: 'Natural healing agent for stomach lining',
-    ingredients: ['Aloe vera gel', 'Water'],
-    instructions: 'Drink 2-4 oz of pure aloe vera juice daily',
-    origin: 'Africa',
-    effectiveness: 'moderate',
-    safety: 'safe',
-    contraindications: 'May cause diarrhea in large amounts'
-  },
-
-  // Respiratory Remedies
-  {
-    id: 'honey_lemon_tea',
-    name: 'Honey Lemon Tea',
-    category: 'respiratory',
-    symptoms: ['cough', 'sore_throat', 'congestion'],
-    description: 'Traditional remedy for respiratory infections',
-    ingredients: ['Fresh lemon juice', 'Raw honey', 'Hot water'],
-    instructions: 'Mix lemon juice and honey in hot water',
-    origin: 'Global',
-    effectiveness: 'high',
-    safety: 'safe',
-    contraindications: 'Avoid honey for children under 1 year'
-  },
-  {
-    id: 'eucalyptus_steam',
-    name: 'Eucalyptus Steam Inhalation',
-    category: 'respiratory',
-    symptoms: ['congestion', 'sinusitis', 'bronchitis'],
-    description: 'Natural decongestant and expectorant',
-    ingredients: ['Eucalyptus essential oil', 'Hot water'],
-    instructions: 'Add 3-5 drops to hot water and inhale steam',
-    origin: 'Australia',
-    effectiveness: 'high',
-    safety: 'safe',
-    contraindications: 'Avoid direct contact with eyes'
-  },
-  {
-    id: 'turmeric_milk',
-    name: 'Turmeric Milk (Golden Milk)',
-    category: 'respiratory',
-    symptoms: ['cough', 'congestion', 'inflammation'],
-    description: 'Anti-inflammatory Ayurvedic remedy',
-    ingredients: ['Turmeric powder', 'Milk', 'Honey', 'Black pepper'],
-    instructions: 'Mix turmeric, black pepper in warm milk with honey',
-    origin: 'India',
-    effectiveness: 'moderate',
-    safety: 'safe',
-    contraindications: 'May interact with blood thinners'
-  },
-  {
-    id: 'garlic_syrup',
-    name: 'Garlic Honey Syrup',
-    category: 'respiratory',
-    symptoms: ['cough', 'bronchitis', 'infection'],
-    description: 'Natural antibiotic and immune booster',
-    ingredients: ['Fresh garlic', 'Raw honey'],
-    instructions: 'Infuse crushed garlic in honey for 24 hours',
-    origin: 'Global',
-    effectiveness: 'high',
-    safety: 'safe',
-    contraindications: 'May cause stomach upset in large amounts'
-  },
-
-  // Nervous System Remedies
-  {
-    id: 'lavender_tea',
-    name: 'Lavender Tea',
-    category: 'nervous',
-    symptoms: ['anxiety', 'insomnia', 'stress'],
-    description: 'Calming herb for nervous system',
-    ingredients: ['Lavender flowers', 'Hot water'],
-    instructions: 'Steep lavender flowers in hot water for 5 minutes',
-    origin: 'Mediterranean',
-    effectiveness: 'moderate',
-    safety: 'safe',
-    contraindications: 'May cause drowsiness'
-  },
-  {
-    id: 'valerian_root',
-    name: 'Valerian Root Tea',
-    category: 'nervous',
-    symptoms: ['insomnia', 'anxiety', 'stress'],
-    description: 'Natural sedative for sleep disorders',
-    ingredients: ['Valerian root', 'Hot water'],
-    instructions: 'Steep valerian root in hot water for 10 minutes',
-    origin: 'Europe',
-    effectiveness: 'high',
-    safety: 'moderate',
-    contraindications: 'May cause drowsiness, avoid with alcohol'
-  },
-  {
-    id: 'ashwagandha_tea',
-    name: 'Ashwagandha Tea',
-    category: 'nervous',
-    symptoms: ['stress', 'anxiety', 'fatigue'],
-    description: 'Adaptogenic herb for stress management',
-    ingredients: ['Ashwagandha powder', 'Hot water', 'Honey'],
-    instructions: 'Mix ashwagandha powder in hot water with honey',
-    origin: 'India',
-    effectiveness: 'high',
-    safety: 'safe',
-    contraindications: 'May interact with thyroid medications'
-  },
-  {
-    id: 'passionflower_tea',
-    name: 'Passionflower Tea',
-    category: 'nervous',
-    symptoms: ['anxiety', 'insomnia', 'panic_attacks'],
-    description: 'Natural anxiolytic and sedative',
-    ingredients: ['Passionflower herb', 'Hot water'],
-    instructions: 'Steep passionflower in hot water for 10 minutes',
-    origin: 'Americas',
-    effectiveness: 'moderate',
-    safety: 'safe',
-    contraindications: 'May cause drowsiness'
-  },
-
-  // Skin Remedies
-  {
-    id: 'aloe_vera_gel',
-    name: 'Aloe Vera Gel',
-    category: 'skin',
-    symptoms: ['acne', 'eczema', 'inflammation', 'burns'],
-    description: 'Natural healing and moisturizing agent',
-    ingredients: ['Fresh aloe vera gel'],
-    instructions: 'Apply fresh aloe gel directly to affected area',
-    origin: 'Africa',
-    effectiveness: 'high',
-    safety: 'safe',
-    contraindications: 'Test on small area first'
-  },
-  {
-    id: 'tea_tree_oil',
-    name: 'Tea Tree Oil',
-    category: 'skin',
-    symptoms: ['acne', 'fungal_infection', 'bacterial_infection'],
-    description: 'Natural antibacterial and antifungal agent',
-    ingredients: ['Tea tree essential oil', 'Carrier oil'],
-    instructions: 'Dilute with carrier oil and apply to affected area',
-    origin: 'Australia',
-    effectiveness: 'high',
-    safety: 'moderate',
-    contraindications: 'Must be diluted, avoid ingestion'
-  },
-  {
-    id: 'coconut_oil',
-    name: 'Coconut Oil',
-    category: 'skin',
-    symptoms: ['dry_skin', 'eczema', 'itching'],
-    description: 'Natural moisturizer and anti-inflammatory',
-    ingredients: ['Virgin coconut oil'],
-    instructions: 'Apply directly to skin as moisturizer',
-    origin: 'Tropical regions',
-    effectiveness: 'moderate',
-    safety: 'safe',
-    contraindications: 'May clog pores for some skin types'
-  },
-  {
-    id: 'calendula_ointment',
-    name: 'Calendula Ointment',
-    category: 'skin',
-    symptoms: ['rashes', 'inflammation', 'wounds'],
-    description: 'Healing herb for skin conditions',
-    ingredients: ['Calendula flowers', 'Carrier oil'],
-    instructions: 'Apply calendula ointment to affected area',
-    origin: 'Europe',
-    effectiveness: 'moderate',
-    safety: 'safe',
-    contraindications: 'May cause allergic reactions'
-  },
-
-  // Joint and Pain Remedies
-  {
-    id: 'turmeric_curcumin',
-    name: 'Turmeric Curcumin',
-    category: 'joints',
-    symptoms: ['joint_pain', 'inflammation', 'arthritis'],
-    description: 'Powerful anti-inflammatory compound',
-    ingredients: ['Turmeric powder', 'Black pepper', 'Fat'],
-    instructions: 'Take with black pepper and fat for absorption',
-    origin: 'India',
-    effectiveness: 'high',
-    safety: 'safe',
-    contraindications: 'May interact with blood thinners'
-  },
-  {
-    id: 'ginger_compress',
-    name: 'Ginger Compress',
-    category: 'joints',
-    symptoms: ['joint_pain', 'muscle_pain', 'inflammation'],
-    description: 'Warming compress for pain relief',
-    ingredients: ['Fresh ginger', 'Hot water', 'Cloth'],
-    instructions: 'Apply ginger-infused hot compress to affected area',
-    origin: 'Asia',
-    effectiveness: 'moderate',
-    safety: 'safe',
-    contraindications: 'Avoid on broken skin'
-  },
-  {
-    id: 'arnica_gel',
-    name: 'Arnica Gel',
-    category: 'joints',
-    symptoms: ['joint_pain', 'muscle_pain', 'swelling'],
-    description: 'Homeopathic remedy for pain and swelling',
-    ingredients: ['Arnica montana', 'Gel base'],
-    instructions: 'Apply arnica gel to affected area',
-    origin: 'Europe',
-    effectiveness: 'moderate',
-    safety: 'safe',
-    contraindications: 'Avoid on broken skin'
-  },
-  {
-    id: 'willow_bark_tea',
-    name: 'Willow Bark Tea',
-    category: 'joints',
-    symptoms: ['joint_pain', 'headache', 'inflammation'],
-    description: 'Natural source of salicylic acid',
-    ingredients: ['Willow bark', 'Hot water'],
-    instructions: 'Steep willow bark in hot water for 10 minutes',
-    origin: 'Europe',
-    effectiveness: 'moderate',
-    safety: 'moderate',
-    contraindications: 'May interact with blood thinners'
-  },
-
-  // Cardiovascular Remedies
-  {
-    id: 'garlic_supplement',
-    name: 'Garlic Supplement',
-    category: 'cardiovascular',
-    symptoms: ['high_blood_pressure', 'poor_circulation'],
-    description: 'Natural cardiovascular support',
-    ingredients: ['Garlic extract'],
-    instructions: 'Take garlic supplement as directed',
-    origin: 'Global',
-    effectiveness: 'moderate',
-    safety: 'safe',
-    contraindications: 'May interact with blood thinners'
-  },
-  {
-    id: 'hawthorn_tea',
-    name: 'Hawthorn Tea',
-    category: 'cardiovascular',
-    symptoms: ['heart_disease', 'poor_circulation', 'palpitations'],
-    description: 'Traditional heart tonic',
-    ingredients: ['Hawthorn berries', 'Hot water'],
-    instructions: 'Steep hawthorn berries in hot water for 10 minutes',
-    origin: 'Europe',
-    effectiveness: 'moderate',
-    safety: 'moderate',
-    contraindications: 'May interact with heart medications'
-  },
-
-  // Endocrine Remedies
-  {
-    id: 'cinnamon_tea',
-    name: 'Cinnamon Tea',
-    category: 'endocrine',
-    symptoms: ['diabetes', 'weight_gain'],
-    description: 'Natural blood sugar regulator',
-    ingredients: ['Cinnamon sticks', 'Hot water'],
-    instructions: 'Steep cinnamon sticks in hot water for 10 minutes',
-    origin: 'Asia',
-    effectiveness: 'moderate',
-    safety: 'safe',
-    contraindications: 'May interact with diabetes medications'
-  },
-  {
-    id: 'fenugreek_tea',
-    name: 'Fenugreek Tea',
-    category: 'endocrine',
-    symptoms: ['diabetes', 'weight_gain'],
-    description: 'Traditional remedy for blood sugar control',
-    ingredients: ['Fenugreek seeds', 'Hot water'],
-    instructions: 'Steep fenugreek seeds in hot water for 10 minutes',
-    origin: 'India',
-    effectiveness: 'moderate',
-    safety: 'safe',
-    contraindications: 'May interact with diabetes medications'
-  },
-
-  // Immune System Remedies
-  {
-    id: 'elderberry_syrup',
-    name: 'Elderberry Syrup',
-    category: 'immune',
-    symptoms: ['frequent_infections', 'cough', 'fever'],
-    description: 'Natural immune booster and antiviral',
-    ingredients: ['Elderberries', 'Honey', 'Water'],
-    instructions: 'Take 1-2 tablespoons daily during illness',
-    origin: 'Europe',
-    effectiveness: 'high',
-    safety: 'safe',
-    contraindications: 'Avoid raw elderberries'
-  },
-  {
-    id: 'echinacea_tea',
-    name: 'Echinacea Tea',
-    category: 'immune',
-    symptoms: ['frequent_infections', 'cough', 'congestion'],
-    description: 'Natural immune system stimulant',
-    ingredients: ['Echinacea root', 'Hot water'],
-    instructions: 'Steep echinacea root in hot water for 10 minutes',
-    origin: 'North America',
-    effectiveness: 'moderate',
-    safety: 'safe',
-    contraindications: 'May cause allergic reactions'
-  },
-  {
-    id: 'vitamin_c_rich_foods',
-    name: 'Vitamin C Rich Foods',
-    category: 'immune',
-    symptoms: ['frequent_infections', 'fatigue'],
-    description: 'Essential nutrient for immune function',
-    ingredients: ['Citrus fruits', 'Bell peppers', 'Broccoli'],
-    instructions: 'Consume vitamin C rich foods daily',
-    origin: 'Global',
-    effectiveness: 'high',
-    safety: 'safe',
-    contraindications: 'None'
-  },
-
-  // Reproductive Health Remedies
-  {
-    id: 'chasteberry_tea',
-    name: 'Chasteberry Tea',
-    category: 'reproductive',
-    symptoms: ['pms', 'irregular_periods', 'menopause'],
-    description: 'Natural hormone balancer',
-    ingredients: ['Chasteberry', 'Hot water'],
-    instructions: 'Steep chasteberry in hot water for 10 minutes',
-    origin: 'Mediterranean',
-    effectiveness: 'moderate',
-    safety: 'safe',
-    contraindications: 'May interact with hormone medications'
-  },
-  {
-    id: 'red_clover_tea',
-    name: 'Red Clover Tea',
-    category: 'reproductive',
-    symptoms: ['menopause', 'hot_flashes'],
-    description: 'Natural source of phytoestrogens',
-    ingredients: ['Red clover flowers', 'Hot water'],
-    instructions: 'Steep red clover flowers in hot water for 10 minutes',
-    origin: 'Europe',
-    effectiveness: 'moderate',
-    safety: 'safe',
-    contraindications: 'May interact with hormone medications'
-  },
-
-  // Urinary System Remedies
-  {
-    id: 'cranberry_juice',
-    name: 'Cranberry Juice',
-    category: 'urinary',
-    symptoms: ['uti', 'bladder_infection'],
-    description: 'Natural urinary tract health support',
-    ingredients: ['Pure cranberry juice'],
-    instructions: 'Drink 8-16 oz of pure cranberry juice daily',
-    origin: 'North America',
-    effectiveness: 'moderate',
-    safety: 'safe',
-    contraindications: 'May interact with blood thinners'
-  },
-  {
-    id: 'dandelion_tea',
-    name: 'Dandelion Tea',
-    category: 'urinary',
-    symptoms: ['frequent_urination', 'kidney_stones'],
-    description: 'Natural diuretic and kidney support',
-    ingredients: ['Dandelion root', 'Hot water'],
-    instructions: 'Steep dandelion root in hot water for 10 minutes',
-    origin: 'Global',
-    effectiveness: 'moderate',
-    safety: 'safe',
-    contraindications: 'May interact with diuretics'
-  },
-
-  // Eye and Ear Remedies
-  {
-    id: 'eyebright_tea',
-    name: 'Eyebright Tea',
-    category: 'eye_ear',
-    symptoms: ['eye_pain', 'dry_eyes', 'eye_inflammation'],
-    description: 'Traditional remedy for eye health',
-    ingredients: ['Eyebright herb', 'Hot water'],
-    instructions: 'Steep eyebright in hot water for 10 minutes',
-    origin: 'Europe',
-    effectiveness: 'moderate',
-    safety: 'safe',
-    contraindications: 'Avoid direct eye contact'
-  },
-  {
-    id: 'mullein_oil',
-    name: 'Mullein Oil',
-    category: 'eye_ear',
-    symptoms: ['ear_pain', 'ear_infection'],
-    description: 'Traditional remedy for ear health',
-    ingredients: ['Mullein flowers', 'Olive oil'],
-    instructions: 'Apply warm mullein oil to ear canal',
-    origin: 'Europe',
-    effectiveness: 'moderate',
-    safety: 'moderate',
-    contraindications: 'Avoid if eardrum is perforated'
-  },
-
-  // General Health Remedies
-  {
-    id: 'green_tea',
-    name: 'Green Tea',
-    category: 'general',
-    symptoms: ['low_energy', 'inflammation', 'aging_concerns'],
-    description: 'Antioxidant-rich health tonic',
-    ingredients: ['Green tea leaves', 'Hot water'],
-    instructions: 'Steep green tea leaves in hot water for 3-5 minutes',
-    origin: 'Asia',
-    effectiveness: 'high',
-    safety: 'safe',
-    contraindications: 'Contains caffeine'
-  },
-  {
-    id: 'probiotic_yogurt',
-    name: 'Probiotic Yogurt',
-    category: 'general',
-    symptoms: ['digestive_issues', 'immune_weakness'],
-    description: 'Natural source of beneficial bacteria',
-    ingredients: ['Live culture yogurt'],
-    instructions: 'Consume 1-2 servings daily',
-    origin: 'Global',
-    effectiveness: 'moderate',
-    safety: 'safe',
-    contraindications: 'Avoid if lactose intolerant'
-  },
-  {
-    id: 'omega_3_foods',
-    name: 'Omega-3 Rich Foods',
-    category: 'general',
-    symptoms: ['inflammation', 'heart_disease', 'depression'],
-    description: 'Essential fatty acids for overall health',
-    ingredients: ['Fatty fish', 'Flaxseeds', 'Walnuts'],
-    instructions: 'Include omega-3 rich foods in daily diet',
-    origin: 'Global',
-    effectiveness: 'high',
-    safety: 'safe',
-    contraindications: 'May interact with blood thinners'
+// Premium content endpoints
+app.get('/api/premium/wellness-plan/:dosha', (req, res) => {
+  const { dosha } = req.params;
+  const userId = getUser(req);
+  const user = userUsage.get(userId);
+  
+  // Check subscription level
+  if (!user || !user.isPremium) {
+    return res.status(403).json({
+      success: false,
+      message: 'Premium subscription required',
+      upgradeUrl: '/api/pricing'
+    });
   }
-];
+  
+  const plan = premiumContent.wellnessPlans[dosha];
+  if (!plan) {
+    return res.status(404).json({
+      success: false,
+      message: 'Wellness plan not found'
+    });
+  }
+  
+  res.json({
+    success: true,
+    data: plan,
+    generatedAt: new Date().toISOString(),
+    userId: userId
+  });
+});
+
+app.get('/api/premium/remedies', (req, res) => {
+  const userId = getUser(req);
+  const user = userUsage.get(userId);
+  
+  // Check subscription level
+  if (!user || !user.isPremium) {
+    return res.status(403).json({
+      success: false,
+      message: 'Premium subscription required',
+      upgradeUrl: '/api/pricing'
+    });
+  }
+  
+  res.json({
+    success: true,
+    data: premiumContent.exclusiveRemedies,
+    total: premiumContent.exclusiveRemedies.length
+  });
+});
+
+app.post('/api/premium/generate-report', (req, res) => {
+  const { reportType, userData, assessmentData } = req.body;
+  const userId = getUser(req);
+  const user = userUsage.get(userId);
+  
+  // Check subscription level
+  if (!user || !user.isPremium) {
+    return res.status(403).json({
+      success: false,
+      message: 'Premium subscription required',
+      upgradeUrl: '/api/pricing'
+    });
+  }
+  
+  const reportTemplate = premiumContent.detailedReports[reportType];
+  if (!reportTemplate) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid report type'
+    });
+  }
+  
+  // Generate personalized report
+  const report = {
+    id: `report_${Date.now()}`,
+    type: reportType,
+    userId: userId,
+    generatedAt: new Date().toISOString(),
+    sections: reportTemplate.sections,
+    content: generateReportContent(reportType, userData, assessmentData),
+    recommendations: generatePersonalizedRecommendations(userData, assessmentData),
+    nextSteps: generateNextSteps(userData, assessmentData)
+  };
+  
+  res.json({
+    success: true,
+    data: report,
+    downloadUrl: `/api/premium/download-report/${report.id}`
+  });
+});
+
+function generateReportContent(reportType, userData, assessmentData) {
+  // Generate personalized content based on user data and assessment
+  return {
+    doshaAnalysis: `Based on your assessment, you show ${assessmentData.dominantDosha} characteristics...`,
+    recommendations: `For your ${assessmentData.dominantDosha} constitution, we recommend...`,
+    lifestyle: `Your lifestyle should focus on balancing ${assessmentData.dominantDosha}...`,
+    diet: `Your diet should include foods that pacify ${assessmentData.dominantDosha}...`
+  };
+}
+
+function generatePersonalizedRecommendations(userData, assessmentData) {
+  return [
+    'Start your day with warm water and lemon',
+    'Practice 10 minutes of meditation daily',
+    'Include ghee in your diet',
+    'Maintain regular sleep schedule',
+    'Practice gentle yoga suitable for your dosha'
+  ];
+}
+
+function generateNextSteps(userData, assessmentData) {
+  return [
+    'Schedule a follow-up assessment in 30 days',
+    'Start implementing the recommended diet changes',
+    'Begin the suggested daily routine',
+    'Track your progress using our mobile app',
+    'Consider upgrading to Professional plan for advanced features'
+  ];
+}
 
 app.listen(PORT, () => {
   console.log(`🚀 Ayurveda Remedy API (Simple Version) running on port ${PORT}`);
@@ -1713,3 +1472,321 @@ app.listen(PORT, () => {
   console.log(`💳 Premium features: Subscription plans and monetization ready`);
   console.log(`🔒 Security: CSP headers and API key authentication enabled`);
 });
+
+// API Marketplace and White-label Solutions
+const apiKeys = new Map();
+const whiteLabelClients = new Map();
+
+// API Key management
+app.post('/api/keys/generate', authenticateApiKey, (req, res) => {
+  const { name, permissions, rateLimit } = req.body;
+  const userId = getUser(req);
+  
+  const apiKey = generateApiKey();
+  const keyData = {
+    id: apiKey,
+    name: name || 'Default API Key',
+    userId: userId,
+    permissions: permissions || ['read'],
+    rateLimit: rateLimit || 1000,
+    createdAt: new Date(),
+    lastUsed: null,
+    usage: 0
+  };
+  
+  apiKeys.set(apiKey, keyData);
+  
+  res.json({
+    success: true,
+    data: {
+      apiKey: apiKey,
+      name: keyData.name,
+      permissions: keyData.permissions,
+      rateLimit: keyData.rateLimit,
+      createdAt: keyData.createdAt
+    }
+  });
+});
+
+app.get('/api/keys', authenticateApiKey, (req, res) => {
+  const userId = getUser(req);
+  const userKeys = Array.from(apiKeys.values()).filter(key => key.userId === userId);
+  
+  res.json({
+    success: true,
+    data: userKeys.map(key => ({
+      id: key.id,
+      name: key.name,
+      permissions: key.permissions,
+      rateLimit: key.rateLimit,
+      createdAt: key.createdAt,
+      lastUsed: key.lastUsed,
+      usage: key.usage
+    }))
+  });
+});
+
+app.delete('/api/keys/:keyId', authenticateApiKey, (req, res) => {
+  const { keyId } = req.params;
+  const userId = getUser(req);
+  
+  const key = apiKeys.get(keyId);
+  if (!key || key.userId !== userId) {
+    return res.status(404).json({
+      success: false,
+      message: 'API key not found'
+    });
+  }
+  
+  apiKeys.delete(keyId);
+  
+  res.json({
+    success: true,
+    message: 'API key deleted successfully'
+  });
+});
+
+// White-label solutions
+app.post('/api/white-label/setup', authenticateApiKey, (req, res) => {
+  const { 
+    clientName, 
+    branding, 
+    customDomain, 
+    features, 
+    subscriptionPlan 
+  } = req.body;
+  
+  const clientId = generateClientId();
+  const clientData = {
+    id: clientId,
+    name: clientName,
+    branding: {
+      logo: branding.logo,
+      colors: branding.colors,
+      fonts: branding.fonts,
+      customCss: branding.customCss
+    },
+    domain: customDomain,
+    features: features || ['assessments', 'remedies', 'reports'],
+    subscriptionPlan: subscriptionPlan || 'enterprise',
+    createdAt: new Date(),
+    status: 'active',
+    usage: {
+      assessments: 0,
+      apiCalls: 0,
+      users: 0
+    }
+  };
+  
+  whiteLabelClients.set(clientId, clientData);
+  
+  res.json({
+    success: true,
+    data: {
+      clientId: clientId,
+      setupUrl: `https://${customDomain}/setup`,
+      apiEndpoint: `https://${customDomain}/api`,
+      dashboardUrl: `https://${customDomain}/admin`
+    }
+  });
+});
+
+app.get('/api/white-label/:clientId/config', (req, res) => {
+  const { clientId } = req.params;
+  const client = whiteLabelClients.get(clientId);
+  
+  if (!client) {
+    return res.status(404).json({
+      success: false,
+      message: 'Client not found'
+    });
+  }
+  
+  res.json({
+    success: true,
+    data: {
+      branding: client.branding,
+      features: client.features,
+      apiEndpoints: generateClientEndpoints(clientId)
+    }
+  });
+});
+
+function generateClientEndpoints(clientId) {
+  return {
+    assessments: `/api/${clientId}/assessments`,
+    remedies: `/api/${clientId}/remedies`,
+    reports: `/api/${clientId}/reports`,
+    users: `/api/${clientId}/users`
+  };
+}
+
+// Marketplace features
+const marketplaceFeatures = {
+  integrations: [
+    {
+      id: 'shopify',
+      name: 'Shopify Integration',
+      description: 'Sell Ayurvedic products directly in your Shopify store',
+      price: 99.99,
+      category: 'ecommerce',
+      features: [
+        'Product recommendations based on dosha',
+        'Automated inventory management',
+        'Customer health profiles',
+        'Personalized marketing campaigns'
+      ]
+    },
+    {
+      id: 'woocommerce',
+      name: 'WooCommerce Integration',
+      description: 'Integrate Ayurvedic recommendations with WooCommerce',
+      price: 79.99,
+      category: 'ecommerce',
+      features: [
+        'Dosha-based product filtering',
+        'Health assessment widgets',
+        'Customer segmentation',
+        'Automated email campaigns'
+      ]
+    },
+    {
+      id: 'mailchimp',
+      name: 'Mailchimp Integration',
+      description: 'Send personalized wellness emails based on dosha',
+      price: 49.99,
+      category: 'marketing',
+      features: [
+        'Dosha-specific email templates',
+        'Automated wellness campaigns',
+        'Customer health tracking',
+        'A/B testing for wellness content'
+      ]
+    },
+    {
+      id: 'zapier',
+      name: 'Zapier Integration',
+      description: 'Connect Ayurvedic insights with 5000+ apps',
+      price: 29.99,
+      category: 'automation',
+      features: [
+        'Trigger wellness workflows',
+        'Sync health data across platforms',
+        'Automated follow-ups',
+        'Custom automation rules'
+      ]
+    }
+  ],
+  
+  addons: [
+    {
+      id: 'advanced_analytics',
+      name: 'Advanced Analytics Dashboard',
+      description: 'Comprehensive health and business analytics',
+      price: 199.99,
+      category: 'analytics',
+      features: [
+        'Real-time health metrics',
+        'Revenue tracking',
+        'Customer lifetime value',
+        'Predictive health insights'
+      ]
+    },
+    {
+      id: 'ai_coach',
+      name: 'AI Wellness Coach',
+      description: 'Personalized AI-powered wellness guidance',
+      price: 299.99,
+      category: 'ai',
+      features: [
+        '24/7 wellness support',
+        'Personalized recommendations',
+        'Progress tracking',
+        'Natural language interactions'
+      ]
+    },
+    {
+      id: 'mobile_app',
+      name: 'Custom Mobile App',
+      description: 'White-label mobile app for your brand',
+      price: 999.99,
+      category: 'mobile',
+      features: [
+        'iOS and Android apps',
+        'Custom branding',
+        'Push notifications',
+        'Offline functionality'
+      ]
+    }
+  ]
+};
+
+// Marketplace endpoints
+app.get('/api/marketplace/integrations', (req, res) => {
+  res.json({
+    success: true,
+    data: marketplaceFeatures.integrations,
+    total: marketplaceFeatures.integrations.length
+  });
+});
+
+app.get('/api/marketplace/addons', (req, res) => {
+  res.json({
+    success: true,
+    data: marketplaceFeatures.addons,
+    total: marketplaceFeatures.addons.length
+  });
+});
+
+app.post('/api/marketplace/purchase', async (req, res) => {
+  const { itemId, itemType, customerEmail } = req.body;
+  
+  let item;
+  if (itemType === 'integration') {
+    item = marketplaceFeatures.integrations.find(i => i.id === itemId);
+  } else if (itemType === 'addon') {
+    item = marketplaceFeatures.addons.find(a => a.id === itemId);
+  }
+  
+  if (!item) {
+    return res.status(404).json({
+      success: false,
+      message: 'Item not found'
+    });
+  }
+  
+  try {
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: item.price * 100,
+      currency: 'usd',
+      description: `Purchase: ${item.name}`,
+      receipt_email: customerEmail,
+      metadata: {
+        itemId: itemId,
+        itemType: itemType,
+        itemName: item.name
+      }
+    });
+    
+    res.json({
+      success: true,
+      clientSecret: paymentIntent.client_secret,
+      item: item
+    });
+    
+  } catch (error) {
+    console.error('Marketplace purchase error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Purchase failed. Please try again.'
+    });
+  }
+});
+
+function generateApiKey() {
+  return 'ak_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now().toString(36);
+}
+
+function generateClientId() {
+  return 'client_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now().toString(36);
+}
