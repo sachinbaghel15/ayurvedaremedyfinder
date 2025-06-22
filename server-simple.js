@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -9,6 +10,46 @@ const PORT = process.env.PORT || 4000;
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
+
+// Custom static file handlers for Render
+app.get('/styles-new.css', (req, res) => {
+  console.log('styles-new.css route handler called');
+  const filePath = path.join(__dirname, 'public', 'styles-new.css');
+  console.log('Looking for file at:', filePath);
+  console.log('File exists:', fs.existsSync(filePath));
+  
+  if (fs.existsSync(filePath)) {
+    console.log('Serving styles-new.css with text/css MIME type');
+    res.setHeader('Content-Type', 'text/css');
+    res.sendFile(filePath);
+  } else {
+    res.status(404).json({ error: 'styles-new.css not found' });
+  }
+});
+
+app.get('/script-new.js', (req, res) => {
+  console.log('script-new.js route handler called');
+  const filePath = path.join(__dirname, 'public', 'script-new.js');
+  
+  if (fs.existsSync(filePath)) {
+    res.setHeader('Content-Type', 'application/javascript');
+    res.sendFile(filePath);
+  } else {
+    res.status(404).json({ error: 'script-new.js not found' });
+  }
+});
+
+app.get('/jspdf.min.js', (req, res) => {
+  console.log('jspdf.min.js route handler called');
+  const filePath = path.join(__dirname, 'public', 'jspdf.min.js');
+  
+  if (fs.existsSync(filePath)) {
+    res.setHeader('Content-Type', 'application/javascript');
+    res.sendFile(filePath);
+  } else {
+    res.status(404).json({ error: 'jspdf.min.js not found' });
+  }
+});
 
 // Health check
 app.get('/health', (req, res) => {
