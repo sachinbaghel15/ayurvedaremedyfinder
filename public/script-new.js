@@ -430,56 +430,5 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function handleDownloadReport() {
-    // Show email modal before allowing download
-    document.getElementById('email-modal').style.display = 'block';
-    document.getElementById('user-email').value = '';
-    document.getElementById('email-error').style.display = 'none';
-    allowDownload = false;
-}
-
-function closeEmailModal() {
-    document.getElementById('email-modal').style.display = 'none';
-}
-
-function submitEmailForDownload() {
-    const emailInput = document.getElementById('user-email').value.trim();
-    const errorDiv = document.getElementById('email-error');
-    if (!validateEmail(emailInput)) {
-        errorDiv.textContent = 'Please enter a valid email address.';
-        errorDiv.style.display = 'block';
-        return;
-    }
-    errorDiv.style.display = 'none';
-    emailForDownload = emailInput;
-    allowDownload = false;
-    // Send email and symptoms to backend
-    fetch('/api/send-report', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            email: emailForDownload,
-            symptoms: selectedSymptoms.map(s => s.id)
-        })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            allowDownload = true;
-            closeEmailModal();
-            generatePDFReport();
-            alert('Report will be sent to your email!');
-        } else {
-            errorDiv.textContent = data.message || 'Failed to send email. Please try again.';
-            errorDiv.style.display = 'block';
-        }
-    })
-    .catch(() => {
-        errorDiv.textContent = 'Failed to send email. Please try again.';
-        errorDiv.style.display = 'block';
-    });
-}
-
-function validateEmail(email) {
-    // Simple email regex
-    return /^\S+@\S+\.\S+$/.test(email);
+    generatePDFReport();
 } 
