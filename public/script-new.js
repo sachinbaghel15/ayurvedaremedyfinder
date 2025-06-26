@@ -19,77 +19,7 @@ fetch('/api/symptoms')
         }
     });
 
-const searchInput = document.getElementById('symptom-search');
-const autocompleteList = document.getElementById('autocomplete-list');
-let currentFocus = -1;
-
-if (searchInput) {
-    searchInput.addEventListener('input', function() {
-        showAutocomplete(this.value);
-    });
-    searchInput.addEventListener('focus', function() {
-        showAutocomplete(this.value);
-    });
-    searchInput.addEventListener('keydown', function(e) {
-        let items = autocompleteList.getElementsByClassName('autocomplete-item');
-        if (e.key === 'ArrowDown') {
-            currentFocus++;
-            addActive(items);
-        } else if (e.key === 'ArrowUp') {
-            currentFocus--;
-            addActive(items);
-        } else if (e.key === 'Enter') {
-            e.preventDefault();
-            if (currentFocus > -1 && items[currentFocus]) {
-                items[currentFocus].click();
-            }
-        }
-    });
-}
-
-document.addEventListener('click', function(e) {
-    if (e.target !== searchInput) {
-        closeAutocomplete();
-    }
-});
-
-function showAutocomplete(val) {
-    closeAutocomplete();
-    if (!val) return;
-    let matches = allSymptoms.filter(s => s.name.toLowerCase().includes(val.toLowerCase()));
-    if (matches.length === 0) return;
-    matches.slice(0, 12).forEach(symptom => {
-        let item = document.createElement('div');
-        item.className = 'autocomplete-item';
-        item.textContent = symptom.name;
-        item.onclick = function() {
-            addSymptom(symptom.name);
-            closeAutocomplete();
-        };
-        autocompleteList.appendChild(item);
-    });
-    autocompleteList.style.display = 'block';
-    currentFocus = -1;
-}
-
-function closeAutocomplete() {
-    autocompleteList.innerHTML = '';
-    autocompleteList.style.display = 'none';
-}
-
-function addActive(items) {
-    if (!items) return;
-    removeActive(items);
-    if (currentFocus >= items.length) currentFocus = 0;
-    if (currentFocus < 0) currentFocus = items.length - 1;
-    items[currentFocus].classList.add('active');
-    items[currentFocus].scrollIntoView({ block: 'nearest' });
-}
-function removeActive(items) {
-    for (let i = 0; i < items.length; i++) {
-        items[i].classList.remove('active');
-    }
-}
+// Removed autocomplete logic for symptom search bar
 
 // ===== QUICK SEARCH FUNCTIONS =====
 // Quick search function
