@@ -1,6 +1,3 @@
-const Remedy = require('../models/Remedy');
-const Herb = require('../models/Herb');
-
 // Dosha information data
 const doshaInfo = {
   vata: {

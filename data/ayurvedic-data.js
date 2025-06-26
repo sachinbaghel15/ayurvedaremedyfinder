@@ -1,237 +1,128 @@
-const express = require('express');
-const path = require('path');
-const cors = require('cors');
-const fs =require('fs');
-
-const app = express();
-const PORT = process.env.PORT || 4000;
-
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.static('public'));
-
-// Custom static file handlers for Render
-app.get('/styles-new.css', (req, res) => {
-  console.log('styles-new.css route handler called');
-  const filePath = path.join(__dirname, 'public', 'styles-new.css');
-  console.log('Looking for file at:', filePath);
-  console.log('File exists:', fs.existsSync(filePath));
+const causesData = {
+  // Respiratory causes
+  cough: ['viral_infection', 'bacterial_infection', 'allergies', 'smoking', 'pollution', 'dry_air'],
+  cold: ['viral_infection', 'weakened_immunity', 'seasonal_changes', 'stress'],
+  fever: ['infection', 'inflammation', 'immune_response', 'viral_bacterial'],
+  sore_throat: ['viral_infection', 'bacterial_infection', 'acid_reflux', 'dry_air', 'smoking'],
+  congestion: ['allergies', 'sinus_infection', 'viral_infection', 'environmental_factors'],
   
-  if (fs.existsSync(filePath)) {
-    console.log('Serving styles-new.css with text/css MIME type');
-    res.setHeader('Content-Type', 'text/css');
-    res.sendFile(filePath);
-  } else {
-    res.status(404).json({ error: 'styles-new.css not found' });
-  }
-});
-
-app.get('/script-new.js', (req, res) => {
-  console.log('script-new.js route handler called');
-  const filePath = path.join(__dirname, 'public', 'script-new.js');
+  // Digestive causes
+  indigestion: ['poor_diet', 'stress', 'overeating', 'food_intolerance', 'low_digestive_fire'],
+  bloating: ['poor_diet', 'food_intolerance', 'stress', 'imbalanced_doshas', 'weak_digestion'],
+  constipation: ['poor_diet', 'dehydration', 'lack_of_fiber', 'stress', 'vata_imbalance'],
+  diarrhea: ['food_poisoning', 'viral_infection', 'stress', 'pitta_imbalance', 'poor_diet'],
+  nausea: ['digestive_upset', 'stress', 'motion_sickness', 'pregnancy', 'medication'],
   
-  if (fs.existsSync(filePath)) {
-    res.setHeader('Content-Type', 'application/javascript');
-    res.sendFile(filePath);
-  } else {
-    res.status(404).json({ error: 'script-new.js not found' });
-  }
-});
-
-app.get('/jspdf.min.js', (req, res) => {
-  console.log('jspdf.min.js route handler called');
-  const filePath = path.join(__dirname, 'public', 'jspdf.min.js');
+  // Mental causes
+  anxiety: ['stress', 'vata_imbalance', 'poor_sleep', 'caffeine', 'genetic_factors'],
+  stress: ['work_pressure', 'relationship_issues', 'financial_worries', 'health_concerns'],
+  insomnia: ['stress', 'vata_imbalance', 'poor_sleep_hygiene', 'caffeine', 'screen_time'],
+  depression: ['chemical_imbalance', 'stress', 'genetic_factors', 'life_events', 'kapha_imbalance'],
+  mood_swings: ['hormonal_imbalance', 'stress', 'pitta_imbalance', 'poor_diet'],
   
-  if (fs.existsSync(filePath)) {
-    res.setHeader('Content-Type', 'application/javascript');
-    res.sendFile(filePath);
-  } else {
-    res.status(404).json({ error: 'jspdf.min.js not found' });
-  }
-});
-
-// Health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
-});
-
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
-});
-
-// Doshas data
-const doshaInfo = {
-  vata: {
-    name: 'Vata',
-    elements: ['Air', 'Ether'],
-    qualities: ['Light', 'Cold', 'Dry', 'Rough', 'Subtle', 'Mobile'],
-    characteristics: {
-      physical: [
-        'Thin, lean body frame',
-        'Dry skin and hair',
-        'Cold hands and feet',
-        'Irregular appetite and digestion',
-        'Light, interrupted sleep',
-        'Quick movements and speech'
-      ],
-      mental: [
-        'Creative and imaginative',
-        'Quick to learn and forget',
-        'Enthusiastic and adaptable',
-        'Prone to worry and anxiety',
-        'Variable moods'
-      ]
-    }
-  },
-  pitta: {
-    name: 'Pitta',
-    elements: ['Fire', 'Water'],
-    qualities: ['Hot', 'Sharp', 'Light', 'Liquid', 'Oily', 'Spreading'],
-    characteristics: {
-      physical: [
-        'Medium build and weight',
-        'Warm body temperature',
-        'Good appetite and digestion',
-        'Sharp features and eyes',
-        'Tendency to sweat easily',
-        'Reddish hair or complexion'
-      ],
-      mental: [
-        'Intelligent and focused',
-        'Strong leadership qualities',
-        'Competitive and ambitious',
-        'Quick to anger',
-        'Good memory and concentration'
-      ]
-    }
-  },
-  kapha: {
-    name: 'Kapha',
-    elements: ['Earth', 'Water'],
-    qualities: ['Heavy', 'Slow', 'Cold', 'Oily', 'Smooth', 'Dense'],
-    characteristics: {
-      physical: [
-        'Large, strong body frame',
-        'Thick, oily skin and hair',
-        'Slow metabolism',
-        'Deep, sound sleep',
-        'Strong immune system',
-        'Slow, steady movements'
-      ],
-      mental: [
-        'Calm and patient',
-        'Loving and compassionate',
-        'Good memory and learning',
-        'Stable and loyal',
-        'Slow to anger'
-      ]
-    }
-  }
+  // Pain causes
+  headache: ['stress', 'dehydration', 'poor_posture', 'eye_strain', 'vata_imbalance'],
+  back_pain: ['poor_posture', 'muscle_strain', 'stress', 'vata_imbalance', 'aging'],
+  joint_pain: ['inflammation', 'arthritis', 'overuse', 'kapha_imbalance', 'aging'],
+  muscle_pain: ['overuse', 'stress', 'poor_posture', 'dehydration', 'vata_imbalance'],
+  chronic_pain: ['inflammation', 'nerve_damage', 'stress', 'dosha_imbalance', 'aging'],
+  
+  // Skin causes
+  acne: ['hormonal_imbalance', 'poor_diet', 'stress', 'pitta_imbalance', 'bacteria'],
+  eczema: ['allergies', 'stress', 'dry_skin', 'immune_system_issues', 'vata_imbalance'],
+  dry_skin: ['dehydration', 'weather', 'aging', 'vata_imbalance', 'poor_skincare'],
+  itching: ['allergies', 'dry_skin', 'stress', 'vata_imbalance', 'skin_conditions'],
+  rashes: ['allergies', 'contact_dermatitis', 'stress', 'pitta_imbalance', 'infections'],
+  
+  // Energy causes
+  fatigue: ['poor_sleep', 'stress', 'poor_diet', 'dehydration', 'dosha_imbalance'],
+  low_energy: ['poor_diet', 'stress', 'lack_of_exercise', 'dosha_imbalance', 'sleep_issues'],
+  weakness: ['poor_diet', 'dehydration', 'stress', 'illness', 'vata_imbalance'],
+  tiredness: ['poor_sleep', 'stress', 'overwork', 'dosha_imbalance', 'poor_diet'],
+  adrenal_fatigue: ['chronic_stress', 'poor_diet', 'lack_of_sleep', 'overwork', 'dosha_imbalance']
 };
 
-// Symptoms data
-const symptomsData = {
-  respiratory: [
-    { id: 'cough', name: 'Cough' },
-    { id: 'cold', name: 'Cold' },
-    { id: 'fever', name: 'Fever' },
-    { id: 'sore_throat', name: 'Sore Throat' },
-    { id: 'congestion', name: 'Congestion' },
-    { id: 'shortness_of_breath', name: 'Shortness of Breath' },
-    { id: 'sinusitis', name: 'Sinusitis' },
-    { id: 'bronchitis', name: 'Bronchitis' },
-    { id: 'asthma', name: 'Asthma' },
-    { id: 'hoarseness', name: 'Hoarseness' }
+const productRecommendations = {
+  tulsi: [
+    {
+      name: 'Organic India Tulsi Tea',
+      type: 'tea_bags',
+      price: '$12.99',
+      quantity: '25 bags',
+      rating: 4.5,
+      ethical_score: 9.2,
+      sustainability: 'high',
+      certifications: ['USDA Organic', 'Fair Trade'],
+      availability: 'global',
+      supplier: 'Organic India'
+    },
+    {
+      name: 'Traditional Medicinals Tulsi Tea',
+      type: 'tea_bags',
+      price: '$8.99',
+      quantity: '16 bags',
+      rating: 4.3,
+      ethical_score: 8.8,
+      sustainability: 'high',
+      certifications: ['USDA Organic', 'Non-GMO'],
+      availability: 'global',
+      supplier: 'Traditional Medicinals'
+    }
   ],
-  digestive: [
-    { id: 'indigestion', name: 'Indigestion' },
-    { id: 'bloating', name: 'Bloating' },
-    { id: 'constipation', name: 'Constipation' },
-    { id: 'diarrhea', name: 'Diarrhea' },
-    { id: 'nausea', name: 'Nausea' },
-    { id: 'loss_of_appetite', name: 'Loss of Appetite' },
-    { id: 'acid_reflux', name: 'Acid Reflux' },
-    { id: 'heartburn', name: 'Heartburn' },
-    { id: 'gas', name: 'Gas' },
-    { id: 'abdominal_pain', name: 'Abdominal Pain' }
+  turmeric: [
+    {
+      name: 'Frontier Co-op Organic Turmeric',
+      type: 'powder',
+      price: '$9.99',
+      quantity: '8 oz',
+      rating: 4.6,
+      ethical_score: 9.0,
+      sustainability: 'high',
+      certifications: ['USDA Organic', 'Fair Trade'],
+      availability: 'global',
+      supplier: 'Frontier Co-op'
+    },
+    {
+      name: 'Simply Organic Turmeric',
+      type: 'powder',
+      price: '$7.99',
+      quantity: '4.5 oz',
+      rating: 4.4,
+      ethical_score: 8.5,
+      sustainability: 'medium',
+      certifications: ['USDA Organic'],
+      availability: 'global',
+      supplier: 'Simply Organic'
+    }
   ],
-  mental: [
-    { id: 'anxiety', name: 'Anxiety' },
-    { id: 'stress', name: 'Stress' },
-    { id: 'insomnia', name: 'Insomnia' },
-    { id: 'depression', name: 'Depression' },
-    { id: 'mood_swings', name: 'Mood Swings' },
-    { id: 'brain_fog', name: 'Brain Fog' },
-    { id: 'memory_problems', name: 'Memory Problems' },
-    { id: 'concentration_issues', name: 'Concentration Issues' },
-    { id: 'panic_attacks', name: 'Panic Attacks' },
-    { id: 'sleep_problems', name: 'Sleep Problems' }
-  ],
-  pain: [
-    { id: 'headache', name: 'Headache' },
-    { id: 'back_pain', name: 'Back Pain' },
-    { id: 'joint_pain', name: 'Joint Pain' },
-    { id: 'muscle_pain', name: 'Muscle Pain' },
-    { id: 'chronic_pain', name: 'Chronic Pain' },
-    { id: 'inflammation', name: 'Inflammation' },
-    { id: 'arthritis', name: 'Arthritis' },
-    { id: 'migraine', name: 'Migraine' },
-    { id: 'neck_pain', name: 'Neck Pain' },
-    { id: 'sciatica', name: 'Sciatica' }
-  ],
-  skin: [
-    { id: 'acne', name: 'Acne' },
-    { id: 'eczema', name: 'Eczema' },
-    { id: 'dry_skin', name: 'Dry Skin' },
-    { id: 'itching', name: 'Itching' },
-    { id: 'rashes', name: 'Rashes' },
-    { id: 'psoriasis', name: 'Psoriasis' },
-    { id: 'hives', name: 'Hives' },
-    { id: 'fungal_infection', name: 'Fungal Infection' },
-    { id: 'dermatitis', name: 'Dermatitis' },
-    { id: 'oily_skin', name: 'Oily Skin' }
-  ],
-  energy: [
-    { id: 'fatigue', name: 'Fatigue' },
-    { id: 'low_energy', name: 'Low Energy' },
-    { id: 'weakness', name: 'Weakness' },
-    { id: 'tiredness', name: 'Tiredness' },
-    { id: 'adrenal_fatigue', name: 'Adrenal Fatigue' },
-    { id: 'lethargy', name: 'Lethargy' }
-  ],
-  womens_health: [
-    { id: 'irregular_periods', name: 'Irregular Periods' },
-    { id: 'pms', name: 'PMS' },
-    { id: 'menstrual_cramps', name: 'Menstrual Cramps' },
-    { id: 'hot_flashes', name: 'Hot Flashes' },
-    { id: 'menopause', name: 'Menopause' },
-    { id: 'pcos', name: 'PCOS' },
-    { id: 'infertility', name: 'Infertility' },
-    { id: 'low_libido', name: 'Low Libido' }
-  ],
-  mens_health: [
-    { id: 'low_libido', name: 'Low Libido' },
-    { id: 'erectile_dysfunction', name: 'Erectile Dysfunction' },
-    { id: 'prostate_problems', name: 'Prostate Problems' },
-    { id: 'andropause', name: 'Andropause' },
-    { id: 'hair_loss', name: 'Hair Loss' }
-  ],
-  general: [
-    { id: 'frequent_infections', name: 'Frequent Infections' },
-    { id: 'allergies', name:. 'Allergies' },
-    { id: 'autoimmune_disease', name: 'Autoimmune Disease' },
-    { id: 'diabetes', name: 'Diabetes' },
-    { id: 'high_blood_pressure', name: 'High Blood Pressure' },
-    { id: 'thyroid_problems', name: 'Thyroid Problems' },
-    { id: 'weight_gain', name: 'Weight Gain' },
-    { id: 'weight_loss', name: 'Weight Loss' },
-    { id: 'aging_concerns', name: 'Aging Concerns' },
-    { id: 'vitamin_c_deficiency', name: 'Vitamin C Deficiency' }
+  ashwagandha: [
+    {
+      name: 'Organic India Ashwagandha',
+      type: 'powder',
+      price: '$19.99',
+      quantity: '8 oz',
+      rating: 4.7,
+      ethical_score: 9.3,
+      sustainability: 'high',
+      certifications: ['USDA Organic', 'Fair Trade'],
+      availability: 'global',
+      supplier: 'Organic India'
+    },
+    {
+      name: 'Himalaya Ashwagandha',
+      type: 'capsules',
+      price: '$24.99',
+      quantity: '60 capsules',
+      rating: 4.5,
+      ethical_score: 8.9,
+      sustainability: 'high',
+      certifications: ['USDA Organic'],
+      availability: 'global',
+      supplier: 'Himalaya'
+    }
   ]
 };
 
-// Enhanced Remedies data with nutritional info, body benefits, and product suggestions
 const remediesData = [
   {
     id: '1',
@@ -658,113 +549,200 @@ const remediesData = [
     contraindications: 'May cause mild diarrhea initially. Start with small doses.',
     preparation_time: '5 minutes',
     dosage: '1 dose before bed'
+  },
+  {
+    id: '13',
+    name: 'Cumin Coriander Fennel Tea',
+    category: 'digestive',
+    symptoms: ['indigestion', 'bloating', 'gas', 'heaviness'],
+    ingredients: [
+      {
+        name: 'Cumin seeds',
+        nutritional_info: 'Rich in iron, antioxidants, cuminaldehyde',
+        body_benefits: 'Aids digestion, reduces bloating, antimicrobial',
+        product_suggestion: 'Organic Cumin Seeds - Frontier Co-op'
+      },
+      {
+        name: 'Coriander seeds',
+        nutritional_info: 'Linalool, antioxidants, minerals',
+        body_benefits: 'Soothes digestion, reduces acidity, detoxifying',
+        product_suggestion: 'Organic Coriander Seeds - Simply Organic'
+      },
+      {
+        name: 'Fennel seeds',
+        nutritional_info: 'Anethole, fiber, essential oils',
+        body_benefits: 'Relieves gas, carminative, cooling',
+        product_suggestion: 'Organic Fennel Seeds - Frontier Co-op'
+      }
+    ],
+    instructions: 'Boil 2 cups water, add 1 tsp each of cumin, coriander, and fennel seeds. Simmer 10 minutes, strain and drink warm after meals.',
+    benefits: 'Improves digestion, relieves bloating and gas, detoxifies the system',
+    origin: 'India',
+    classical_reference: 'Traditional Ayurvedic home remedy for digestion',
+    effectiveness: 'high',
+    contraindications: 'None known in moderate amounts.',
+    preparation_time: '15 minutes',
+    dosage: '1 cup after meals'
+  },
+  {
+    id: '14',
+    name: 'Gotu Kola Calming Tea',
+    category: 'mental',
+    symptoms: ['anxiety', 'brain_fog', 'poor_concentration', 'restlessness'],
+    ingredients: [
+      {
+        name: 'Gotu Kola',
+        nutritional_info: 'Triterpenoids, asiaticoside, vitamins',
+        body_benefits: 'Calms nerves, improves memory, reduces anxiety',
+        product_suggestion: 'Organic Gotu Kola - Banyan Botanicals'
+      },
+      {
+        name: 'Brahmi',
+        nutritional_info: 'Bacosides, saponins',
+        body_benefits: 'Cognitive enhancer, stress relief',
+        product_suggestion: 'Organic Brahmi Powder - Organic India'
+      },
+      {
+        name: 'Honey',
+        nutritional_info: 'Natural sugars, antioxidants',
+        body_benefits: 'Soothing, calming, sweetening',
+        product_suggestion: 'Raw Honey'
+      }
+    ],
+    instructions: 'Boil 1 cup water, add 1/2 tsp gotu kola and 1/4 tsp brahmi. Simmer 5 minutes, strain, add honey. Drink in the afternoon or evening.',
+    benefits: 'Reduces anxiety, improves focus, calms the mind',
+    origin: 'India',
+    classical_reference: 'Gotu Kola and Brahmi are classic Ayurvedic medhya rasayanas (brain tonics)',
+    effectiveness: 'high',
+    contraindications: 'Avoid during pregnancy. May interact with sedatives.',
+    preparation_time: '10 minutes',
+    dosage: '1 cup daily'
   }
 ];
 
-// Routes
-app.get('/api/doshas/info', (req, res) => {
-  res.json({
-    success: true,
-    data: doshaInfo
-  });
-});
+const doshasData = {
+    vata: {
+        name: 'Vata',
+        description: 'Vata represents the energy of movement and is associated with the elements of air and ether. It governs bodily functions such as breathing, circulation, and nerve impulses.',
+        characteristics: [
+            'Creative and energetic',
+            'Slim build',
+            'Prone to anxiety and insomnia'
+        ],
+        balancing_remedies: [
+            'Warm, nourishing foods',
+            'Regular routine',
+            'Calming herbs like Ashwagandha'
+        ]
+    },
+    pitta: {
+        name: 'Pitta',
+        description: 'Pitta embodies the energy of transformation and is linked to the elements of fire and water. It controls digestion, metabolism, and body temperature.',
+        characteristics: [
+            'Intelligent and focused',
+            'Medium build',
+            'Prone to anger and inflammation'
+        ],
+        balancing_remedies: [
+            'Cooling foods and drinks',
+            'Stress management',
+            'Soothing herbs like Brahmi'
+        ]
+    },
+    kapha: {
+        name: 'Kapha',
+        description: 'Kapha signifies the energy of structure and lubrication, connected to the elements of earth and water. It governs immunity, strength, and stability.',
+        characteristics: [
+            'Calm and compassionate',
+            'Strong build',
+            'Prone to congestion and weight gain'
+        ],
+        balancing_remedies: [
+            'Light, warm foods',
+            'Regular exercise',
+            'Stimulating herbs like Trikatu'
+        ]
+    }
+};
 
-app.get('/api/symptoms', (req, res) => {
-  const { category } = req.query;
-  
-  if (category && symptomsData[category]) {
-    res.json({
-      success: true,
-      data: symptomsData[category]
-    });
-  } else {
-    // Return all symptoms
-    const allSymptoms = Object.values(symptomsData).flat();
-    res.json({
-      success: true,
-      data: allSymptoms
-    });
-  }
-});
+const symptomsData = {
+  "respiratory": [
+    {
+      "symptom": "cough",
+      "name": "Cough",
+      "description": "A reflex action to clear your airways of mucus and irritants such as dust or smoke."
+    },
+    {
+      "symptom": "cold",
+      "name": "Cold",
+      "description": "A viral infection that affects the nose, throat, and sometimes the lungs."
+    },
+    {
+      "symptom": "fever",
+      "name": "Fever",
+      "description": "An elevated body temperature as a symptom of an infection or illness."
+    },
+    {
+      "symptom": "sore_throat",
+      "name": "Sore Throat",
+      "description": "Inflammation and irritation of the throat."
+    },
+    {
+      "symptom": "congestion",
+      "name": "Congestion",
+      "description": "A blockage in the airways, often due to an infection or allergies."
+    }
+  ],
+  "digestive": [
+    {
+      "symptom": "indigestion",
+      "name": "Indigestion",
+      "description": "Discomfort or pain in the stomach associated with difficulty in digesting food."
+    },
+    {
+      "symptom": "bloating",
+      "name": "Bloating",
+      "description": "A feeling of fullness or swelling in the abdomen."
+    },
+    {
+      "symptom": "gas",
+      "name": "Gas",
+      "description": "Excess air or gas in the digestive tract causing discomfort or flatulence."
+    },
+    {
+      "symptom": "heaviness",
+      "name": "Heaviness",
+      "description": "A sensation of weight or sluggishness in the stomach after eating."
+    }
+  ],
+  "mental": [
+    {
+      "symptom": "anxiety",
+      "name": "Anxiety",
+      "description": "A feeling of worry, nervousness, or unease."
+    },
+    {
+      "symptom": "brain_fog",
+      "name": "Brain Fog",
+      "description": "A state of mental confusion or lack of clarity."
+    },
+    {
+      "symptom": "poor_concentration",
+      "name": "Poor Concentration",
+      "description": "Difficulty focusing or maintaining attention."
+    },
+    {
+      "symptom": "restlessness",
+      "name": "Restlessness",
+      "description": "An inability to relax or remain still."
+    }
+  ]
+};
 
-app.get('/api/remedies', (req, res) => {
-  res.json({
-    success: true,
-    data: remediesData
-  });
-});
-
-// IMPORTANT: This route must come BEFORE /api/remedies/:id
-app.get('/api/remedies/by-symptoms', (req, res) => {
-  const { symptoms } = req.query;
-  
-  if (!symptoms) {
-    return res.status(400).json({
-      success: false,
-      message: 'Symptoms parameter is required'
-    });
-  }
-  
-  const symptomArray = symptoms.split(',');
-  const remedies = remediesData.filter(remedy => 
-    remedy.symptoms.some(symptom => symptomArray.includes(symptom))
-  );
-  
-  res.json({
-    success: true,
-    data: remedies,
-    total: remedies.length,
-    matchedSymptoms: symptomArray
-  });
-});
-
-app.get('/api/remedies/:id', (req, res) => {
-  const remedy = remediesData.find(r => r.id === req.params.id);
-  
-  if (!remedy) {
-    return res.status(404).json({
-      success: false,
-      message: 'Remedy not found'
-    });
-  }
-  
-  res.json({
-    success: true,
-    data: remedy
-  });
-});
-
-// Serve static files
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Serve the main page
-app.get('/', (req, res) => {
-  const fs = require('fs');
-  const indexPath = path.join(__dirname, 'public', 'index.html');
-  
-  if (fs.existsSync(indexPath)) {
-    return res.sendFile(indexPath);
-  }
-  
-  res.status(404).json({
-    error: 'Frontend not found',
-    message: 'Please check if public/index.html exists'
-  });
-});
-
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({
-    success: false,
-    message: 'Route not found'
-  });
-});
-
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Ayurveda Remedy API running on port ${PORT}`);
-  console.log(`📖 Frontend: http://localhost:${PORT}`);
-  console.log(`🔧 API Documentation: http://localhost:${PORT}/api/docs`);
-  console.log(`📊 Health Check: http://localhost:${PORT}/health`);
-  console.log(`🔓 No API key required for development`);
-}); 
+module.exports = {
+    causesData,
+    productRecommendations,
+    remediesData,
+    doshasData,
+    symptomsData
+}; 
