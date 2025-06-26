@@ -5,6 +5,91 @@ const API_BASE = window.location.origin; // Use current domain for production
 
 // Global variables
 let selectedSymptoms = [];
+let allSymptoms = [];
+
+// Fetch all symptoms for autocomplete
+fetch('/api/symptoms')
+    .then(res => res.json())
+    .then(data => {
+        if (data.success && Array.isArray(data.data)) {
+            allSymptoms = data.data.map(s => ({
+                id: s.symptom || s.id,
+                name: s.name
+            }));
+        }
+    });
+
+const searchInput = document.getElementById('symptom-search');
+const autocompleteList = document.getElementById('autocomplete-list');
+let currentFocus = -1;
+
+if (searchInput) {
+    searchInput.addEventListener('input', function() {
+        showAutocomplete(this.value);
+    });
+    searchInput.addEventListener('focus', function() {
+        showAutocomplete(this.value);
+    });
+    searchInput.addEventListener('keydown', function(e) {
+        let items = autocompleteList.getElementsByClassName('autocomplete-item');
+        if (e.key === 'ArrowDown') {
+            currentFocus++;
+            addActive(items);
+        } else if (e.key === 'ArrowUp') {
+            currentFocus--;
+            addActive(items);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (currentFocus > -1 && items[currentFocus]) {
+                items[currentFocus].click();
+            }
+        }
+    });
+}
+
+document.addEventListener('click', function(e) {
+    if (e.target !== searchInput) {
+        closeAutocomplete();
+    }
+});
+
+function showAutocomplete(val) {
+    closeAutocomplete();
+    if (!val) return;
+    let matches = allSymptoms.filter(s => s.name.toLowerCase().includes(val.toLowerCase()));
+    if (matches.length === 0) return;
+    matches.slice(0, 12).forEach(symptom => {
+        let item = document.createElement('div');
+        item.className = 'autocomplete-item';
+        item.textContent = symptom.name;
+        item.onclick = function() {
+            addSymptom(symptom.name);
+            closeAutocomplete();
+        };
+        autocompleteList.appendChild(item);
+    });
+    autocompleteList.style.display = 'block';
+    currentFocus = -1;
+}
+
+function closeAutocomplete() {
+    autocompleteList.innerHTML = '';
+    autocompleteList.style.display = 'none';
+}
+
+function addActive(items) {
+    if (!items) return;
+    removeActive(items);
+    if (currentFocus >= items.length) currentFocus = 0;
+    if (currentFocus < 0) currentFocus = items.length - 1;
+    items[currentFocus].classList.add('active');
+    items[currentFocus].scrollIntoView({ block: 'nearest' });
+}
+function removeActive(items) {
+    for (let i = 0; i < items.length; i++) {
+        items[i].classList.remove('active');
+    }
+}
 
 // ===== QUICK SEARCH FUNCTIONS =====
 // Quick search function
@@ -255,105 +340,71 @@ function getRemediesFromModal() {
 // Update search bar to show selected symptoms
 function updateSearchBarDisplay() {
     const searchInput = document.getElementById('symptom-search');
-    if (searchInput && selectedSymptoms.length > 0) {
-        const symptomsText = selectedSymptoms.map(s => s.name).join(', ');
-        searchInput.value = symptomsText;
+    if (searchInput) {
+        searchInput.value = selectedSymptoms.map(s => s.name).join(', ');
     }
 }
 
-// Get remedies for selected symptoms
+// Get remedies from API
 async function getRemedies() {
-    const resultsSection = document.getElementById('results-section');
-    const remediesContainer = document.getElementById('remedies-container');
-    if (!resultsSection || !remediesContainer) return;
-    // Show loading
-    resultsSection.style.display = 'block';
-    remediesContainer.innerHTML = '<div class="loading">Finding remedies for your symptoms...</div>';
-    // Get symptom IDs
-    const symptomIds = selectedSymptoms.map(s => s.id).join(',');
-    try {
-        const response = await fetch(`/api/remedies/by-symptoms?symptoms=${symptomIds}`);
-        const data = await response.json();
-        if (data.success && data.data) {
-            displayRemedies(data.data);
-        } else {
-            displayRemedies(getSampleRemedies());
-        }
-    } catch (error) {
-        console.error('Error loading remedies:', error);
-        displayRemedies(getSampleRemedies());
-    }
-}
-
-// Display remedies
-function displayRemedies(remedies) {
-    const remediesContainer = document.getElementById('remedies-container');
-    if (!remediesContainer) return;
-    
-    if (remedies.length === 0) {
-        remediesContainer.innerHTML = '<div class="no-remedies">No remedies found for your symptoms. Please try different symptoms or consult a healthcare provider.</div>';
+    if (selectedSymptoms.length === 0) {
+        // Clear remedies if no symptoms are selected
+        displayRemedies([]);
         return;
     }
-    
-    const symptomsText = selectedSymptoms.map(s => s.name).join(', ');
-    remediesContainer.innerHTML = `
-        <div class="symptoms-summary">
-            <h4>Symptoms: ${symptomsText}</h4>
-        </div>
-        <div class="remedies-grid">
-            ${remedies.map(remedy => `
-                <div class="remedy-card">
-                    <div class="remedy-header">
-                        <h4>${remedy.name}</h4>
-                        <div class="remedy-badges">
-                            <span class="category-badge">${remedy.category}</span>
-                            <span class="origin-badge">${remedy.origin}</span>
-                            <span class="effectiveness-badge ${remedy.effectiveness}">${remedy.effectiveness}</span>
-                        </div>
-                    </div>
-                    
-                    <div class="remedy-description">
-                        <p><strong>Benefits:</strong> ${remedy.benefits}</p>
-                        ${remedy.classical_reference ? `<p><strong>Classical Reference:</strong> ${remedy.classical_reference}</p>` : ''}
-                    </div>
-                    
-                    <div class="remedy-details">
-                        <div class="ingredients-section">
-                            <h5>Ingredients & Nutritional Information:</h5>
-                            ${Array.isArray(remedy.ingredients) && remedy.ingredients[0] && typeof remedy.ingredients[0] === 'object' ? 
-                                remedy.ingredients.map(ingredient => `
-                                    <div class="ingredient-item">
-                                        <h6>${ingredient.name}</h6>
-                                        <p><strong>Nutritional Info:</strong> ${ingredient.nutritional_info}</p>
-                                        <p><strong>Body Benefits:</strong> ${ingredient.body_benefits}</p>
-                                        <p><strong>Product Suggestion:</strong> ${ingredient.product_suggestion}</p>
-                                    </div>
-                                `).join('') :
-                                remedy.ingredients.map(ingredient => `<li>${ingredient}</li>`).join('')
-                            }
-                        </div>
-                        
-                        <div class="instructions-section">
-                            <h5>Instructions:</h5>
-                            <p>${remedy.instructions}</p>
-                            ${remedy.preparation_time ? `<p><strong>Preparation Time:</strong> ${remedy.preparation_time}</p>` : ''}
-                            ${remedy.dosage ? `<p><strong>Dosage:</strong> ${remedy.dosage}</p>` : ''}
-                        </div>
-                        
-                        ${remedy.contraindications ? `
-                            <div class="contraindications">
-                                <h5>⚠️ Precautions:</h5>
-                                <p>${remedy.contraindications}</p>
-                            </div>
-                        ` : ''}
-                    </div>
-                </div>
-            `).join('')}
-        </div>
-    `;
+    const symptomIds = selectedSymptoms.map(s => s.id).join(',');
+    const url = `${API_BASE}/api/remedies/search?symptoms=${symptomIds}`;
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+        if (data.success) {
+            displayRemedies(data.data);
+        } else {
+            displayRemedies([]);
+        }
+    } catch (error) {
+        console.error('Error fetching remedies:', error);
+        displayRemedies([]);
+    }
 }
 
-// Sample remedies fallback
+// Display remedies in the UI
+function displayRemedies(remedies) {
+    const remediesContainer = document.getElementById('remedies-container');
+    const resultsSection = document.getElementById('results-section');
+
+    if (!remediesContainer || !resultsSection) {
+        console.error('Required elements not found in the DOM');
+        return;
+    }
+
+    if (remedies && remedies.length > 0) {
+        resultsSection.style.display = 'block';
+        remediesContainer.innerHTML = remedies.map((remedy, index) => `
+            <div class="remedy-card">
+                <h3>${index + 1}. ${remedy.name}</h3>
+                <p><strong>Category:</strong> ${remedy.category}</p>
+                <p><strong>Benefits:</strong> ${remedy.benefits}</p>
+                <div class="ingredients">
+                    <strong>Ingredients:</strong>
+                    <ul>
+                        ${remedy.ingredients.map(ingredient => `<li>${ingredient}</li>`).join('')}
+                    </ul>
+                </div>
+                <div class="instructions">
+                    <strong>Instructions:</strong>
+                    <p>${remedy.instructions}</p>
+                </div>
+                ${remedy.contraindications ? `<div class="contraindications"><strong>Precautions:</strong> ${remedy.contraindications}</div>` : ''}
+            </div>
+        `).join('');
+    } else {
+        resultsSection.style.display = 'block'; // Show the section to display the message
+        remediesContainer.innerHTML = '<div class="no-remedies">No remedies found for the selected symptoms. Please try again.</div>';
+    }
+}
+
+// Get sample remedies for initial display
 function getSampleRemedies() {
     return [
         {
@@ -446,4 +497,59 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-}); 
+});
+
+function handleDownloadReport() {
+    // Show email modal before allowing download
+    document.getElementById('email-modal').style.display = 'block';
+    document.getElementById('user-email').value = '';
+    document.getElementById('email-error').style.display = 'none';
+    allowDownload = false;
+}
+
+function closeEmailModal() {
+    document.getElementById('email-modal').style.display = 'none';
+}
+
+function submitEmailForDownload() {
+    const emailInput = document.getElementById('user-email').value.trim();
+    const errorDiv = document.getElementById('email-error');
+    if (!validateEmail(emailInput)) {
+        errorDiv.textContent = 'Please enter a valid email address.';
+        errorDiv.style.display = 'block';
+        return;
+    }
+    errorDiv.style.display = 'none';
+    emailForDownload = emailInput;
+    allowDownload = false;
+    // Send email and symptoms to backend
+    fetch('/api/send-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            email: emailForDownload,
+            symptoms: selectedSymptoms.map(s => s.id)
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            allowDownload = true;
+            closeEmailModal();
+            generatePDFReport();
+            alert('Report will be sent to your email!');
+        } else {
+            errorDiv.textContent = data.message || 'Failed to send email. Please try again.';
+            errorDiv.style.display = 'block';
+        }
+    })
+    .catch(() => {
+        errorDiv.textContent = 'Failed to send email. Please try again.';
+        errorDiv.style.display = 'block';
+    });
+}
+
+function validateEmail(email) {
+    // Simple email regex
+    return /^\S+@\S+\.\S+$/.test(email);
+} 
