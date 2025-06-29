@@ -318,7 +318,7 @@ function displayRemedies(remedies) {
                 <div class="ingredients">
                     <strong>Ingredients:</strong>
                     <ul>
-                        ${remedy.ingredients.map(ingredient => `<li>${ingredient}</li>`).join('')}
+                        ${remedy.ingredients.map(ingredient => `<li><strong>${ingredient.name}</strong>${ingredient.nutritional_info ? ` - ${ingredient.nutritional_info}` : ''}</li>`).join('')}
                     </ul>
                 </div>
                 <div class="instructions">
