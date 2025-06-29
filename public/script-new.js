@@ -226,7 +226,7 @@ function showCategorySymptoms(category) {
                 if (data.success && data.data && data.data.length > 0) {
                     container.innerHTML = data.data.map(symptom => `
                         <label class="symptom-checkbox">
-                            <input type="checkbox" value="${symptom.id}" data-name="${symptom.name}" ${selectedSymptoms.some(s => s.id === symptom.id) ? 'checked' : ''}>
+                            <input type="checkbox" value="${symptom.symptom}" data-name="${symptom.name}" ${selectedSymptoms.some(s => s.id === symptom.symptom) ? 'checked' : ''}>
                             ${symptom.name}
                         </label>
                     `).join('');
