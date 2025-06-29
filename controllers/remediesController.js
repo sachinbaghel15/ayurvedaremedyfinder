@@ -14,10 +14,27 @@ function getProductRecommendations(ingredients) {
   return recommendations;
 }
 
+function enrichRemedy(remedy) {
+  return {
+    ...remedy,
+    matched_condition: remedy.matched_condition || 'General imbalance',
+    herbs: remedy.herbs || (remedy.ingredients ? remedy.ingredients.map(ing => ({
+      name: ing.name || '',
+      reason: ing.body_benefits || '',
+      dosage: '',
+      form: '',
+      timing: ''
+    })) : []),
+    lifestyle_tips: remedy.lifestyle_tips || [],
+    food_suggestions: remedy.food_suggestions || [],
+    urgent: typeof remedy.urgent === 'boolean' ? remedy.urgent : false
+  };
+}
+
 const getRemedies = (req, res) => {
   res.json({
     success: true,
-    data: remediesData
+    data: remediesData.map(enrichRemedy)
   });
 };
 
@@ -33,7 +50,7 @@ const getRemedyById = (req, res) => {
 
   res.json({
     success: true,
-    data: remedy
+    data: enrichRemedy(remedy)
   });
 };
 
@@ -50,7 +67,7 @@ const getRemediesBySymptom = (req, res) => {
   const symptomArray = symptoms.split(',');
   let remedies = remediesData.filter(remedy => 
     remedy.symptoms.some(symptom => symptomArray.includes(symptom))
-  );
+  ).map(enrichRemedy);
   
   res.json({
     success: true,
@@ -73,7 +90,7 @@ const getEnhancedRemediesBySymptom = (req, res) => {
   const symptomArray = symptoms.split(',');
   const remedies = remediesData.filter(remedy => 
     remedy.symptoms.some(symptom => symptomArray.includes(symptom))
-  );
+  ).map(enrichRemedy);
   
   // Add cause analysis for each remedy
   const enhancedRemedies = remedies.map(remedy => ({
@@ -103,7 +120,7 @@ const searchRemedies = (req, res) => {
   const symptomArray = symptoms.split(',');
   let remedies = remediesData.filter(remedy => 
     remedy.symptoms.some(symptom => symptomArray.includes(symptom))
-  );
+  ).map(enrichRemedy);
   res.json({
     success: true,
     data: remedies,

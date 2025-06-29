@@ -6,6 +6,7 @@ const API_BASE = window.location.origin; // Use current domain for production
 // Global variables
 let selectedSymptoms = [];
 let allSymptoms = [];
+let userProfile = null;
 
 // Fetch all symptoms for autocomplete
 fetch('/api/symptoms')
@@ -40,160 +41,119 @@ function quickSearch() {
 }
 
 // Parse natural language to symptoms
+const symptomMap = {
+    'tired': { id: 'fatigue', ayurvedic: 'Ojas depletion' },
+    'fatigue': { id: 'fatigue', ayurvedic: 'Ojas depletion' },
+    'low energy': { id: 'low_energy', ayurvedic: 'Ojas depletion' },
+    'no energy': { id: 'low_energy', ayurvedic: 'Ojas depletion' },
+    'exhausted': { id: 'fatigue', ayurvedic: 'Ojas depletion' },
+    'weakness': { id: 'weakness', ayurvedic: 'Ojas depletion' },
+    'pimples': { id: 'acne', ayurvedic: 'Yuvan Pidika' },
+    'acne': { id: 'acne', ayurvedic: 'Yuvan Pidika' },
+    'breakouts': { id: 'acne', ayurvedic: 'Yuvan Pidika' },
+    'zits': { id: 'acne', ayurvedic: 'Yuvan Pidika' },
+    'indigestion': { id: 'indigestion', ayurvedic: 'Ajeerna' },
+    'digestive issues': { id: 'indigestion', ayurvedic: 'Ajeerna' },
+    'stomach upset': { id: 'indigestion', ayurvedic: 'Ajeerna' },
+    'bloating': { id: 'bloating', ayurvedic: 'Adhmana' },
+    'gas': { id: 'gas', ayurvedic: 'Aadhmana' },
+    'heaviness': { id: 'heaviness', ayurvedic: 'Gourava' },
+    'constipation': { id: 'constipation', ayurvedic: 'Vibandha' },
+    'not able to poop': { id: 'constipation', ayurvedic: 'Vibandha' },
+    'hard stool': { id: 'constipation', ayurvedic: 'Vibandha' },
+    'diarrhea': { id: 'diarrhea', ayurvedic: 'Atisara' },
+    'loose motions': { id: 'diarrhea', ayurvedic: 'Atisara' },
+    'watery stool': { id: 'diarrhea', ayurvedic: 'Atisara' },
+    'headache': { id: 'headache', ayurvedic: 'Shirashoola' },
+    'migraine': { id: 'migraine', ayurvedic: 'Ardhavabhedaka' },
+    'cough': { id: 'cough', ayurvedic: 'Kasa' },
+    'coughing': { id: 'cough', ayurvedic: 'Kasa' },
+    'cold': { id: 'congestion', ayurvedic: 'Pratishyaya' },
+    'runny nose': { id: 'congestion', ayurvedic: 'Pratishyaya' },
+    'blocked nose': { id: 'congestion', ayurvedic: 'Pratishyaya' },
+    'sore throat': { id: 'sore_throat', ayurvedic: 'Kanthashoola' },
+    'throat pain': { id: 'sore_throat', ayurvedic: 'Kanthashoola' },
+    'fever': { id: 'fever', ayurvedic: 'Jwara' },
+    'temperature': { id: 'fever', ayurvedic: 'Jwara' },
+    'joint pain': { id: 'joint_pain', ayurvedic: 'Sandhishoola' },
+    'arthritis': { id: 'arthritis', ayurvedic: 'Amavata' },
+    'stiffness': { id: 'stiffness', ayurvedic: 'Stambha' },
+    'swelling': { id: 'swelling', ayurvedic: 'Shotha' },
+    'back pain': { id: 'back_pain', ayurvedic: 'Katishoola' },
+    'anxiety': { id: 'anxiety', ayurvedic: 'Chittodvega' },
+    'feeling anxious': { id: 'anxiety', ayurvedic: 'Chittodvega' },
+    'stress': { id: 'stress', ayurvedic: 'Manasika Shoka' },
+    'depression': { id: 'depression', ayurvedic: 'Vishada' },
+    'feeling depressed': { id: 'depression', ayurvedic: 'Vishada' },
+    'insomnia': { id: 'insomnia', ayurvedic: 'Anidra' },
+    'can\'t sleep': { id: 'insomnia', ayurvedic: 'Anidra' },
+    'trouble sleeping': { id: 'insomnia', ayurvedic: 'Anidra' },
+    'skin rash': { id: 'rashes', ayurvedic: 'Kustha' },
+    'rashes': { id: 'rashes', ayurvedic: 'Kustha' },
+    'itching': { id: 'itching', ayurvedic: 'Kandu' },
+    'hives': { id: 'hives', ayurvedic: 'Urticaria' },
+    'nausea': { id: 'nausea', ayurvedic: 'Chhardi' },
+    'vomiting': { id: 'vomiting', ayurvedic: 'Chhardi' },
+    'throwing up': { id: 'vomiting', ayurvedic: 'Chhardi' },
+    'chest pain': { id: 'chest_pain', ayurvedic: 'Urahshoola', urgent: true },
+    'palpitations': { id: 'palpitations', ayurvedic: 'Hridspandana', urgent: true },
+    'fainting': { id: 'fainting', ayurvedic: 'Murcha', urgent: true },
+    'paralysis': { id: 'paralysis', ayurvedic: 'Pakshaghata', urgent: true },
+    // ...add more as needed
+};
+
 function parseSymptoms(text) {
-    const symptomMap = {
-        'headache': 'headache',
-        'migraine': 'migraine',
-        'fever': 'fever',
-        'stomach pain': 'abdominal_pain',
-        'stomachache': 'abdominal_pain',
-        'nausea': 'nausea',
-        'vomiting': 'vomiting',
-        'diarrhea': 'diarrhea',
-        'constipation': 'constipation',
-        'cough': 'cough',
-        'cold': 'congestion',
-        'sore throat': 'sore_throat',
-        'fatigue': 'fatigue',
-        'tired': 'fatigue',
-        'insomnia': 'insomnia',
-        'anxiety': 'anxiety',
-        'stress': 'stress',
-        'depression': 'depression',
-        'back pain': 'back_pain',
-        'joint pain': 'joint_pain',
-        'acne': 'acne',
-        'skin rash': 'rashes',
-        'digestive issues': 'indigestion',
-        'bloating': 'bloating',
-        'gas': 'gas',
-        'heartburn': 'heartburn',
-        'acid reflux': 'acid_reflux',
-        'indigestion': 'indigestion',
-        'abdominal pain': 'abdominal_pain',
-        'chest pain': 'chest_pain',
-        'shortness of breath': 'shortness_of_breath',
-        'wheezing': 'wheezing',
-        'asthma': 'asthma',
-        'bronchitis': 'bronchitis',
-        'pneumonia': 'pneumonia',
-        'sinusitis': 'sinusitis',
-        'allergic rhinitis': 'allergic_rhinitis',
-        'sleep apnea': 'sleep_apnea',
-        'pleurisy': 'pleurisy',
-        'dizziness': 'dizziness',
-        'vertigo': 'vertigo',
-        'mood swings': 'mood_swings',
-        'memory problems': 'memory_problems',
-        'concentration issues': 'concentration_issues',
-        'panic attacks': 'panic_attacks',
-        'obsessive compulsive disorder': 'ocd',
-        'attention deficit disorder': 'adhd',
-        'epilepsy': 'epilepsy',
-        'parkinsons': 'parkinsons',
-        'alzheimers': 'alzheimers',
-        'neuralgia': 'neuralgia',
-        'eczema': 'eczema',
-        'psoriasis': 'psoriasis',
-        'dry skin': 'dry_skin',
-        'oily skin': 'oily_skin',
-        'itching': 'itching',
-        'rashes': 'rashes',
-        'hives': 'hives',
-        'inflammation': 'inflammation',
-        'dermatitis': 'dermatitis',
-        'vitiligo': 'vitiligo',
-        'rosacea': 'rosacea',
-        'fungal infection': 'fungal_infection',
-        'bacterial infection': 'bacterial_infection',
-        'warts': 'warts',
-        'moles': 'moles',
-        'skin cancer': 'skin_cancer',
-        'joint stiffness': 'stiffness',
-        'joint swelling': 'swelling',
-        'neck pain': 'neck_pain',
-        'muscle pain': 'muscle_pain',
-        'arthritis': 'arthritis',
-        'rheumatoid arthritis': 'rheumatoid_arthritis',
-        'gout': 'gout',
-        'bursitis': 'bursitis',
-        'tendonitis': 'tendonitis',
-        'carpal tunnel': 'carpal_tunnel',
-        'sciatica': 'sciatica',
-        'fibromyalgia': 'fibromyalgia',
-        'osteoporosis': 'osteoporosis',
-        'heart palpitations': 'palpitations',
-        'high blood pressure': 'high_blood_pressure',
-        'low blood pressure': 'low_blood_pressure',
-        'irregular heartbeat': 'irregular_heartbeat',
-        'swollen ankles': 'swollen_ankles',
-        'varicose veins': 'varicose_veins',
-        'poor circulation': 'poor_circulation',
-        'heart disease': 'heart_disease',
-        'angina': 'angina',
-        'diabetes': 'diabetes',
-        'thyroid problems': 'thyroid_problems',
-        'weight gain': 'weight_gain',
-        'weight loss': 'weight_loss',
-        'hot flashes': 'hot_flashes',
-        'night sweats': 'night_sweats',
-        'irregular periods': 'irregular_periods',
-        'polycystic ovary syndrome': 'pcos',
-        'adrenal fatigue': 'adrenal_fatigue',
-        'frequent infections': 'frequent_infections',
-        'allergies': 'allergies',
-        'food allergies': 'food_allergies',
-        'seasonal allergies': 'seasonal_allergies',
-        'autoimmune disease': 'autoimmune_disease',
-        'lupus': 'lupus',
-        'multiple sclerosis': 'multiple_sclerosis',
-        'hiv': 'hiv_aids',
-        'aids': 'hiv_aids',
-        'cancer': 'cancer',
-        'infertility': 'infertility',
-        'premenstrual syndrome': 'pms',
-        'menstrual cramps': 'menstrual_cramps',
-        'endometriosis': 'endometriosis',
-        'uterine fibroids': 'fibroids',
-        'prostate problems': 'prostate_problems',
-        'erectile dysfunction': 'erectile_dysfunction',
-        'low libido': 'low_libido',
-        'menopause': 'menopause',
-        'andropause': 'andropause',
-        'frequent urination': 'frequent_urination',
-        'painful urination': 'painful_urination',
-        'urinary incontinence': 'urinary_incontinence',
-        'kidney stones': 'kidney_stones',
-        'urinary tract infection': 'uti',
-        'kidney disease': 'kidney_disease',
-        'bladder infection': 'bladder_infection',
-        'blurred vision': 'blurred_vision',
-        'eye pain': 'eye_pain',
-        'dry eyes': 'dry_eyes',
-        'cataracts': 'cataracts',
-        'glaucoma': 'glaucoma',
-        'macular degeneration': 'macular_degeneration',
-        'ear pain': 'ear_pain',
-        'tinnitus': 'tinnitus',
-        'hearing loss': 'hearing_loss',
-        'chills': 'chills',
-        'excessive sweating': 'sweating',
-        'low energy': 'low_energy',
-        'general inflammation': 'inflammation',
-        'chronic pain': 'chronic_pain',
-        'sleep problems': 'sleep_problems',
-        'appetite changes': 'appetite_changes',
-        'temperature sensitivity': 'temperature_sensitivity',
-        'aging concerns': 'aging_concerns'
-    };
-    const words = text.toLowerCase().split(/[\,\s]+/);
+    // Fuzzy matching helper (Levenshtein distance)
+    function levenshtein(a, b) {
+        const matrix = [];
+        let i;
+        for (i = 0; i <= b.length; i++) { matrix[i] = [i]; }
+        let j;
+        for (j = 0; j <= a.length; j++) { matrix[0][j] = j; }
+        for (i = 1; i <= b.length; i++) {
+            for (j = 1; j <= a.length; j++) {
+                if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                    matrix[i][j] = matrix[i - 1][j - 1];
+                } else {
+                    matrix[i][j] = Math.min(
+                        matrix[i - 1][j - 1] + 1, // substitution
+                        matrix[i][j - 1] + 1,     // insertion
+                        matrix[i - 1][j] + 1      // deletion
+                    );
+                }
+            }
+        }
+        return matrix[b.length][a.length];
+    }
+    const words = text.toLowerCase().split(/[\,]+/).map(w => w.trim()).filter(Boolean);
     const foundSymptoms = [];
     words.forEach(word => {
         if (symptomMap[word]) {
             foundSymptoms.push({
-                id: symptomMap[word],
-                name: word.charAt(0).toUpperCase() + word.slice(1)
+                id: symptomMap[word].id,
+                name: word.charAt(0).toUpperCase() + word.slice(1),
+                ayurvedic: symptomMap[word].ayurvedic,
+                urgent: symptomMap[word].urgent || false
             });
+        } else {
+            // Fuzzy match: find closest symptom phrase
+            let minDist = 3; // allow up to 2 typos
+            let bestKey = null;
+            for (const key in symptomMap) {
+                const dist = levenshtein(word, key);
+                if (dist < minDist) {
+                    minDist = dist;
+                    bestKey = key;
+                }
+            }
+            if (bestKey) {
+                foundSymptoms.push({
+                    id: symptomMap[bestKey].id,
+                    name: bestKey.charAt(0).toUpperCase() + bestKey.slice(1),
+                    ayurvedic: symptomMap[bestKey].ayurvedic,
+                    urgent: symptomMap[bestKey].urgent || false
+                });
+            }
         }
     });
     return foundSymptoms;
@@ -368,44 +328,65 @@ function generatePDFReport() {
         alert('Please search for remedies first');
         return;
     }
-    
-    // Check if jsPDF is available
     if (typeof jsPDF === 'undefined') {
         alert('PDF generation is not available. Please refresh the page and try again.');
         return;
     }
-    
+    const name = userProfile && userProfile.name ? userProfile.name : 'User';
     const symptomsText = selectedSymptoms.map(s => s.name).join(', ');
-    // Create PDF content
     const doc = new jsPDF();
-    doc.setFontSize(20);
-    doc.text('Ayurveda Remedy Report', 20, 20);
+    doc.setFontSize(18);
+    doc.text(`Ayurveda Remedy Report for ${name}`, 20, 20);
     doc.setFontSize(12);
-    doc.text(`Symptoms: ${symptomsText}`, 20, 40);
-    doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 50);
-    doc.setFontSize(14);
-    doc.text('Recommended Remedies:', 20, 70);
-    // Add remedy details
+    doc.text(`Symptoms: ${symptomsText}`, 20, 35);
+    doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 45);
+    let y = 55;
     const remediesContainer = document.getElementById('remedies-container');
     const remedyCards = remediesContainer ? remediesContainer.querySelectorAll('.remedy-card') : [];
-    let yPosition = 85;
-    remedyCards.forEach((card, index) => {
-        if (yPosition > 250) {
-            doc.addPage();
-            yPosition = 20;
-        }
-        const name = card.querySelector('h4').textContent;
-        const description = card.querySelector('.remedy-description p').textContent;
-        doc.setFontSize(12);
-        doc.setFont(undefined, 'bold');
-        doc.text(`${index + 1}. ${name}`, 20, yPosition);
-        doc.setFont(undefined, 'normal');
-        doc.setFontSize(10);
-        const splitDesc = doc.splitTextToSize(description, 170);
-        doc.text(splitDesc, 20, yPosition + 5);
-        yPosition += 15 + (splitDesc.length * 5);
-    });
-    doc.save('ayurveda-remedy-report.pdf');
+    if (remedyCards.length === 0) {
+        doc.text('No remedies found for the selected symptoms.', 20, y);
+    } else {
+        doc.setFontSize(14);
+        doc.text('Recommended Remedies:', 20, y);
+        y += 10;
+        remediesContainer.querySelectorAll('.remedy-card').forEach((card, idx) => {
+            if (y > 250) { doc.addPage(); y = 20; }
+            const title = card.querySelector('h3').textContent;
+            doc.setFontSize(12);
+            doc.text(`${idx + 1}. ${title}`, 20, y);
+            y += 7;
+            // Extract rich details from the API data (if available)
+            const remedyId = title.split('.')[1] ? title.split('.')[1].trim() : '';
+            // Try to find the remedy in the API data
+            const remedy = window.lastRemediesData ? window.lastRemediesData.find(r => r.name === title.replace(/^[0-9]+\.\s*/, '')) : null;
+            if (remedy) {
+                if (remedy.matched_condition) { doc.text(`Condition: ${remedy.matched_condition}`, 22, y); y += 6; }
+                if (remedy.herbs && remedy.herbs.length) {
+                    doc.text('Herbs:', 22, y); y += 6;
+                    remedy.herbs.forEach(h => {
+                        doc.text(`- ${h.name} (${h.form || ''}): ${h.reason} ${h.dosage ? 'Dosage: ' + h.dosage : ''} ${h.timing ? 'Timing: ' + h.timing : ''}`, 24, y);
+                        y += 6;
+                    });
+                }
+                if (remedy.instructions) { doc.text(`Instructions: ${remedy.instructions}`, 22, y); y += 6; }
+                if (remedy.lifestyle_tips && remedy.lifestyle_tips.length) {
+                    doc.text('Lifestyle Tips:', 22, y); y += 6;
+                    remedy.lifestyle_tips.forEach(tip => { doc.text(`- ${tip}`, 24, y); y += 6; });
+                }
+                if (remedy.food_suggestions && remedy.food_suggestions.length) {
+                    doc.text('Food Suggestions:', 22, y); y += 6;
+                    remedy.food_suggestions.forEach(food => { doc.text(`- ${food}`, 24, y); y += 6; });
+                }
+                if (remedy.classical_reference) { doc.text(`Classical Reference: ${remedy.classical_reference}`, 22, y); y += 6; }
+                if (remedy.urgent) { doc.setTextColor(200,0,0); doc.text('URGENT: Seek medical attention if symptoms are severe.', 22, y); doc.setTextColor(0,0,0); y += 8; }
+            }
+            y += 4;
+        });
+    }
+    y += 10;
+    doc.setFontSize(10);
+    doc.text('Disclaimer: This report is for educational purposes only. Consult a qualified healthcare provider for medical advice. Classical references are cited for informational use.', 20, y, { maxWidth: 170 });
+    doc.save(`Ayurveda-Remedy-Report-${name.replace(/\s+/g, '_')}.pdf`);
 }
 
 // Close modal when clicking outside
@@ -431,4 +412,41 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function handleDownloadReport() {
     generatePDFReport();
+}
+
+function showProfileModal() {
+    const modal = document.getElementById('profile-modal');
+    if (modal) modal.style.display = 'block';
+}
+
+function closeProfileModal() {
+    const modal = document.getElementById('profile-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+function submitProfileForm() {
+    const form = document.getElementById('profile-form');
+    if (!form) return;
+    const formData = new FormData(form);
+    userProfile = {};
+    for (let [key, value] of formData.entries()) {
+        userProfile[key] = value;
+    }
+    // Determine Prakriti type from quiz answers
+    const prakritiScores = { vata: 0, pitta: 0, kapha: 0 };
+    ['q1','q2','q3','q4','q5'].forEach(q => {
+        if (userProfile[q]) prakritiScores[userProfile[q]]++;
+    });
+    let prakriti = 'unknown';
+    let maxScore = 0;
+    for (const type in prakritiScores) {
+        if (prakritiScores[type] > maxScore) {
+            maxScore = prakritiScores[type];
+            prakriti = type;
+        }
+    }
+    userProfile.prakriti = prakriti;
+    closeProfileModal();
+    alert(`Profile saved!\nName: ${userProfile.name}\nPrakriti: ${prakriti.charAt(0).toUpperCase() + prakriti.slice(1)}`);
+    // You can now use userProfile to personalize remedies, diet, etc.
 } 
