@@ -391,7 +391,7 @@ function generatePDFReport() {
         });
     }
     y += 10;
-    doc.setFontSize(10);
+        doc.setFontSize(10);
     doc.text('Disclaimer: This report is for educational purposes only. Consult a qualified healthcare provider for medical advice. Classical references are cited for informational use.', 20, y, { maxWidth: 170 });
     doc.save(`Ayurveda-Remedy-Report-${name.replace(/\s+/g, '_')}.pdf`);
 }
@@ -461,23 +461,245 @@ function submitProfileForm() {
     // You can now use userProfile to personalize remedies, diet, etc.
 }
 
-function showPersonalizedModal() {
+async function showPersonalizedModal() {
     const modal = document.getElementById('personalized-modal');
     const content = document.getElementById('personalized-content');
     if (modal && content) {
-        // Build personalized content
+        content.innerHTML = '<div style="text-align:center;padding:2em;">Loading personalized info...</div>';
+        let doshaInfo = null;
+        try {
+            const res = await fetch('/api/doshas/info');
+            const data = await res.json();
+            if (data.success && data.data) {
+                doshaInfo = data.data;
+            }
+        } catch (e) {
+            content.innerHTML = '<div style="color:red;">Failed to load dosha info. Please try again later.</div>';
+        return;
+    }
+        let profileHtml = '';
+        if (userProfile) {
+            profileHtml = `<div style='background:#f8f9fa;padding:1em;border-radius:8px;margin-bottom:1em;'>
+                <strong>Name:</strong> ${userProfile.name || ''} &nbsp; 
+                <strong>Age:</strong> ${userProfile.age || ''} &nbsp; 
+                <strong>Gender:</strong> ${userProfile.gender || ''} &nbsp; 
+                <strong>Diet:</strong> ${userProfile.diet || ''} &nbsp; 
+                <strong>Sleep:</strong> ${userProfile.sleep || ''} &nbsp; 
+                <strong>Stress:</strong> ${userProfile.stress || ''} &nbsp; 
+                <strong>Prakriti:</strong> <span style='color:#007bff'>${userProfile.prakriti ? userProfile.prakriti.charAt(0).toUpperCase() + userProfile.prakriti.slice(1) : ''}</span>
+            </div>`;
+        }
         let prakriti = userProfile && userProfile.prakriti ? userProfile.prakriti : 'unknown';
-        let prakritiLabel = prakriti.charAt(0).toUpperCase() + prakriti.slice(1);
-        let infoHtml = `<h4>Your Prakriti (Constitution): <span style='color:#007bff'>${prakritiLabel}</span></h4>`;
-        // Add advanced options (static for now, can be made dynamic)
-        infoHtml += `<div style='margin:1em 0;'>
-            <button class='btn btn-secondary' onclick='showDoshaAdvice()'>Remedies for My Dosha</button>
-            <button class='btn btn-secondary' onclick='showLifestyleAdvice()'>Lifestyle Tips</button>
-            <button class='btn btn-secondary' onclick='showDietAdvice()'>Diet Suggestions</button>
-        </div>`;
-        infoHtml += `<div id='personalized-details'></div>`;
-        content.innerHTML = infoHtml;
+        let dosha = doshaInfo && doshaInfo[prakriti] ? doshaInfo[prakriti] : null;
+        let doshaHtml = '';
+        if (dosha) {
+            doshaHtml = `
+                <div style='display:flex;justify-content:space-between;align-items:center;'>
+                  <h4 style='margin-bottom:0;'>${dosha.name} Dosha</h4>
+                  <div>
+                    <button class='btn btn-primary' style='margin-right:8px;' onclick='downloadPersonalizedPDF()'><i class="fas fa-download"></i> Download PDF</button>
+                    <button class='btn btn-secondary' onclick='sharePersonalizedAdvice()'><i class="fas fa-share-alt"></i> Share</button>
+                  </div>
+                </div>
+                <p style='margin-top:0.5em;'><strong>Elements:</strong> ${dosha.elements.join(', ')}</p>
+                <p><strong>Qualities:</strong> ${dosha.qualities.join(', ')}</p>
+                <div class='personalized-tabs' style='margin:1em 0 0.5em 0;display:flex;gap:8px;'>
+                    <button class='tab-btn btn btn-secondary' id='tab-remedies' onclick='showPersonalizedTab("remedies")'><i class="fas fa-leaf"></i> Remedies</button>
+                    <button class='tab-btn btn btn-secondary' id='tab-favorites' onclick='showPersonalizedTab("favorites")'><i class="fas fa-star"></i> Favorites</button>
+                    <button class='tab-btn btn btn-secondary' id='tab-herbs' onclick='showPersonalizedTab("herbs")'><i class="fas fa-seedling"></i> Herbs</button>
+                    <button class='tab-btn btn btn-secondary' id='tab-lifestyle' onclick='showPersonalizedTab("lifestyle")'><i class="fas fa-spa"></i> Lifestyle</button>
+                    <button class='tab-btn btn btn-secondary' id='tab-diet' onclick='showPersonalizedTab("diet")'><i class="fas fa-apple-alt"></i> Diet</button>
+                    <button class='tab-btn btn btn-secondary' id='tab-classical' onclick='showPersonalizedTab("classical")'><i class="fas fa-book"></i> Classical References</button>
+                    <button class='tab-btn btn btn-secondary' id='tab-faq' onclick='showPersonalizedTab("faq")'><i class="fas fa-question-circle"></i> FAQ</button>
+                </div>
+                <div id='personalized-tab-content'></div>
+            `;
+        } else {
+            doshaHtml = `<p style='color:red;'>No dosha info found for your Prakriti. Please complete your profile and quiz.</p>`;
+        }
+        content.innerHTML = profileHtml + doshaHtml;
         modal.style.display = 'block';
+        showPersonalizedTab('remedies');
+    }
+}
+
+function getFavoriteRemedies() {
+    try {
+        return JSON.parse(localStorage.getItem('favoriteRemedies') || '[]');
+    } catch {
+        return [];
+    }
+}
+
+function setFavoriteRemedies(favs) {
+    localStorage.setItem('favoriteRemedies', JSON.stringify(favs));
+}
+
+function toggleFavoriteRemedy(remedy) {
+    let favs = getFavoriteRemedies();
+    const idx = favs.findIndex(r => r.name === remedy.name);
+    if (idx !== -1) {
+        favs.splice(idx, 1);
+    } else {
+        favs.push(remedy);
+    }
+    setFavoriteRemedies(favs);
+    // Refresh current tab
+    const active = document.querySelector('.tab-btn.active');
+    if (active) showPersonalizedTab(active.id.replace('tab-', ''));
+}
+
+async function showPersonalizedTab(tab) {
+    ['remedies','favorites','herbs','lifestyle','diet','classical','faq'].forEach(t => {
+        const btn = document.getElementById('tab-' + t);
+        if (btn) btn.classList.remove('active');
+    });
+    const activeBtn = document.getElementById('tab-' + tab);
+    if (activeBtn) activeBtn.classList.add('active');
+    const tabContent = document.getElementById('personalized-tab-content');
+    if (!tabContent) return;
+    const prakriti = userProfile && userProfile.prakriti ? userProfile.prakriti : 'unknown';
+    if (tab === 'remedies') {
+        tabContent.innerHTML = '<div style="text-align:center;padding:1em;">Loading remedies...</div>';
+        try {
+            const res = await fetch(`/api/doshas/recommendations/${prakriti}`);
+            const data = await res.json();
+            const favs = getFavoriteRemedies();
+            if (data.success && data.data && data.data.remedies && data.data.remedies.length > 0) {
+                tabContent.innerHTML = `<h5 style='margin-top:0;'>Recommended Remedies for ${prakriti.charAt(0).toUpperCase() + prakriti.slice(1)}</h5>` +
+                    data.data.remedies.map(remedy => {
+                        const isFav = favs.some(r => r.name === remedy.name);
+                        return `
+                        <div class='remedy-card personalized-remedy-card' style='margin-bottom:1.5em;padding:1em 1.2em;border-radius:10px;background:#f9f9fc;box-shadow:0 2px 8px rgba(0,0,0,0.04);transition:box-shadow 0.2s;position:relative;'>
+                            <span onclick='toggleFavoriteRemedy(${JSON.stringify(remedy).replace(/'/g, "&#39;")})' title='${isFav ? "Remove from Favorites" : "Add to Favorites"}' style='position:absolute;top:12px;right:16px;font-size:1.4em;cursor:pointer;color:${isFav ? "#ffc107" : "#bbb"};transition:color 0.2s;'>
+                                <i class="fas fa-star"></i>
+                            </span>
+                            <div style='font-size:1.1em;font-weight:600;margin-bottom:0.3em;'>${remedy.name}</div>
+                            ${remedy.category ? `<div style='color:#888;font-size:0.95em;margin-bottom:0.2em;'><i class="fas fa-tag"></i> ${remedy.category}</div>` : ''}
+                            ${remedy.benefits ? `<div style='margin-bottom:0.2em;'><strong>Benefits:</strong> ${remedy.benefits}</div>` : ''}
+                            ${remedy.ingredients && remedy.ingredients.length ? `<div style='margin-bottom:0.2em;'><strong>Ingredients:</strong> <ul style='margin:0 0 0 1.2em;padding:0;'>${remedy.ingredients.map(ing => `<li>${typeof ing === 'string' ? ing : ing.name}</li>`).join('')}</ul></div>` : ''}
+                            ${remedy.instructions ? `<div style='margin-bottom:0.2em;'><strong>Instructions:</strong> ${remedy.instructions}</div>` : ''}
+                            ${remedy.contraindications ? `<div style='margin-bottom:0.2em;'><strong>Precautions:</strong> ${remedy.contraindications}</div>` : ''}
+                            ${remedy.description ? `<div style='margin-bottom:0.2em;'><em>${remedy.description}</em></div>` : ''}
+                        </div>
+                        `;
+                    }).join('') + `
+                    <style>
+                    .personalized-remedy-card:hover { box-shadow:0 4px 16px rgba(0,0,0,0.10); background:#f4f8ff; }
+                    </style>`;
+            } else {
+                tabContent.innerHTML = '<p>No personalized remedies found for your dosha.</p>';
+            }
+        } catch (e) {
+            tabContent.innerHTML = '<p style="color:red;">Failed to load remedies.</p>';
+        }
+    } else if (tab === 'favorites') {
+        const favs = getFavoriteRemedies();
+        if (favs.length === 0) {
+            tabContent.innerHTML = '<p>You have not saved any favorite remedies yet. Click the star on a remedy to save it here!</p>';
+        } else {
+            tabContent.innerHTML = `<h5 style='margin-top:0;'>Your Favorite Remedies</h5>` +
+                favs.map(remedy => `
+                    <div class='remedy-card personalized-remedy-card' style='margin-bottom:1.5em;padding:1em 1.2em;border-radius:10px;background:#f9f9fc;box-shadow:0 2px 8px rgba(0,0,0,0.04);transition:box-shadow 0.2s;position:relative;'>
+                        <span onclick='toggleFavoriteRemedy(${JSON.stringify(remedy).replace(/'/g, "&#39;")})' title='Remove from Favorites' style='position:absolute;top:12px;right:16px;font-size:1.4em;cursor:pointer;color:#ffc107;transition:color 0.2s;'>
+                            <i class="fas fa-star"></i>
+                        </span>
+                        <div style='font-size:1.1em;font-weight:600;margin-bottom:0.3em;'>${remedy.name}</div>
+                        ${remedy.category ? `<div style='color:#888;font-size:0.95em;margin-bottom:0.2em;'><i class="fas fa-tag"></i> ${remedy.category}</div>` : ''}
+                        ${remedy.benefits ? `<div style='margin-bottom:0.2em;'><strong>Benefits:</strong> ${remedy.benefits}</div>` : ''}
+                        ${remedy.ingredients && remedy.ingredients.length ? `<div style='margin-bottom:0.2em;'><strong>Ingredients:</strong> <ul style='margin:0 0 0 1.2em;padding:0;'>${remedy.ingredients.map(ing => `<li>${typeof ing === 'string' ? ing : ing.name}</li>`).join('')}</ul></div>` : ''}
+                        ${remedy.instructions ? `<div style='margin-bottom:0.2em;'><strong>Instructions:</strong> ${remedy.instructions}</div>` : ''}
+                        ${remedy.contraindications ? `<div style='margin-bottom:0.2em;'><strong>Precautions:</strong> ${remedy.contraindications}</div>` : ''}
+                        ${remedy.description ? `<div style='margin-bottom:0.2em;'><em>${remedy.description}</em></div>` : ''}
+                    </div>
+                `).join('') + `
+                <style>
+                .personalized-remedy-card:hover { box-shadow:0 4px 16px rgba(0,0,0,0.10); background:#f4f8ff; }
+                </style>`;
+        }
+    } else if (tab === 'herbs') {
+        tabContent.innerHTML = '<div style="text-align:center;padding:1em;">Loading herbs...</div>';
+        try {
+            const res = await fetch(`/api/doshas/recommendations/${prakriti}`);
+            const data = await res.json();
+            if (data.success && data.data && data.data.herbs && data.data.herbs.length > 0) {
+                tabContent.innerHTML = `<h5 style='margin-top:0;'>Recommended Herbs for ${prakriti.charAt(0).toUpperCase() + prakriti.slice(1)}</h5>` +
+                    data.data.herbs.map(herb => `
+                        <div class='remedy-card personalized-remedy-card' style='margin-bottom:1.2em;padding:1em 1.2em;border-radius:10px;background:#f6fff6;box-shadow:0 2px 8px rgba(0,0,0,0.04);transition:box-shadow 0.2s;'>
+                            <div style='font-size:1.1em;font-weight:600;margin-bottom:0.3em;'>${herb.name}</div>
+                            ${herb.description ? `<div style='margin-bottom:0.2em;'>${herb.description}</div>` : ''}
+                            ${herb.classical_reference ? `<div style='margin-bottom:0.2em;'><strong>Classical Reference:</strong> ${herb.classical_reference}</div>` : ''}
+                        </div>
+                    `).join('') + `
+                    <style>
+                    .personalized-remedy-card:hover { box-shadow:0 4px 16px rgba(0,0,0,0.10); background:#f0fff0; }
+                    </style>`;
+            } else {
+                tabContent.innerHTML = '<p>No recommended herbs found for your dosha.</p>';
+            }
+        } catch (e) {
+            tabContent.innerHTML = '<p style="color:red;">Failed to load herbs.</p>';
+        }
+    } else if (tab === 'lifestyle') {
+        const res = await fetch('/api/doshas/info');
+        const data = await res.json();
+        const dosha = data.data && data.data[prakriti] ? data.data[prakriti] : null;
+        if (dosha && dosha.balancing && dosha.balancing.lifestyle) {
+            tabContent.innerHTML = `<h5 style='margin-top:0;'>Lifestyle Tips</h5><ul style='margin-left:1.2em;'>` + dosha.balancing.lifestyle.map(tip => `<li>${tip}</li>`).join('') + `</ul>`;
+        } else {
+            tabContent.innerHTML = '<p>No lifestyle tips found for your dosha.</p>';
+        }
+    } else if (tab === 'diet') {
+        const res = await fetch('/api/doshas/info');
+        const data = await res.json();
+        const dosha = data.data && data.data[prakriti] ? data.data[prakriti] : null;
+        if (dosha && dosha.balancing && dosha.balancing.foods) {
+            tabContent.innerHTML = `<h5 style='margin-top:0;'>Diet Suggestions</h5><ul style='margin-left:1.2em;'>` + dosha.balancing.foods.map(food => `<li>${food}</li>`).join('') + `</ul>`;
+        } else {
+            tabContent.innerHTML = '<p>No diet suggestions found for your dosha.</p>';
+        }
+    } else if (tab === 'classical') {
+        const classicalRefs = {
+            vata: [
+                'Charaka Samhita: Sutrasthana 1/59',
+                'Ashtanga Hridaya: Sutrasthana 1/7',
+                'Sushruta Samhita: Sutrasthana 15/41'
+            ],
+            pitta: [
+                'Charaka Samhita: Sutrasthana 1/60',
+                'Ashtanga Hridaya: Sutrasthana 1/8',
+                'Sushruta Samhita: Sutrasthana 15/42'
+            ],
+            kapha: [
+                'Charaka Samhita: Sutrasthana 1/61',
+                'Ashtanga Hridaya: Sutrasthana 1/9',
+                'Sushruta Samhita: Sutrasthana 15/43'
+            ]
+        };
+        const refs = classicalRefs[prakriti] || [];
+        if (refs.length > 0) {
+            tabContent.innerHTML = `<h5 style='margin-top:0;'>Classical References for ${prakriti.charAt(0).toUpperCase() + prakriti.slice(1)}</h5><ul style='margin-left:1.2em;'>` + refs.map(ref => `<li>${ref}</li>`).join('') + `</ul>`;
+        } else {
+            tabContent.innerHTML = '<p>No classical references found for your dosha.</p>';
+        }
+    } else if (tab === 'faq') {
+        // Static FAQ content
+        const faqs = [
+            { q: 'What is Ayurveda?', a: 'Ayurveda is an ancient system of natural healing that originated in India over 5,000 years ago. It focuses on balancing the body, mind, and spirit using diet, lifestyle, herbs, and therapies.' },
+            { q: 'What are doshas?', a: 'Doshas are the three fundamental energies (Vata, Pitta, Kapha) that govern physiological and psychological functions in the body. Each person has a unique combination of doshas.' },
+            { q: 'How do I know my dosha?', a: 'You can determine your dosha by taking a Prakriti (constitution) quiz, which assesses your physical, mental, and emotional traits.' },
+            { q: 'Can Ayurveda help with chronic conditions?', a: 'Ayurveda offers holistic approaches for managing chronic conditions, but you should always consult a qualified healthcare provider for serious or persistent issues.' },
+            { q: 'Are Ayurvedic remedies safe?', a: 'Most Ayurvedic remedies use natural ingredients, but it is important to use them appropriately and consult a practitioner, especially if you have underlying health conditions or are taking medications.' },
+            { q: 'What is the role of diet in Ayurveda?', a: 'Diet is central in Ayurveda. Foods are chosen based on your dosha and the current season to maintain balance and health.' },
+            { q: 'Can I use Ayurveda with modern medicine?', a: 'Ayurveda can complement modern medicine, but always inform your healthcare provider about any herbs or supplements you are taking.' }
+        ];
+        tabContent.innerHTML = `<h5 style='margin-top:0;'>Frequently Asked Questions</h5>` +
+            faqs.map(faq => `
+                <div style='margin-bottom:1.2em;padding:1em 1.2em;border-radius:10px;background:#f8f9fa;box-shadow:0 1px 4px rgba(0,0,0,0.03);'>
+                    <div style='font-weight:600;margin-bottom:0.3em;'><i class="fas fa-question-circle"></i> ${faq.q}</div>
+                    <div style='color:#333;'>${faq.a}</div>
+                </div>
+            `).join('');
     }
 }
 
@@ -537,4 +759,84 @@ function clearSelectedSymptoms() {
     const searchInput = document.getElementById('symptom-search');
     if (searchInput) searchInput.value = '';
     displayRemedies([]);
+}
+
+function getCurrentPersonalizedTab() {
+    const active = document.querySelector('.tab-btn.active');
+    return active ? active.id.replace('tab-', '') : 'remedies';
+}
+
+function getCurrentPersonalizedRemedies() {
+    const tab = getCurrentPersonalizedTab();
+    if (tab === 'remedies') {
+        // Not async: get from last loaded remedies in DOM
+        const cards = document.querySelectorAll('#personalized-tab-content .remedy-card');
+        return Array.from(cards).map(card => card.innerText.trim());
+    } else if (tab === 'favorites') {
+        return getFavoriteRemedies().map(r => r.name + (r.benefits ? (': ' + r.benefits) : ''));
+    }
+    return [];
+}
+
+function downloadPersonalizedPDF() {
+    if (typeof jsPDF === 'undefined') {
+        alert('PDF generation is not available.');
+        return;
+    }
+    const doc = new jsPDF();
+    const name = userProfile && userProfile.name ? userProfile.name : 'User';
+    const prakriti = userProfile && userProfile.prakriti ? userProfile.prakriti : '';
+    const tab = getCurrentPersonalizedTab();
+    let title = 'Ayurveda Personalized Report';
+    if (tab === 'favorites') title = 'My Favorite Remedies';
+    doc.setFontSize(18);
+    doc.text(title, 20, 20);
+    doc.setFontSize(12);
+    doc.text(`Name: ${name}`, 20, 32);
+    doc.text(`Prakriti: ${prakriti}`, 20, 40);
+    doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 48);
+    let y = 58;
+    const remedies = getCurrentPersonalizedRemedies();
+    if (remedies.length === 0) {
+        doc.text('No remedies found.', 20, y);
+    } else {
+        doc.setFontSize(14);
+        doc.text('Remedies:', 20, y);
+        y += 8;
+        doc.setFontSize(12);
+        remedies.forEach((rem, idx) => {
+            if (y > 270) { doc.addPage(); y = 20; }
+            doc.text(`${idx + 1}. ${rem}`, 22, y);
+            y += 8;
+        });
+    }
+    y += 10;
+    doc.setFontSize(10);
+    doc.text('Disclaimer: This report is for educational purposes only. Consult a qualified healthcare provider for medical advice.', 20, y, { maxWidth: 170 });
+    doc.save(`${title.replace(/\s+/g, '_')}-${name.replace(/\s+/g, '_')}.pdf`);
+}
+
+function sharePersonalizedAdvice() {
+    const name = userProfile && userProfile.name ? userProfile.name : 'User';
+    const prakriti = userProfile && userProfile.prakriti ? userProfile.prakriti : '';
+    const tab = getCurrentPersonalizedTab();
+    let title = 'Ayurveda Personalized Advice';
+    if (tab === 'favorites') title = 'My Favorite Remedies';
+    const remedies = getCurrentPersonalizedRemedies();
+    let summary = `${title}\nName: ${name}\nPrakriti: ${prakriti}\n\nRemedies:\n` + remedies.map((r, i) => `${i + 1}. ${r}`).join('\n');
+    summary += '\n\nDisclaimer: This is for educational purposes only.';
+    // WhatsApp
+    const waUrl = `https://wa.me/?text=${encodeURIComponent(summary)}`;
+    // Email
+    const mailUrl = `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(summary)}`;
+    // Show share options
+    if (navigator.share) {
+        navigator.share({ title, text: summary });
+    } else {
+        if (confirm('Share via WhatsApp? (Cancel for Email)')) {
+            window.open(waUrl, '_blank');
+        } else {
+            window.open(mailUrl, '_blank');
+        }
+    }
 } 

@@ -617,6 +617,63 @@ const remediesData = [
     contraindications: 'Avoid during pregnancy. May interact with sedatives.',
     preparation_time: '10 minutes',
     dosage: '1 cup daily'
+  },
+  {
+    id: '15',
+    name: 'Fennel Ginger Digestive Tonic',
+    category: 'digestive',
+    symptoms: ['indigestion', 'bloating', 'gas', 'acidity'],
+    ingredients: [
+      { name: 'Fennel seeds', nutritional_info: 'Anethole, fiber', body_benefits: 'Carminative, relieves gas', product_suggestion: 'Organic Fennel Seeds' },
+      { name: 'Ginger', nutritional_info: 'Gingerol, anti-inflammatory', body_benefits: 'Aids digestion, reduces nausea', product_suggestion: 'Fresh Ginger Root' },
+      { name: 'Lemon', nutritional_info: 'Vitamin C, citric acid', body_benefits: 'Alkalizing, aids digestion', product_suggestion: 'Fresh Lemon' }
+    ],
+    instructions: 'Boil 2 cups water, add 1 tsp fennel seeds and 1/2 inch ginger. Simmer 7 minutes, add lemon juice, strain and drink after meals.',
+    benefits: 'Relieves indigestion, gas, and acidity.',
+    origin: 'India',
+    classical_reference: 'Traditional Ayurvedic digestive remedy',
+    effectiveness: 'high',
+    contraindications: 'None known in moderate amounts.',
+    preparation_time: '10 minutes',
+    dosage: '1 cup after meals'
+  },
+  {
+    id: '16',
+    name: 'Neem Turmeric Skin Cleanser',
+    category: 'skin',
+    symptoms: ['acne', 'eczema', 'psoriasis', 'hives'],
+    ingredients: [
+      { name: 'Neem leaves', nutritional_info: 'Nimbin, antioxidants', body_benefits: 'Antibacterial, anti-inflammatory', product_suggestion: 'Dried Neem Leaves' },
+      { name: 'Turmeric', nutritional_info: 'Curcumin, anti-inflammatory', body_benefits: 'Reduces inflammation, brightens skin', product_suggestion: 'Organic Turmeric Powder' },
+      { name: 'Aloe Vera', nutritional_info: 'Polysaccharides, vitamins', body_benefits: 'Soothes and heals skin', product_suggestion: 'Fresh Aloe Vera Gel' }
+    ],
+    instructions: 'Make a paste of neem, turmeric, and aloe vera. Apply to affected skin for 20 minutes, then rinse.',
+    benefits: 'Reduces acne, soothes eczema and hives, improves skin health.',
+    origin: 'India',
+    classical_reference: 'Ayurvedic skin care tradition',
+    effectiveness: 'medium',
+    contraindications: 'May cause dryness in sensitive skin.',
+    preparation_time: '5 minutes',
+    dosage: 'Apply 2-3 times weekly'
+  },
+  {
+    id: '17',
+    name: 'Ashwagandha Stress Relief Milk',
+    category: 'mental',
+    symptoms: ['stress', 'anxiety', 'irritability', 'insomnia'],
+    ingredients: [
+      { name: 'Ashwagandha', nutritional_info: 'Withanolides, adaptogens', body_benefits: 'Reduces stress, calms mind', product_suggestion: 'Organic Ashwagandha Powder' },
+      { name: 'Milk', nutritional_info: 'Calcium, protein', body_benefits: 'Nourishing, calming', product_suggestion: 'Organic Milk or Almond Milk' },
+      { name: 'Cardamom', nutritional_info: 'Essential oils', body_benefits: 'Soothing, digestive', product_suggestion: 'Green Cardamom Pods' }
+    ],
+    instructions: 'Heat 1 cup milk, add 1/2 tsp ashwagandha and a pinch of cardamom. Simmer 5 minutes, drink before bed.',
+    benefits: 'Reduces stress, improves sleep, calms nerves.',
+    origin: 'India',
+    classical_reference: 'Ashwagandha as a medhya rasayana (brain tonic)',
+    effectiveness: 'high',
+    contraindications: 'Avoid during pregnancy.',
+    preparation_time: '7 minutes',
+    dosage: '1 cup before bed'
   }
 ];
 
@@ -691,6 +748,16 @@ const symptomsData = {
       "symptom": "congestion",
       "name": "Congestion",
       "description": "A blockage in the airways, often due to an infection or allergies."
+    },
+    {
+      "symptom": "shortness_of_breath",
+      "name": "Shortness of Breath",
+      "description": "Difficulty breathing or feeling breathless."
+    },
+    {
+      "symptom": "wheezing",
+      "name": "Wheezing",
+      "description": "A high-pitched whistling sound when breathing."
     }
   ],
   "digestive": [
@@ -713,6 +780,21 @@ const symptomsData = {
       "symptom": "heaviness",
       "name": "Heaviness",
       "description": "A sensation of weight or sluggishness in the stomach after eating."
+    },
+    {
+      "symptom": "acidity",
+      "name": "Acidity",
+      "description": "Burning sensation in the stomach or chest due to excess acid."
+    },
+    {
+      "symptom": "loss_of_appetite",
+      "name": "Loss of Appetite",
+      "description": "Reduced desire to eat or lack of hunger."
+    },
+    {
+      "symptom": "stomach_cramps",
+      "name": "Stomach Cramps",
+      "description": "Sudden, sharp pain in the stomach area."
     }
   ],
   "mental": [
@@ -735,9 +817,356 @@ const symptomsData = {
       "symptom": "restlessness",
       "name": "Restlessness",
       "description": "An inability to relax or remain still."
+    },
+    {
+      "symptom": "irritability",
+      "name": "Irritability",
+      "description": "Easily annoyed or angered."
+    },
+    {
+      "symptom": "sadness",
+      "name": "Sadness",
+      "description": "Feeling unhappy or down."
     }
+  ],
+  "pain": [
+    { "symptom": "headache", "name": "Headache", "description": "Pain in the head or upper neck." },
+    { "symptom": "back_pain", "name": "Back Pain", "description": "Pain in the back area." },
+    { "symptom": "joint_pain", "name": "Joint Pain", "description": "Pain in the joints." },
+    { "symptom": "muscle_pain", "name": "Muscle Pain", "description": "Pain in the muscles." },
+    { "symptom": "chronic_pain", "name": "Chronic Pain", "description": "Long-term persistent pain." },
+    { "symptom": "abdominal_pain", "name": "Abdominal Pain", "description": "Pain in the stomach or abdominal area." },
+    { "symptom": "menstrual_cramps", "name": "Menstrual Cramps", "description": "Painful cramps during menstruation." }
+  ],
+  "skin": [
+    { "symptom": "acne", "name": "Acne", "description": "Pimples or breakouts on the skin." },
+    { "symptom": "eczema", "name": "Eczema", "description": "Red, itchy, inflamed skin patches." },
+    { "symptom": "dry_skin", "name": "Dry Skin", "description": "Rough, flaky, or dehydrated skin." },
+    { "symptom": "itching", "name": "Itching", "description": "Uncomfortable sensation causing desire to scratch." },
+    { "symptom": "rashes", "name": "Rashes", "description": "Red, inflamed, or bumpy skin." },
+    { "symptom": "hives", "name": "Hives", "description": "Raised, itchy welts on the skin." },
+    { "symptom": "psoriasis", "name": "Psoriasis", "description": "Thick, scaly skin patches." }
+  ],
+  "energy": [
+    { "symptom": "fatigue", "name": "Fatigue", "description": "Extreme tiredness or lack of energy." },
+    { "symptom": "low_energy", "name": "Low Energy", "description": "Feeling weak or lacking energy." },
+    { "symptom": "weakness", "name": "Weakness", "description": "Reduced strength or power." },
+    { "symptom": "tiredness", "name": "Tiredness", "description": "Feeling sleepy or exhausted." },
+    { "symptom": "adrenal_fatigue", "name": "Adrenal Fatigue", "description": "Fatigue due to adrenal gland dysfunction." },
+    { "symptom": "sleepiness", "name": "Sleepiness", "description": "Feeling drowsy or ready to fall asleep." },
+    { "symptom": "burnout", "name": "Burnout", "description": "Physical or mental collapse from overwork or stress." }
   ]
 };
+
+// 1. Add to 'pain' category
+symptomsData.pain.push(
+  {
+    symptom: "abdominal pain",
+    name: "Abdominal Pain",
+    description: "Pain or discomfort in the abdomen.",
+    ayurvedic: "Udarashoola",
+    remedies: [
+      {
+        name: "Hingwashtak Churna",
+        instructions: "Take 1/2 tsp with warm water after meals.",
+        ingredients: ["Hingwashtak Churna", "Warm water"],
+        benefits: "Relieves abdominal pain, bloating, and indigestion.",
+        contraindications: "Pregnancy, severe gastritis",
+        classical_reference: "Bhaishajya Ratnavali 10/123"
+      }
+    ],
+    diet: [
+      "Warm, light, easily digestible foods",
+      "Avoid cold, heavy, or fried foods",
+      "Include ginger, cumin, and ajwain"
+    ],
+    lifestyle: [
+      "Gentle abdominal massage with warm oil",
+      "Avoid overeating",
+      "Practice mindful eating"
+    ],
+    yoga: [
+      "Pawanmuktasana (Wind-Relieving Pose)",
+      "Apanasana",
+      "Supta Matsyendrasana (Supine Spinal Twist)"
+    ]
+  },
+  {
+    symptom: "back pain",
+    name: "Back Pain",
+    description: "Pain or discomfort in the back.",
+    ayurvedic: "Kati Shoola",
+    remedies: [
+      {
+        name: "Mahanarayan Oil Massage",
+        instructions: "Apply warm Mahanarayan oil to the back and massage gently.",
+        ingredients: ["Mahanarayan oil"],
+        benefits: "Relieves pain and stiffness.",
+        contraindications: "Open wounds, skin infections",
+        classical_reference: "Bhaishajya Ratnavali 29/1"
+      }
+    ],
+    diet: [
+      "Warm, nourishing foods",
+      "Avoid cold and dry foods",
+      "Include ghee and sesame oil"
+    ],
+    lifestyle: [
+      "Regular gentle stretching",
+      "Avoid heavy lifting",
+      "Practice good posture"
+    ],
+    yoga: [
+      "Bhujangasana (Cobra Pose)",
+      "Marjariasana (Cat-Cow Pose)",
+      "Balasana (Child's Pose)"
+    ]
+  },
+  {
+    symptom: "chest pain",
+    name: "Chest Pain",
+    description: "Pain or discomfort in the chest.",
+    ayurvedic: "Urahshoola",
+    remedies: [
+      {
+        name: "Arjuna Powder Drink",
+        instructions: "Mix 1 tsp Arjuna powder in warm water, drink once daily.",
+        ingredients: ["Arjuna powder", "Warm water"],
+        benefits: "Supports heart health and relieves mild chest discomfort.",
+        contraindications: "Severe chest pain (seek emergency care), pregnancy",
+        classical_reference: "Charaka Samhita Chikitsa Sthana 26/73"
+      }
+    ],
+    diet: [
+      "Light, low-fat foods",
+      "Avoid spicy, oily, and heavy foods",
+      "Include pomegranate, garlic, and turmeric"
+    ],
+    lifestyle: [
+      "Avoid stress and overexertion",
+      "Practice deep breathing exercises",
+      "Get adequate rest"
+    ],
+    yoga: [
+      "Setu Bandhasana (Bridge Pose)",
+      "Anulom Vilom Pranayama",
+      "Shavasana (Corpse Pose)"
+    ]
+  }
+);
+
+// 2. Add to 'neurological' (create if not exists)
+if (!symptomsData.neurological) symptomsData.neurological = [];
+symptomsData.neurological.push(
+  {
+    symptom: "paresthesia",
+    name: "Numbness & Tingling",
+    description: "A sensation of tingling, pricking, or numbness.",
+    ayurvedic: "Vatavyadhi",
+    remedies: [
+      {
+        name: "Ashwagandha Churna",
+        instructions: "Mix 1 tsp with warm milk, take at bedtime.",
+        ingredients: ["Ashwagandha powder", "Warm milk"],
+        benefits: "Nerve tonic, balances Vata.",
+        contraindications: "Pregnancy, hyperthyroidism",
+        classical_reference: "Charaka Samhita Chikitsa Sthana 28/45"
+      }
+    ],
+    diet: [
+      "Warm, oily foods",
+      "Avoid cold, dry foods",
+      "Include ghee and sesame oil"
+    ],
+    lifestyle: [
+      "Abhyanga (oil massage) with sesame oil",
+      "Gentle yoga and stretching",
+      "Adequate rest"
+    ],
+    yoga: [
+      "Viparita Karani",
+      "Balasana",
+      "Gentle spinal twists"
+    ]
+  }
+);
+
+// 3. Add to 'skin'
+symptomsData.skin.push(
+  {
+    symptom: "itching",
+    name: "Itching",
+    description: "Uncomfortable sensation causing desire to scratch.",
+    ayurvedic: "Kandu",
+    remedies: [
+      {
+        name: "Neem Paste",
+        instructions: "Apply fresh neem leaf paste to affected area, leave for 20 minutes, rinse.",
+        ingredients: ["Neem leaves", "Water"],
+        benefits: "Reduces itching and inflammation.",
+        contraindications: "Open wounds, allergy to neem",
+        classical_reference: "Charaka Samhita Chikitsa Sthana 7/21"
+      }
+    ],
+    diet: [
+      "Avoid spicy, sour, and salty foods",
+      "Include bitter vegetables (bitter gourd, neem)",
+      "Drink plenty of water"
+    ],
+    lifestyle: [
+      "Keep skin clean and dry",
+      "Wear loose, cotton clothing",
+      "Avoid excessive heat"
+    ],
+    yoga: [
+      "Shitali Pranayama",
+      "Gentle stretching"
+    ]
+  }
+);
+
+// 4. Add to 'mental' (insomnia, fatigue)
+symptomsData.mental.push(
+  {
+    symptom: "insomnia",
+    name: "Insomnia",
+    description: "Difficulty falling or staying asleep.",
+    ayurvedic: "Anidra",
+    remedies: [
+      {
+        name: "Brahmi Ghee",
+        instructions: "Take 1 tsp Brahmi ghee with warm milk at bedtime.",
+        ingredients: ["Brahmi ghee", "Warm milk"],
+        benefits: "Calms the mind and promotes restful sleep.",
+        contraindications: "Lactose intolerance",
+        classical_reference: "Charaka Samhita Chikitsa Sthana 6/8"
+      }
+    ],
+    diet: [
+      "Warm, nourishing foods in the evening",
+      "Avoid caffeine and stimulants",
+      "Include milk, almonds, and dates"
+    ],
+    lifestyle: [
+      "Establish a regular sleep routine",
+      "Avoid screens before bed",
+      "Practice relaxation techniques"
+    ],
+    yoga: [
+      "Yoga Nidra",
+      "Shavasana",
+      "Bhramari Pranayama"
+    ]
+  },
+  {
+    symptom: "fatigue",
+    name: "Fatigue",
+    description: "Extreme tiredness or lack of energy.",
+    ayurvedic: "Klama",
+    remedies: [
+      {
+        name: "Chyawanprash",
+        instructions: "Take 1 tsp daily in the morning with warm milk.",
+        ingredients: ["Chyawanprash", "Warm milk"],
+        benefits: "Boosts energy and immunity.",
+        contraindications: "Diabetes (contains sugar)",
+        classical_reference: "Charaka Samhita Chikitsa Sthana 1/1"
+      }
+    ],
+    diet: [
+      "Nutritious, balanced diet",
+      "Include fresh fruits, nuts, and whole grains",
+      "Avoid junk food and stimulants"
+    ],
+    lifestyle: [
+      "Regular sleep schedule",
+      "Gentle exercise",
+      "Practice relaxation"
+    ],
+    yoga: [
+      "Surya Namaskar",
+      "Viparita Karani"
+    ]
+  }
+);
+
+// 5. Add to 'digestive'
+symptomsData.digestive.push(
+  {
+    symptom: "nausea",
+    name: "Nausea",
+    description: "A feeling of sickness with an inclination to vomit.",
+    ayurvedic: "Chhardi",
+    remedies: [
+      {
+        name: "Ginger Lemon Tea",
+        instructions: "Boil ginger in water, add lemon juice, sip slowly.",
+        ingredients: ["Ginger", "Lemon juice", "Water"],
+        benefits: "Relieves nausea and aids digestion.",
+        contraindications: "Gastric ulcers",
+        classical_reference: "Charaka Samhita Chikitsa Sthana 20/21"
+      }
+    ],
+    diet: [
+      "Eat small, frequent meals",
+      "Avoid greasy or spicy foods",
+      "Include ginger and lemon"
+    ],
+    lifestyle: [
+      "Rest in a comfortable position",
+      "Avoid strong odors",
+      "Practice deep breathing"
+    ],
+    yoga: [
+      "Vajrasana",
+      "Gentle seated twists"
+    ]
+  }
+);
+
+// Add basic entries for missing symptoms (examples, expand as needed)
+if (!symptomsData.general) symptomsData.general = [];
+symptomsData.general.push(
+  { symptom: "chills", name: "Chills", description: "Feeling of coldness, often with shivering.", remedies: [], diet: [], lifestyle: [], yoga: [] },
+  { symptom: "malaise", name: "Malaise", description: "General feeling of discomfort or unease.", remedies: [], diet: [], lifestyle: [], yoga: [] },
+  { symptom: "anorexia", name: "Anorexia", description: "Loss of appetite.", remedies: [], diet: [], lifestyle: [], yoga: [] },
+  { symptom: "weight loss", name: "Weight Loss", description: "Unintentional loss of body weight.", remedies: [], diet: [], lifestyle: [], yoga: [] },
+  { symptom: "cachexia", name: "Cachexia", description: "Weakness and wasting of the body due to severe chronic illness.", remedies: [], diet: [], lifestyle: [], yoga: [] },
+  { symptom: "deformity", name: "Deformity", description: "Abnormal shape or structure of a body part.", remedies: [], diet: [], lifestyle: [], yoga: [] },
+  { symptom: "discharge", name: "Discharge", description: "Release of fluid from the body.", remedies: [], diet: [], lifestyle: [], yoga: [] },
+  { symptom: "dizziness", name: "Dizziness", description: "Feeling faint, woozy, weak, or unsteady.", remedies: [], diet: [], lifestyle: [], yoga: [] },
+  { symptom: "muscle weakness", name: "Muscle Weakness", description: "Reduced strength in one or more muscles.", remedies: [], diet: [], lifestyle: [], yoga: [] },
+  { symptom: "pyrexia", name: "Pyrexia", description: "Fever; elevated body temperature.", remedies: [], diet: [], lifestyle: [], yoga: [] },
+  { symptom: "sweats", name: "Sweats", description: "Excessive sweating.", remedies: [], diet: [], lifestyle: [], yoga: [] },
+  { symptom: "swelling", name: "Swelling", description: "Abnormal enlargement of a body part.", remedies: [], diet: [], lifestyle: [], yoga: [] },
+  { symptom: "arrhythmia", name: "Arrhythmia", description: "Irregular heartbeat.", remedies: [], diet: [], lifestyle: [], yoga: [] },
+  { symptom: "bradycardia", name: "Bradycardia", description: "Slow heart rate.", remedies: [], diet: [], lifestyle: [], yoga: [] },
+  { symptom: "claudication", name: "Claudication", description: "Pain caused by too little blood flow, usually during exercise.", remedies: [], diet: [], lifestyle: [], yoga: [] },
+  { symptom: "palpitations", name: "Palpitations", description: "Noticeably rapid, strong, or irregular heartbeat.", remedies: [], diet: [], lifestyle: [], yoga: [] },
+  { symptom: "tachycardia", name: "Tachycardia", description: "Abnormally rapid heart rate.", remedies: [], diet: [], lifestyle: [], yoga: [] },
+  { symptom: "epistaxis", name: "Epistaxis", description: "Nosebleed.", remedies: [], diet: [], lifestyle: [], yoga: [] },
+  { symptom: "halitosis", name: "Halitosis", description: "Bad breath.", remedies: [], diet: [], lifestyle: [], yoga: [] },
+  { symptom: "hearing loss", name: "Hearing Loss", description: "Partial or total inability to hear.", remedies: [], diet: [], lifestyle: [], yoga: [] },
+  { symptom: "otalgia", name: "Otalgia", description: "Ear pain.", remedies: [], diet: [], lifestyle: [], yoga: [] },
+  { symptom: "otorrhea", name: "Otorrhea", description: "Ear discharge.", remedies: [], diet: [], lifestyle: [], yoga: [] },
+  { symptom: "toothache", name: "Toothache", description: "Pain in or around a tooth.", remedies: [], diet: [], lifestyle: [], yoga: [] },
+  { symptom: "tinnitus", name: "Tinnitus", description: "Ringing or buzzing noise in one or both ears.", remedies: [], diet: [], lifestyle: [], yoga: [] },
+  { symptom: "trismus", name: "Trismus", description: "Reduced opening of the jaws (lockjaw).", remedies: [], diet: [], lifestyle: [], yoga: [] },
+  { symptom: "belching", name: "Belching", description: "Expulsion of gas from the stomach through the mouth.", remedies: [], diet: [], lifestyle: [], yoga: [] },
+  { symptom: "bleeding", name: "Bleeding", description: "Loss of blood from the circulatory system.", remedies: [], diet: [], lifestyle: [], yoga: [] },
+  { symptom: "constipation", name: "Constipation", description: "Difficulty in emptying the bowels.", remedies: [], diet: [], lifestyle: [], yoga: [] },
+  { symptom: "diarrhea", name: "Diarrhea", description: "Frequent loose or liquid bowel movements.", remedies: [], diet: [], lifestyle: [], yoga: [] },
+  { symptom: "dysphagia", name: "Dysphagia", description: "Difficulty swallowing.", remedies: [], diet: [], lifestyle: [], yoga: [] },
+  { symptom: "dyspepsia", name: "Dyspepsia", description: "Indigestion.", remedies: [], diet: [], lifestyle: [], yoga: [] },
+  { symptom: "flatulence", name: "Flatulence", description: "Accumulation of gas in the alimentary canal.", remedies: [], diet: [], lifestyle: [], yoga: [] },
+  { symptom: "heartburn", name: "Heartburn", description: "Burning sensation in the chest caused by acid reflux.", remedies: [], diet: [], lifestyle: [], yoga: [] },
+  { symptom: "odynophagia", name: "Odynophagia", description: "Painful swallowing.", remedies: [], diet: [], lifestyle: [], yoga: [] },
+  { symptom: "proctalgia fugax", name: "Proctalgia Fugax", description: "Sudden, severe pain in the rectum.", remedies: [], diet: [], lifestyle: [], yoga: [] },
+  { symptom: "pyrosis", name: "Pyrosis", description: "Heartburn.", remedies: [], diet: [], lifestyle: [], yoga: [] },
+  { symptom: "rectal tenesmus", name: "Rectal Tenesmus", description: "Feeling of incomplete evacuation after a bowel movement.", remedies: [], diet: [], lifestyle: [], yoga: [] },
+  { symptom: "steatorrhea", name: "Steatorrhea", description: "Fatty stools.", remedies: [], diet: [], lifestyle: [], yoga: [] },
+  { symptom: "vomiting", name: "Vomiting", description: "Ejecting stomach contents through the mouth.", remedies: [], diet: [], lifestyle: [], yoga: [] }
+);
 
 module.exports = {
     causesData,
