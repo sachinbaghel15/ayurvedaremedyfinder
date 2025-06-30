@@ -37,6 +37,7 @@
                             <button onclick="quickSearch()" class="search-btn">
                                 <i class="fas fa-search"></i> Find Remedies
                             </button>
+                            <button type="button" onclick="clearSelectedSymptoms()" class="btn btn-secondary" style="margin-left:8px;">Clear</button>
                         </div>
                         
                         <!-- Popular Symptoms -->
@@ -94,6 +95,12 @@
                 </div>
             </section>
 
+            <!-- Personalize Button -->
+            <div style="text-align:center; margin-bottom: 1rem;">
+                <button class="btn btn-primary" onclick="showProfileModal()">Personalize (Profile & Prakriti Quiz)</button>
+                <button id="show-personalized-btn" class="btn btn-success" style="display:none; margin-left:10px;" onclick="showPersonalizedModal()">Show My Personalized Remedies</button>
+            </div>
+
             <!-- Results Section -->
             <section id="results-section" class="results-section" style="display: none;">
                 <div class="results-header">
@@ -119,6 +126,129 @@
                     <div class="modal-actions">
                         <button onclick="getRemediesFromModal()" class="btn btn-primary">Get Remedies</button>
                         <button onclick="closeCategoryModal()" class="btn btn-secondary">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Follow-up Questions Modal -->
+            <div id="followup-modal" class="modal">
+                <div class="modal-content">
+                    <span class="close" onclick="closeFollowUpModal()">&times;</span>
+                    <h3 id="followup-modal-title">Additional Questions</h3>
+                    <form id="followup-form"></form>
+                    <div class="modal-actions">
+                        <button type="button" onclick="submitFollowUpAnswers()" class="btn btn-primary">Submit</button>
+                        <button type="button" onclick="closeFollowUpModal()" class="btn btn-secondary">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile/Quiz Modal -->
+            <div id="profile-modal" class="modal">
+                <div class="modal-content">
+                    <span class="close" onclick="closeProfileModal()">&times;</span>
+                    <h3>Personal Profile & Prakriti Quiz</h3>
+                    <form id="profile-form">
+                        <div class="form-group">
+                            <label>Name:</label>
+                            <input type="text" name="name" required class="search-input">
+                        </div>
+                        <div class="form-group">
+                            <label>Age:</label>
+                            <input type="number" name="age" min="1" max="120" required class="search-input">
+                        </div>
+                        <div class="form-group">
+                            <label>Gender:</label>
+                            <select name="gender" required class="search-input">
+                                <option value="">Select</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Diet Type:</label>
+                            <select name="diet" required class="search-input">
+                                <option value="">Select</option>
+                                <option value="veg">Vegetarian</option>
+                                <option value="nonveg">Non-Vegetarian</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Sleep Pattern:</label>
+                            <select name="sleep" required class="search-input">
+                                <option value="">Select</option>
+                                <option value="good">Good</option>
+                                <option value="average">Average</option>
+                                <option value="poor">Poor</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Stress Level (1-10):</label>
+                            <input type="number" name="stress" min="1" max="10" required class="search-input">
+                        </div>
+                        <hr>
+                        <h4>Prakriti Quiz (Choose what describes you best)</h4>
+                        <div class="form-group">
+                            <label>1. My body frame is:</label>
+                            <select name="q1" required class="search-input">
+                                <option value="">Select</option>
+                                <option value="vata">Thin, light</option>
+                                <option value="pitta">Medium, muscular</option>
+                                <option value="kapha">Large, sturdy</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>2. My skin is:</label>
+                            <select name="q2" required class="search-input">
+                                <option value="">Select</option>
+                                <option value="vata">Dry, rough</option>
+                                <option value="pitta">Warm, reddish</option>
+                                <option value="kapha">Oily, smooth</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>3. My digestion is:</label>
+                            <select name="q3" required class="search-input">
+                                <option value="">Select</option>
+                                <option value="vata">Irregular</option>
+                                <option value="pitta">Strong</option>
+                                <option value="kapha">Slow</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>4. My temperament is:</label>
+                            <select name="q4" required class="search-input">
+                                <option value="">Select</option>
+                                <option value="vata">Anxious, creative</option>
+                                <option value="pitta">Focused, intense</option>
+                                <option value="kapha">Calm, steady</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>5. My energy level is:</label>
+                            <select name="q5" required class="search-input">
+                                <option value="">Select</option>
+                                <option value="vata">Variable</option>
+                                <option value="pitta">High</option>
+                                <option value="kapha">Consistent, slow</option>
+                            </select>
+                        </div>
+                        <div class="modal-actions">
+                            <button type="button" onclick="submitProfileForm()" class="btn btn-primary">Save Profile</button>
+                            <button type="button" onclick="closeProfileModal()" class="btn btn-secondary">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Personalized Remedies Modal -->
+            <div id="personalized-modal" class="modal">
+                <div class="modal-content" style="max-width:600px;">
+                    <span class="close" onclick="closePersonalizedModal()">&times;</span>
+                    <h3>Advanced Personalized Remedies & Lifestyle</h3>
+                    <div id="personalized-content">
+                        <!-- Personalized content will be loaded here -->
                     </div>
                 </div>
             </div>

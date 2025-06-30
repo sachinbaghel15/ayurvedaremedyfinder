@@ -99,6 +99,11 @@ const symptomMap = {
     'palpitations': { id: 'palpitations', ayurvedic: 'Hridspandana', urgent: true },
     'fainting': { id: 'fainting', ayurvedic: 'Murcha', urgent: true },
     'paralysis': { id: 'paralysis', ayurvedic: 'Pakshaghata', urgent: true },
+    // Added mappings for stomach pain
+    'stomach pain': { id: 'indigestion', ayurvedic: 'Ajeerna' },
+    'abdominal pain': { id: 'indigestion', ayurvedic: 'Ajeerna' },
+    'belly pain': { id: 'indigestion', ayurvedic: 'Ajeerna' },
+    'tummy pain': { id: 'indigestion', ayurvedic: 'Ajeerna' },
     // ...add more as needed
 };
 
@@ -163,13 +168,15 @@ function parseSymptoms(text) {
 function addSymptom(symptomName) {
     const symptoms = parseSymptoms(symptomName);
     if (symptoms.length > 0) {
-        // Avoid duplicates
         symptoms.forEach(symptom => {
-            if (!selectedSymptoms.some(s => s.id === symptom.id)) {
+            const existingIndex = selectedSymptoms.findIndex(s => s.id === symptom.id);
+            if (existingIndex !== -1) {
+                // Update the display name to the latest clicked synonym
+                selectedSymptoms[existingIndex].name = symptom.name;
+            } else {
                 selectedSymptoms.push(symptom);
             }
         });
-        // Update search bar to show selected symptoms
         updateSearchBarDisplay();
         getRemedies();
     }
@@ -448,5 +455,86 @@ function submitProfileForm() {
     userProfile.prakriti = prakriti;
     closeProfileModal();
     alert(`Profile saved!\nName: ${userProfile.name}\nPrakriti: ${prakriti.charAt(0).toUpperCase() + prakriti.slice(1)}`);
+    // Show the personalized remedies button
+    const personalizedBtn = document.getElementById('show-personalized-btn');
+    if (personalizedBtn) personalizedBtn.style.display = '';
     // You can now use userProfile to personalize remedies, diet, etc.
+}
+
+function showPersonalizedModal() {
+    const modal = document.getElementById('personalized-modal');
+    const content = document.getElementById('personalized-content');
+    if (modal && content) {
+        // Build personalized content
+        let prakriti = userProfile && userProfile.prakriti ? userProfile.prakriti : 'unknown';
+        let prakritiLabel = prakriti.charAt(0).toUpperCase() + prakriti.slice(1);
+        let infoHtml = `<h4>Your Prakriti (Constitution): <span style='color:#007bff'>${prakritiLabel}</span></h4>`;
+        // Add advanced options (static for now, can be made dynamic)
+        infoHtml += `<div style='margin:1em 0;'>
+            <button class='btn btn-secondary' onclick='showDoshaAdvice()'>Remedies for My Dosha</button>
+            <button class='btn btn-secondary' onclick='showLifestyleAdvice()'>Lifestyle Tips</button>
+            <button class='btn btn-secondary' onclick='showDietAdvice()'>Diet Suggestions</button>
+        </div>`;
+        infoHtml += `<div id='personalized-details'></div>`;
+        content.innerHTML = infoHtml;
+        modal.style.display = 'block';
+    }
+}
+
+function closePersonalizedModal() {
+    const modal = document.getElementById('personalized-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+// Example handlers for advanced options (can be expanded)
+function showDoshaAdvice() {
+    const prakriti = userProfile && userProfile.prakriti ? userProfile.prakriti : 'unknown';
+    let html = '';
+    if (prakriti === 'vata') {
+        html = `<h5>Vata Balancing Remedies</h5><ul><li>Warm, nourishing foods</li><li>Regular routine</li><li>Calming herbs like Ashwagandha</li></ul>`;
+    } else if (prakriti === 'pitta') {
+        html = `<h5>Pitta Balancing Remedies</h5><ul><li>Cooling foods and drinks</li><li>Stress management</li><li>Soothing herbs like Brahmi</li></ul>`;
+    } else if (prakriti === 'kapha') {
+        html = `<h5>Kapha Balancing Remedies</h5><ul><li>Light, warm foods</li><li>Regular exercise</li><li>Stimulating herbs like Trikatu</li></ul>`;
+    } else {
+        html = `<p>Please complete your profile and quiz for personalized advice.</p>`;
+    }
+    document.getElementById('personalized-details').innerHTML = html;
+}
+
+function showLifestyleAdvice() {
+    const prakriti = userProfile && userProfile.prakriti ? userProfile.prakriti : 'unknown';
+    let html = '';
+    if (prakriti === 'vata') {
+        html = `<h5>Vata Lifestyle Tips</h5><ul><li>Regular routine and schedule</li><li>Gentle exercise like yoga</li><li>Warm oil massage (abhyanga)</li></ul>`;
+    } else if (prakriti === 'pitta') {
+        html = `<h5>Pitta Lifestyle Tips</h5><ul><li>Cool and calming activities</li><li>Moderate exercise</li><li>Cooling meditation practices</li></ul>`;
+    } else if (prakriti === 'kapha') {
+        html = `<h5>Kapha Lifestyle Tips</h5><ul><li>Regular exercise and movement</li><li>Stimulating activities</li><li>Dry massage with powders</li></ul>`;
+    } else {
+        html = `<p>Please complete your profile and quiz for personalized advice.</p>`;
+    }
+    document.getElementById('personalized-details').innerHTML = html;
+}
+
+function showDietAdvice() {
+    const prakriti = userProfile && userProfile.prakriti ? userProfile.prakriti : 'unknown';
+    let html = '';
+    if (prakriti === 'vata') {
+        html = `<h5>Vata Diet Suggestions</h5><ul><li>Sweet, sour, and salty tastes</li><li>Warm, cooked, and moist foods</li><li>Dairy products, nuts, root vegetables</li></ul>`;
+    } else if (prakriti === 'pitta') {
+        html = `<h5>Pitta Diet Suggestions</h5><ul><li>Sweet, bitter, and astringent tastes</li><li>Cooling foods and drinks</li><li>Fresh fruits, dairy, grains</li></ul>`;
+    } else if (prakriti === 'kapha') {
+        html = `<h5>Kapha Diet Suggestions</h5><ul><li>Pungent, bitter, and astringent tastes</li><li>Light, dry, and warm foods</li><li>Legumes, vegetables, fruits like apples and pears</li></ul>`;
+    } else {
+        html = `<p>Please complete your profile and quiz for personalized advice.</p>`;
+    }
+    document.getElementById('personalized-details').innerHTML = html;
+}
+
+function clearSelectedSymptoms() {
+    selectedSymptoms = [];
+    const searchInput = document.getElementById('symptom-search');
+    if (searchInput) searchInput.value = '';
+    displayRemedies([]);
 } 
